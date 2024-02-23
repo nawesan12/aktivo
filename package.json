@@ -17,7 +17,9 @@
 		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"@types/bcrypt": "^5.0.2",
 		"@types/eslint": "8.56.0",
+		"@types/jsonwebtoken": "^9.0.5",
 		"@typescript-eslint/eslint-plugin": "^6.0.0",
 		"@typescript-eslint/parser": "^6.0.0",
 		"autoprefixer": "^10.4.17",
@@ -38,9 +40,11 @@
 	"type": "module",
 	"dependencies": {
 		"@prisma/client": "^5.10.2",
+		"bcrypt": "^5.1.1",
 		"bits-ui": "^0.18.1",
 		"clsx": "^2.1.0",
 		"date-fns": "^3.3.1",
+		"jsonwebtoken": "^9.0.2",
 		"lucide-svelte": "^0.336.0",
 		"tailwind-merge": "^2.2.1",
 		"tailwind-variants": "^0.2.0"
