@@ -92,3 +92,7 @@ html {
 body {
 	overflow-x: hidden;
 }
+
+a {
+	color: #09f;
+}
