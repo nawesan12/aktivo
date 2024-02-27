@@ -2,7 +2,7 @@
 	class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8 max-w-screen-2xl px-8 mx-auto bg-white my-24"
 >
 	<div class="lg:col-span-1 space-y-8">
-		<h2 class="font-semibold text-2xl">Aktivo video</h2>
+		<h2 class="font-semibold text-3xl">Aktivo video</h2>
 		<p>
 			Lorem ipsum, dolor sit amet consectetur adipisicing elit. Deserunt adipisci doloremque
 			aperiam. Ducimus suscipit est doloremque. Unde necessitatibus commodi numquam cum? Vero eos
