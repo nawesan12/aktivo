@@ -1,9 +1,9 @@
-<div class="my-6">
+<section class="min-h-screen grid place-items-center">
 	<div
 		class="grid sm:grid-cols-2 items-center gap-16 p-8 mx-auto max-w-4xl bg-white shadow-[0_2px_10px_-3px_rgba(6,81,237,0.3)] rounded-md text-[#333] font-[sans-serif]"
 	>
 		<div>
-			<h1 class="text-3xl font-extrabold">Let's Talk</h1>
+			<h1 class="text-3xl font-extrabold">Contactate</h1>
 			<p class="text-sm text-gray-400 mt-3">
 				Have some big idea or brand to develop and need help? Then reach out we'd love to hear about
 				your project and provide help.
@@ -34,18 +34,18 @@
 							class="text-[#007bff] text-sm ml-3"
 						>
 							<small class="block">Mail</small>
-							<strong>https://veilmail.io/e/FkKh7o</strong>
+							<strong>contacto@aktivo.com</strong>
 						</a>
 					</li>
 				</ul>
 			</div>
 			<div class="mt-12">
-				<h2 class="text-lg font-extrabold">Socials</h2>
+				<h2 class="text-lg font-extrabold">Social</h2>
 				<ul class="flex mt-3 space-x-4">
 					<li
 						class="bg-[#e6e6e6cf] h-10 w-10 rounded-full flex items-center justify-center shrink-0"
 					>
-						<a href="javascript:void(0)">
+						<a href="/">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="20px"
@@ -63,7 +63,7 @@
 					<li
 						class="bg-[#e6e6e6cf] h-10 w-10 rounded-full flex items-center justify-center shrink-0"
 					>
-						<a href="javascript:void(0)">
+						<a href="/">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="20px"
@@ -81,14 +81,8 @@
 					<li
 						class="bg-[#e6e6e6cf] h-10 w-10 rounded-full flex items-center justify-center shrink-0"
 					>
-						<a href="javascript:void(0)">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="20px"
-								height="20px"
-								fill="#007bff"
-								viewBox="0 0 24 24"
-							>
+						<a href="/">
+							<svg width="20px" height="20px" fill="#007bff" viewBox="0 0 24 24">
 								<path
 									d="M12 9.3a2.7 2.7 0 1 0 0 5.4 2.7 2.7 0 0 0 0-5.4Zm0-1.8a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm5.85-.225a1.125 1.125 0 1 1-2.25 0 1.125 1.125 0 0 1 2.25 0ZM12 4.8c-2.227 0-2.59.006-3.626.052-.706.034-1.18.128-1.618.299a2.59 2.59 0 0 0-.972.633 2.601 2.601 0 0 0-.634.972c-.17.44-.265.913-.298 1.618C4.805 9.367 4.8 9.714 4.8 12c0 2.227.006 2.59.052 3.626.034.705.128 1.18.298 1.617.153.392.333.674.632.972.303.303.585.484.972.633.445.172.918.267 1.62.3.993.047 1.34.052 3.626.052 2.227 0 2.59-.006 3.626-.052.704-.034 1.178-.128 1.617-.298.39-.152.674-.333.972-.632.304-.303.485-.585.634-.972.171-.444.266-.918.299-1.62.047-.993.052-1.34.052-3.626 0-2.227-.006-2.59-.052-3.626-.034-.704-.128-1.18-.299-1.618a2.619 2.619 0 0 0-.633-.972 2.595 2.595 0 0 0-.972-.634c-.44-.17-.914-.265-1.618-.298-.993-.047-1.34-.052-3.626-.052ZM12 3c2.445 0 2.75.009 3.71.054.958.045 1.61.195 2.185.419A4.388 4.388 0 0 1 19.49 4.51c.457.45.812.994 1.038 1.595.222.573.373 1.227.418 2.185.042.96.054 1.265.054 3.71 0 2.445-.009 2.75-.054 3.71-.045.958-.196 1.61-.419 2.185a4.395 4.395 0 0 1-1.037 1.595 4.44 4.44 0 0 1-1.595 1.038c-.573.222-1.227.373-2.185.418-.96.042-1.265.054-3.71.054-2.445 0-2.75-.009-3.71-.054-.958-.045-1.61-.196-2.185-.419A4.402 4.402 0 0 1 4.51 19.49a4.414 4.414 0 0 1-1.037-1.595c-.224-.573-.374-1.227-.419-2.185C3.012 14.75 3 14.445 3 12c0-2.445.009-2.75.054-3.71s.195-1.61.419-2.185A4.392 4.392 0 0 1 4.51 4.51c.45-.458.994-.812 1.595-1.037.574-.224 1.226-.374 2.185-.419C9.25 3.012 9.555 3 12 3Z"
 								>
@@ -100,11 +94,11 @@
 			</div>
 		</div>
 
-		<form action="https://fabform.io/f/xxxxx" method="post" class="ml-auo space-y-4">
+		<form action="" method="post" class="ml-auto space-y-4">
 			<input
 				type="text"
 				name="name"
-				placeholder="Name"
+				placeholder="Nombre"
 				class="w-full rounded-md py-2.5 px-4 border text-sm outline-[#007bff]"
 			/>
 			<input
@@ -115,20 +109,20 @@
 			/>
 			<input
 				type="text"
-				placeholder="Subject"
+				placeholder="Asunto"
 				name="subject"
 				class="w-full rounded-md py-2.5 px-4 border text-sm outline-[#007bff]"
 			/>
 			<textarea
-				placeholder="Message"
+				placeholder="Mensaje"
 				rows="6"
 				name="message"
-				class="w-full rounded-md px-4 border text-sm pt-2.5 outline-[#007bff]"
+				class="w-full rounded-md px-4 border min-h-40 max-h-80 text-sm pt-2.5 outline-[#007bff]"
 			></textarea>
 			<button
 				class="text-white bg-[#007bff] hover:bg-blue-600 font-semibold rounded-md text-sm px-4 py-2.5 w-full"
-				>Send</button
+				>Enviar</button
 			>
 		</form>
 	</div>
-</div>
+</section>
