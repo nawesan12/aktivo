@@ -42,11 +42,13 @@
 		"@internationalized/date": "^3.5.2",
 		"@prisma/client": "^5.10.2",
 		"bcrypt": "^5.1.1",
-		"bits-ui": "^0.18.2",
+		"bits-ui": "^0.18.3",
 		"clsx": "^2.1.0",
 		"date-fns": "^3.3.1",
 		"jsonwebtoken": "^9.0.2",
 		"lucide-svelte": "^0.336.0",
+		"mode-watcher": "^0.2.1",
+		"svelte-sonner": "^0.3.18",
 		"tailwind-merge": "^2.2.1",
 		"tailwind-variants": "^0.2.0"
 	}

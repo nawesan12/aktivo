@@ -1,6 +1,24 @@
-<h1>Aktivo</h1>
+<script>
+	import HomeHero from '@/components/ui/banners/home-hero.svelte';
+	import HomeResolution from '@/components/ui/banners/home-resolution.svelte';
+	import HomeFaq from '@/components/ui/faq/home-faq.svelte';
+	import HomeFooter from '@/components/ui/footers/home-footer.svelte';
+	import HomeFrameYoutube from '@/components/ui/frames/home-frame-youtube.svelte';
+	import HomeHeader from '@/components/ui/headers/home-header.svelte';
+	import BrandsCollab from '@/components/ui/marquees/brands-collab.svelte';
+</script>
 
-<p>landing page</p>
+<HomeHeader />
+<HomeHero />
+<BrandsCollab />
+<HomeFrameYoutube />
+<HomeResolution />
+<HomeFaq />
+<HomeFooter />
 
-<a href="/create-account">Registrarse</a>
-<a href="/feed">acceder a aktivo</a>
+<style>
+	:global(body) {
+		background-image: url('/shapes.svg');
+		backdrop-filter: opacity(20%);
+	}
+</style>
