@@ -15,10 +15,3 @@
 <HomeResolution />
 <HomeFaq />
 <HomeFooter />
-
-<style>
-	:global(body) {
-		background-image: url('/shapes.svg');
-		backdrop-filter: opacity(20%);
-	}
-</style>
