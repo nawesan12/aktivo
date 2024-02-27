@@ -12,15 +12,19 @@
 				<nav aria-label="Global">
 					<ul class="flex items-center gap-6 text-sm">
 						<li>
-							<a class="text-gray-500 transition hover:text-gray-500/75" href="/"> Producto </a>
+							<a class="text-gray-500 transition hover:text-gray-500/75" href="/info"> Producto </a>
 						</li>
 
 						<li>
-							<a class="text-gray-500 transition hover:text-gray-500/75" href="/"> Nosotros </a>
+							<a class="text-gray-500 transition hover:text-gray-500/75" href="/about">
+								Nosotros
+							</a>
 						</li>
 
 						<li>
-							<a class="text-gray-500 transition hover:text-gray-500/75" href="/"> Contacto </a>
+							<a class="text-gray-500 transition hover:text-gray-500/75" href="/contact">
+								Contacto
+							</a>
 						</li>
 					</ul>
 				</nav>
@@ -29,7 +33,7 @@
 			<div class="flex items-center gap-4">
 				<div class="sm:flex sm:gap-4">
 					<a
-						class="rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white shadow"
+						class="rounded-md bg-[#09f] px-5 py-2.5 text-sm font-medium text-white shadow"
 						href="/access"
 					>
 						Acceder
@@ -37,7 +41,7 @@
 
 					<div class="hidden sm:flex">
 						<a
-							class="rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600"
+							class="rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-[#09f]"
 							href="/create-account"
 						>
 							Registrarme

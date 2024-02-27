@@ -1,4 +1,4 @@
-<section class="max-w-screen-xl lg:py-12 mx-auto text-center md:text-left bg-white">
+<section class="max-w-screen-xl lg:py-12 mx-auto text-center px-4 lg:px-8 md:text-left bg-white">
 	<div class="grid gap-6 md:grid-cols-2">
 		<div class="mb-6 md:mb-0">
 			<h2 class="mb-6 text-3xl font-bold">
