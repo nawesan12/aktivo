@@ -1,3 +1,5 @@
-<a href="/create-account/client">Soy cliente</a>
+<script>
+	import SelectTypeOfUser from '@/components/ui/auth/register/select-type-of-user.svelte';
+</script>
 
-<a href="/create-account/commerce">Soy un comercio</a>
+<SelectTypeOfUser />
