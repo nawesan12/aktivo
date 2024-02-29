@@ -38,6 +38,7 @@ enum Category {
   MASSAGE
   DOCTOR
   BEAUTICIAN
+  OTHER
 }
 
 // Model for Commerce
