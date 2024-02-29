@@ -1,2 +1,5 @@
-Registrar comercio - en 4 pasos
-multi step?
+<script>
+	import CommerceMultiStepRegister from '@/components/ui/auth/register/commerce-multi-step-register.svelte';
+</script>
+
+<CommerceMultiStepRegister />
