@@ -2,7 +2,7 @@
 
 import { prisma } from '@/database/client';
 
-export async function get(request: Request) {
+export async function GET({ request }: { request: Request }) {
 	try {
 		const { commerceId } = request.params; // Assuming commerceId is passed as a parameter in the URL
 
