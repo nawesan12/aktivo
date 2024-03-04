@@ -1,15 +1,21 @@
 <script>
+	import Button from '@/components/ui/button/button.svelte';
 	import Input from '@/components/ui/input/input.svelte';
 	import Label from '@/components/ui/label/label.svelte';
 </script>
 
 <main>
 	<section class="p-4 mx-auto space-y-8 w-full lg:max-w-4xl">
-		<h2 class="text-2xl font-semibold">Queres volver a visitar [nombre del lugar]?</h2>
-
-		imagen del lugar y detalles
-		<br />
-		<a href="/[nombre del lugar]">Agendar turno</a>
+		<div
+			class="grid grid-cols-1 gap-4 transition-[grid-template-columns] pb-4 lg:grid-cols-[1fr_120px] lg:gap-8 lg:[&:has(>*:last-child:hover)]:grid-cols-[1fr_160px] border rounded-lg lg:p-4"
+		>
+			<div class="h-48 rounded-lg p-4 bg-gray-200">
+				<h2 class="text-2xl font-semibold">Queres volver a visitar [nombre del lugar]?</h2>
+			</div>
+			<div class="flex items-center justify-center">
+				<Button href="/nombre del lugar" class="w-full">Agendar turno</Button>
+			</div>
+		</div>
 	</section>
 
 	<section class="p-4 mx-auto space-y-8 w-full lg:max-w-4xl">
@@ -45,6 +51,8 @@
 		</section>
 
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
+			<div class="h-32 rounded-lg bg-gray-200"></div>
+			<div class="h-32 rounded-lg bg-gray-200"></div>
 			<div class="h-32 rounded-lg bg-gray-200"></div>
 			<div class="h-32 rounded-lg bg-gray-200"></div>
 		</div>

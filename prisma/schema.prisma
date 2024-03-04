@@ -10,7 +10,10 @@ datasource db {
 // Define the User model for owners and employees
 model User {
   id              Int               @id @default(autoincrement())
+  name            String
+  surname         String
   email           String            @unique
+  phone           String            @unique
   password        String
   role            UserRole          @default(USER)
   commerce        Commerce? // If user is an owner, they will have a commerce associated

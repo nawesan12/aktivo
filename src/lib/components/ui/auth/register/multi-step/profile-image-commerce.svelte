@@ -1,12 +1,17 @@
-<div>
-	<label for="file" class="block text-sm text-gray-500 dark:text-gray-300">File</label>
+<script>
+	import Input from '@/components/ui/input/input.svelte';
+	import Label from '@/components/ui/label/label.svelte';
+</script>
 
-	<label
+<div>
+	<Label for="file" class="block text-sm text-gray-500 dark:text-gray-300">Foto de tu negocio</Label
+	>
+
+	<Label
 		for="dropzone-file"
 		class="flex flex-col items-center w-full max-w-lg p-5 mx-auto mt-2 text-center bg-white border-2 border-gray-300 border-dashed cursor-pointer dark:bg-gray-900 dark:border-gray-700 rounded-xl"
 	>
 		<svg
-			xmlns="http://www.w3.org/2000/svg"
 			fill="none"
 			viewBox="0 0 24 24"
 			stroke-width="1.5"
@@ -26,6 +31,6 @@
 			Upload or darg & drop your file SVG, PNG, JPG or GIF.
 		</p>
 
-		<input id="dropzone-file" type="file" class="hidden" />
-	</label>
+		<Input id="dropzone-file" type="file" class="hidden" />
+	</Label>
 </div>

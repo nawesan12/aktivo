@@ -1,10 +1,11 @@
 <script>
 	import Input from '@/components/ui/input/input.svelte';
+	import Label from '@/components/ui/label/label.svelte';
 	import Textarea from '@/components/ui/textarea/textarea.svelte';
 </script>
 
 <div>
-	<label for="" class="block text-sm text-gray-500 dark:text-gray-300">Nombre</label>
+	<Label for="" class="block text-sm dark:text-gray-300">Nombre</Label>
 
 	<Input
 		type="text"
@@ -13,7 +14,7 @@
 	/>
 </div>
 <div>
-	<label for="" class="block text-sm text-gray-500 dark:text-gray-300">Descripcion</label>
+	<Label for="" class="block text-sm text-gray-500 dark:text-gray-300">Descripcion</Label>
 
 	<Textarea
 		placeholder="Descripcion de tu servicio"
