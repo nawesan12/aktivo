@@ -27,6 +27,7 @@ model Employee {
 
 enum UserRole {
   USER
+  OWNER
   ADMIN
 }
 
