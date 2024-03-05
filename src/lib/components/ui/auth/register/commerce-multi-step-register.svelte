@@ -7,6 +7,8 @@
 	import OwnerDetails from './multi-step/owner-details.svelte';
 	import ProfileImageCommerce from './multi-step/profile-image-commerce.svelte';
 	import TeamFiller from './multi-step/team-filler.svelte';
+	import PhoneInput from './multi-step/phone-input.svelte';
+	import LocationSelector from './multi-step/location-selector.svelte';
 
 	let currentStep = 0;
 
@@ -34,10 +36,14 @@
 		{:else if currentStep === 3}
 			<OwnerDetails />
 		{:else if currentStep === 4}
-			<AddServiceForm />
+			<PhoneInput />
 		{:else if currentStep === 5}
-			<TeamFiller />
+			<LocationSelector />
 		{:else if currentStep === 6}
+			<AddServiceForm />
+		{:else if currentStep === 7}
+			<TeamFiller />
+		{:else if currentStep === 8}
 			Codigo de ultimar detalles
 		{/if}
 		<section class="w-full max-w-sm text-left">
