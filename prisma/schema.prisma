@@ -23,6 +23,8 @@ model User {
 
 model Employee {
   id         Int       @id @default(autoincrement())
+  name       String
+  position   String
   Commerce   Commerce? @relation(fields: [commerceId], references: [id])
   commerceId Int?
   Booking    Booking[]

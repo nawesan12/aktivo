@@ -13,7 +13,7 @@
 	let currentStep = 0;
 
 	function handleSteps() {
-		if (currentStep === 6) {
+		if (currentStep === 8) {
 			// Ver donde manejar la subida a la db
 			// y guardar token de sesion en localstorage
 			// cargar data del commerce en localstorage
@@ -44,7 +44,7 @@
 		{:else if currentStep === 7}
 			<TeamFiller />
 		{:else if currentStep === 8}
-			Codigo de ultimar detalles
+			Codigo de ultimar detalles? / Bienvenida
 		{/if}
 		<section class="w-full max-w-sm text-left">
 			<Button on:click={handleSteps}>Siguiente</Button>
