@@ -23,7 +23,7 @@ export async function GET(
     };
 
     if (serviceId) {
-      where.staffServices = {
+      where.services = {
         some: { serviceId },
       };
     }

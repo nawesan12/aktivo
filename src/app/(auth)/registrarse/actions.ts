@@ -7,6 +7,7 @@ import { signIn } from "@/lib/auth";
 
 export async function registerUser(formData: {
   name: string;
+  businessName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -17,7 +18,7 @@ export async function registerUser(formData: {
       return { success: false, error: parsed.error.issues[0].message };
     }
 
-    const { name, email, password } = parsed.data;
+    const { name, businessName, email, password } = parsed.data;
 
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) {
@@ -26,8 +27,8 @@ export async function registerUser(formData: {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Generate slug from business name (user name as initial business name)
-    const baseSlug = name
+    // Generate slug from business name
+    const baseSlug = businessName
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -55,7 +56,7 @@ export async function registerUser(formData: {
 
       const business = await tx.business.create({
         data: {
-          name: `Negocio de ${name}`,
+          name: businessName,
           slug,
         },
       });

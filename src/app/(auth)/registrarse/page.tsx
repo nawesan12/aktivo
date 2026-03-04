@@ -66,6 +66,18 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
+              <label className="text-sm font-medium mb-1.5 block">Nombre del negocio</label>
+              <input
+                {...register("businessName")}
+                type="text"
+                placeholder="Ej: Barberia Don Lucas"
+                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+              {errors.businessName && (
+                <p className="text-xs text-destructive mt-1">{errors.businessName.message}</p>
+              )}
+            </div>
+            <div>
               <label className="text-sm font-medium mb-1.5 block">Email</label>
               <input
                 {...register("email")}

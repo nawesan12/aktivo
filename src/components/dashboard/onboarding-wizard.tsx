@@ -33,6 +33,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
   const [duration, setDuration] = useState(30);
   const [price, setPrice] = useState(0);
   const [savingService, setSavingService] = useState(false);
+  const [createdServiceId, setCreatedServiceId] = useState<string | null>(null);
 
   // Step 3: Staff
   const [staffName, setStaffName] = useState("");
@@ -82,6 +83,8 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         body: JSON.stringify({ name: serviceName, duration, price, isActive: true }),
       });
       if (!res.ok) throw new Error("Error al crear servicio");
+      const data = await res.json();
+      setCreatedServiceId(data.id);
       toast.success("Servicio creado");
       setStep(2);
     } catch {
@@ -98,7 +101,12 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
       const res = await fetch("/api/panel/staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: staffName, specialty, phone: staffPhone }),
+        body: JSON.stringify({
+          name: staffName,
+          specialty,
+          phone: staffPhone,
+          serviceIds: createdServiceId ? [createdServiceId] : [],
+        }),
       });
       if (!res.ok) throw new Error("Error al crear profesional");
       toast.success("Profesional creado");
