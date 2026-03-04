@@ -146,9 +146,19 @@ export async function POST(request: Request) {
         },
       });
 
+      // Get business-specific MP token if available
+      const mpConfig = await db.businessConfig.findUnique({
+        where: {
+          businessId_key: {
+            businessId: business.id,
+            key: "mp_access_token",
+          },
+        },
+      });
+
       // Create MercadoPago preference
       try {
-        const mp = getMPClient();
+        const mp = getMPClient(mpConfig?.value ?? undefined);
         const preference = await mp.preference.create({
           body: {
             items: [
