@@ -17,6 +17,7 @@ export default async function BookingLayout({
     select: {
       name: true,
       slug: true,
+      logo: true,
       primaryColor: true,
       accentColor: true,
     },
@@ -39,12 +40,20 @@ export default async function BookingLayout({
             href={`/${business.slug}`}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-              style={{ background: `linear-gradient(135deg, ${business.primaryColor || "#6366f1"}, ${business.accentColor || "#22d3ee"})` }}
-            >
-              {business.name.charAt(0)}
-            </div>
+            {business.logo ? (
+              <img
+                src={business.logo}
+                alt={business.name}
+                className="w-7 h-7 rounded-lg object-cover"
+              />
+            ) : (
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                style={{ background: `linear-gradient(135deg, ${business.primaryColor || "#6366f1"}, ${business.accentColor || "#22d3ee"})` }}
+              >
+                {business.name.charAt(0)}
+              </div>
+            )}
             <span className="font-heading font-semibold">{business.name}</span>
           </Link>
         </div>

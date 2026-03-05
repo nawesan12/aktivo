@@ -68,6 +68,17 @@ export function BookingWizard({ businessId, slug }: BookingWizardProps) {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <ProgressBar currentStep={step} />
 
+      {/* Contextual subtitle */}
+      <h2 className="text-lg font-heading font-semibold text-center mb-6">
+        {[
+          "Elige el servicio que necesitas",
+          "Selecciona tu profesional",
+          "Elige fecha y horario",
+          "Completa tus datos de contacto",
+          "Revisa y confirma tu turno",
+        ][step]}
+      </h2>
+
       {/* Back button */}
       {step > 0 && (
         <Button

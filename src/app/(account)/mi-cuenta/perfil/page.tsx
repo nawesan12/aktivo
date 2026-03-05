@@ -5,19 +5,21 @@ import useSWR from "swr";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { ImageUploader } from "@/components/upload/image-uploader";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function ProfilePage() {
-  const { data, isLoading, mutate } = useSWR("/api/account/profile", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/account/profile");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [image, setImage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (data) {
       setName(data.name || "");
       setPhone(data.phone || "");
+      setImage(data.image || null);
     }
   }, [data]);
 
@@ -27,7 +29,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone }),
+        body: JSON.stringify({ name, phone, image }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -53,10 +55,14 @@ export default function ProfilePage() {
 
       <div className="glass rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-2xl font-bold text-primary">
-              {(data?.name || "U").charAt(0).toUpperCase()}
-            </span>
+          <div className="w-16 h-16">
+            <ImageUploader
+              value={image}
+              onChange={(url) => setImage(url)}
+              folder="aktivo/profiles"
+              aspectRatio="1:1"
+              className="w-16 h-16 rounded-full"
+            />
           </div>
           <div>
             <p className="font-medium">{data?.name}</p>

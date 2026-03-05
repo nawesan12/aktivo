@@ -67,16 +67,17 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { name, phone } = body;
+    const { name, phone, image } = body;
 
     const updateData: Record<string, string> = {};
     if (name !== undefined) updateData.name = name;
     if (phone !== undefined) updateData.phone = phone;
+    if (image !== undefined) updateData.image = image;
 
     const user = await db.user.update({
       where: { id: session.user.id },
       data: updateData,
-      select: { id: true, name: true, email: true, phone: true },
+      select: { id: true, name: true, email: true, phone: true, image: true },
     });
 
     await logAction({
