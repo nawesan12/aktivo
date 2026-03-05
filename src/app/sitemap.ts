@@ -6,19 +6,19 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: "https://aktivo.com",
+      url: "https://jiku.app",
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
-      url: "https://aktivo.com/registrarse",
+      url: "https://jiku.app/registrarse",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: "https://aktivo.com/iniciar-sesion",
+      url: "https://jiku.app/iniciar-sesion",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,
@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     businessPages = businesses.map((business) => ({
-      url: `https://aktivo.com/${business.slug}`,
+      url: `https://jiku.app/${business.slug}`,
       lastModified: business.updatedAt,
       changeFrequency: "daily" as const,
       priority: 0.7,

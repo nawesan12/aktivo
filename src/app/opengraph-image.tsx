@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 
 export const alt =
-  "Aktivo - Plataforma de turnos, CRM y pagos para negocios de servicios en Argentina";
+  "Jiku - Plataforma de turnos, CRM y pagos para negocios de servicios en Argentina";
 
 export const size = {
   width: 1200,
@@ -38,7 +38,7 @@ export default function OGImage() {
             height: "400px",
             borderRadius: "50%",
             background:
-              "radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%)",
+              "radial-gradient(circle, rgba(74,222,128,0.4) 0%, transparent 70%)",
             display: "flex",
           }}
         />
@@ -52,7 +52,7 @@ export default function OGImage() {
             height: "400px",
             borderRadius: "50%",
             background:
-              "radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%)",
+              "radial-gradient(circle, rgba(34,197,85,0.3) 0%, transparent 70%)",
             display: "flex",
           }}
         />
@@ -71,7 +71,7 @@ export default function OGImage() {
               width: "48px",
               height: "48px",
               borderRadius: "12px",
-              background: "linear-gradient(135deg, #6366f1, #a855f7)",
+              background: "linear-gradient(135deg, #4ADE80, #22c55e)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -80,7 +80,7 @@ export default function OGImage() {
               fontWeight: 700,
             }}
           >
-            A
+            J
           </div>
           <span
             style={{
@@ -90,7 +90,7 @@ export default function OGImage() {
               letterSpacing: "-1px",
             }}
           >
-            Aktivo
+            Jiku
           </span>
         </div>
 
@@ -138,8 +138,8 @@ export default function OGImage() {
               style={{
                 padding: "8px 20px",
                 borderRadius: "9999px",
-                border: "1px solid rgba(99,102,241,0.4)",
-                color: "#a5b4fc",
+                border: "1px solid rgba(74,222,128,0.4)",
+                color: "#86efac",
                 fontSize: "16px",
                 display: "flex",
               }}

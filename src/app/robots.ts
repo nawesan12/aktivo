@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/panel/", "/mi-cuenta/", "/api/", "/admin/"],
     },
-    sitemap: "https://aktivo.com/sitemap.xml",
+    sitemap: "https://jiku.app/sitemap.xml",
   };
 }

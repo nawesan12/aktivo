@@ -67,7 +67,7 @@ export const useBookingStore = create<BookingState>()(
       reset: () => set(initialState),
     }),
     {
-      name: "aktivo-booking",
+      name: "jiku-booking",
       storage: createJSONStorage(() => sessionStorage),
     }
   )

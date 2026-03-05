@@ -9,11 +9,39 @@
    ────────────────────────────────────────── */
 
 @font-face {
-  font-family: "Space Grotesk";
+  font-family: "Sora";
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 300 800;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/spacegrotesk/v16/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj62UUsjNsFjTDJK.woff2")
+  src: url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap");
+  src: url("https://fonts.gstatic.com/s/sora/v12/xMQOuFFYT72X5wkB_18qmnndmSdSnk-DKQRDA3-SAag.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/cormorantgaramond/v16/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrEPjuw-NxBKL_y94.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/cormorantgaramond/v16/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrHtPkyuF7w6C0w.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/ibmplexmono/v19/-F63fjptAgt5VM-kVkqdyU8n5igy1MCzb9skDsnQ.woff2")
     format("woff2");
 }
 
@@ -29,9 +57,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --font-sans: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Georgia", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -71,7 +100,7 @@
 }
 
 /* ──────────────────────────────────────────
-   Dark mode as default (Aktivo brand)
+   Dark mode as default (Jiku brand)
    ────────────────────────────────────────── */
 
 :root {
@@ -84,22 +113,22 @@
   --card-foreground: #fafafa;
   --popover: #18181b;
   --popover-foreground: #fafafa;
-  --primary: #6366f1;
-  --primary-foreground: #fafafa;
+  --primary: #4ADE80;
+  --primary-foreground: #09090b;
   --secondary: #27272a;
   --secondary-foreground: #fafafa;
   --muted: #27272a;
   --muted-foreground: #a1a1aa;
-  --accent: #22d3ee;
+  --accent: #22c55e;
   --accent-foreground: #09090b;
   --destructive: #ef4444;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.15);
-  --ring: #6366f1;
+  --ring: #4ADE80;
 
   /* Charts */
-  --chart-1: #6366f1;
-  --chart-2: #22d3ee;
+  --chart-1: #4ADE80;
+  --chart-2: #22c55e;
   --chart-3: #a78bfa;
   --chart-4: #34d399;
   --chart-5: #f59e0b;
@@ -107,15 +136,15 @@
   /* Sidebar */
   --sidebar: #0f0f12;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: #fafafa;
+  --sidebar-primary: #4ADE80;
+  --sidebar-primary-foreground: #09090b;
   --sidebar-accent: #27272a;
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #6366f1;
+  --sidebar-ring: #4ADE80;
 
-  /* Aktivo brand tokens */
-  --brand-gradient: linear-gradient(135deg, #6366f1, #22d3ee);
+  /* Jiku brand tokens */
+  --brand-gradient: linear-gradient(135deg, #4ADE80, #22c55e);
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -128,33 +157,33 @@
   --card-foreground: #09090b;
   --popover: #ffffff;
   --popover-foreground: #09090b;
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
+  --primary: #4ADE80;
+  --primary-foreground: #09090b;
   --secondary: #f4f4f5;
   --secondary-foreground: #09090b;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --accent: #22d3ee;
+  --accent: #22c55e;
   --accent-foreground: #09090b;
   --destructive: #ef4444;
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #6366f1;
+  --ring: #4ADE80;
 
-  --chart-1: #6366f1;
-  --chart-2: #0891b2;
+  --chart-1: #4ADE80;
+  --chart-2: #22c55e;
   --chart-3: #7c3aed;
   --chart-4: #059669;
   --chart-5: #d97706;
 
   --sidebar: #ffffff;
   --sidebar-foreground: #09090b;
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: #4ADE80;
+  --sidebar-primary-foreground: #09090b;
   --sidebar-accent: #f4f4f5;
   --sidebar-accent-foreground: #09090b;
   --sidebar-border: #e4e4e7;
-  --sidebar-ring: #6366f1;
+  --sidebar-ring: #4ADE80;
 
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.08);
@@ -210,11 +239,11 @@ html {
   }
 
   .glow-primary {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3), 0 0 60px rgba(74, 222, 128, 0.1);
   }
 
   .glow-accent {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3), 0 0 60px rgba(34, 211, 238, 0.1);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 60px rgba(34, 197, 94, 0.1);
   }
 
   .bg-grid-pattern {

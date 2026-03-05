@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 
 function InvitationContent() {
   const searchParams = useSearchParams();
@@ -102,7 +102,7 @@ export default function InvitationPage() {
       <div className="w-full max-w-md text-center">
         <div className="mb-8">
           <Link href="/" className="inline-flex">
-            <AktivoLogo size="md" />
+            <JikuLogo size="md" />
           </Link>
         </div>
 

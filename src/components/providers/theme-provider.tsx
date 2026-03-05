@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    const stored = localStorage.getItem("aktivo-theme") as Theme | null;
+    const stored = localStorage.getItem("jiku-theme") as Theme | null;
     if (stored) {
       setTheme(stored);
     }
@@ -28,7 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (theme === "light") {
       root.classList.add("light");
     }
-    localStorage.setItem("aktivo-theme", theme);
+    localStorage.setItem("jiku-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));

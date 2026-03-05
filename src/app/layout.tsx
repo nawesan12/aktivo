@@ -3,10 +3,10 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://aktivo.com"),
+  metadataBase: new URL("https://jiku.app"),
   title: {
-    default: "Aktivo - Plataforma de Crecimiento para Negocios de Servicios",
-    template: "%s | Aktivo",
+    default: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
+    template: "%s | Jiku",
   },
   description:
     "Turnos, CRM, pagos y fidelizacion para barberias, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
@@ -46,15 +46,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "es_AR",
-    siteName: "Aktivo",
-    title: "Aktivo - Plataforma de Crecimiento para Negocios de Servicios",
+    siteName: "Jiku",
+    title: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
     description:
       "Turnos, CRM, pagos y fidelizacion para barberias, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
-    url: "https://aktivo.com",
+    url: "https://jiku.app",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Aktivo - Plataforma de Crecimiento para Negocios de Servicios",
+    title: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
     description:
       "Turnos, CRM, pagos y fidelizacion para barberias, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
   },
@@ -70,11 +70,11 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://aktivo.com",
+    canonical: "https://jiku.app",
   },
-  authors: [{ name: "Aktivo" }],
-  creator: "Aktivo",
-  publisher: "Aktivo",
+  authors: [{ name: "Jiku" }],
+  creator: "Jiku",
+  publisher: "Jiku",
   category: "Software",
 };
 

@@ -6,9 +6,9 @@ export default function LandingLayout({
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Aktivo",
-    url: "https://aktivo.com",
-    logo: "https://aktivo.com/favicon.svg",
+    name: "Jiku",
+    url: "https://jiku.app",
+    logo: "https://jiku.app/favicon.svg",
     description:
       "Plataforma de gestion de turnos, CRM, pagos y fidelizacion para negocios de servicios en Argentina.",
   };
@@ -16,8 +16,8 @@ export default function LandingLayout({
   const softwareJsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Aktivo",
-    url: "https://aktivo.com",
+    name: "Jiku",
+    url: "https://jiku.app",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: [
@@ -139,11 +139,11 @@ export default function LandingLayout({
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Aktivo",
-    url: "https://aktivo.com",
+    name: "Jiku",
+    url: "https://jiku.app",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://aktivo.com/{search_term_string}",
+      target: "https://jiku.app/{search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };

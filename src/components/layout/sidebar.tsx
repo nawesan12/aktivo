@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   BarChart2,
 } from "lucide-react";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -53,12 +53,12 @@ export function Sidebar() {
       <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
         {!sidebarCollapsed && (
           <Link href="/panel" className="flex items-center gap-2">
-            <AktivoLogo size="sm" />
+            <JikuLogo size="sm" />
           </Link>
         )}
         {sidebarCollapsed && (
           <div className="mx-auto">
-            <AktivoLogo size="sm" iconOnly />
+            <JikuLogo size="sm" iconOnly />
           </div>
         )}
         <button

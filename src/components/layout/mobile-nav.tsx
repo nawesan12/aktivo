@@ -17,7 +17,7 @@ import {
   X,
   BarChart2,
 } from "lucide-react";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -51,7 +51,7 @@ export function MobileNav() {
             className="flex items-center gap-2"
             onClick={() => setMobileNavOpen(false)}
           >
-            <AktivoLogo size="sm" />
+            <JikuLogo size="sm" />
           </Link>
           <button
             onClick={() => setMobileNavOpen(false)}

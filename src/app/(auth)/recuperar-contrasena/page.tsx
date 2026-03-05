@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 
 function RecoverContent() {
   const searchParams = useSearchParams();
@@ -20,7 +20,7 @@ export default function RecoverPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <AktivoLogo size="md" />
+            <JikuLogo size="md" />
           </Link>
         </div>
         <Suspense

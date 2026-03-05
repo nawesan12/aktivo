@@ -52,7 +52,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
   }, [step]);
 
   function markSeen() {
-    try { localStorage.setItem(`aktivo_onboarding_${businessId}`, "1"); } catch {}
+    try { localStorage.setItem(`jiku_onboarding_${businessId}`, "1"); } catch {}
   }
 
   async function saveProfile() {
@@ -125,7 +125,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="text-center mb-8">
         <h1 className="text-2xl font-heading font-bold">
-          Bienvenido a <span className="brand-text">Aktivo</span>
+          Bienvenido a <span className="brand-text">Jiku</span>
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Configuremos {businessName} en unos pasos

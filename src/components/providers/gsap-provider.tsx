@@ -10,7 +10,7 @@ if (typeof window !== "undefined") {
 
 export function GSAPProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    // Set GSAP defaults for Aktivo aesthetic
+    // Set GSAP defaults for Jiku aesthetic
     gsap.defaults({
       ease: "power3.out",
       duration: 0.8,

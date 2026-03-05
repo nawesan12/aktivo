@@ -44,10 +44,10 @@ function getEmailHtml(data: EmailData): string {
 <body style="margin:0;padding:0;background-color:#09090b;font-family:system-ui,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <h1 style="background:linear-gradient(135deg,#6366F1,#22D3EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:28px;margin:0;">
+      <h1 style="background:linear-gradient(135deg,#4ADE80,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:28px;margin:0;">
         ${data.businessName}
       </h1>
-      <p style="color:#a1a1aa;font-size:12px;margin:4px 0 0;">Powered by Aktivo</p>
+      <p style="color:#a1a1aa;font-size:12px;margin:4px 0 0;">Powered by Jiku</p>
     </div>
     <div style="background-color:#18181b;border-radius:12px;padding:32px;border:1px solid rgba(255,255,255,0.1);">
       <h2 style="color:#fafafa;font-size:20px;margin:0 0 16px 0;">
@@ -72,7 +72,7 @@ function getEmailHtml(data: EmailData): string {
           </tr>
           <tr>
             <td style="color:#a1a1aa;padding:8px 0;font-size:14px;">Hora</td>
-            <td style="color:#6366F1;padding:8px 0;font-size:18px;text-align:right;font-weight:700;">${timeStr}</td>
+            <td style="color:#4ADE80;padding:8px 0;font-size:18px;text-align:right;font-weight:700;">${timeStr}</td>
           </tr>
         </table>
       </div>
@@ -83,7 +83,7 @@ function getEmailHtml(data: EmailData): string {
       }
     </div>
     <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">
-      ${data.businessName} &middot; Powered by Aktivo
+      ${data.businessName} &middot; Powered by Jiku
     </p>
   </div>
 </body>

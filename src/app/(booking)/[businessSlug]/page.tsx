@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${business.name} - Reserva tu turno`,
-    description: business.description || `Reserva turnos online en ${business.name}. Rapido, simple y seguro con Aktivo.`,
+    description: business.description || `Reserva turnos online en ${business.name}. Rapido, simple y seguro con Jiku.`,
     openGraph: {
       title: `${business.name} - Reserva tu turno`,
       description: business.description || `Reserva turnos online en ${business.name}`,

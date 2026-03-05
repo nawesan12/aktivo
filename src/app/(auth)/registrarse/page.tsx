@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 import { toast } from "sonner";
 import { registerSchema, type RegisterInput } from "@/lib/validations";
 import { registerUser } from "./actions";
@@ -46,7 +46,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <AktivoLogo size="md" />
+            <JikuLogo size="md" />
           </Link>
           <h1 className="text-2xl font-heading font-bold">Crea tu cuenta</h1>
           <p className="text-muted-foreground text-sm mt-1">Empeza a gestionar tu negocio</p>

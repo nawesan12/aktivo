@@ -14,8 +14,8 @@ function getResetEmailHtml(resetUrl: string): string {
 <body style="margin:0;padding:0;background-color:#09090b;font-family:system-ui,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <h1 style="background:linear-gradient(135deg,#6366F1,#22D3EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:28px;margin:0;">
-        Aktivo
+      <h1 style="background:linear-gradient(135deg,#4ADE80,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:28px;margin:0;">
+        Jiku
       </h1>
     </div>
     <div style="background-color:#18181b;border-radius:12px;padding:32px;border:1px solid rgba(255,255,255,0.1);">
@@ -26,7 +26,7 @@ function getResetEmailHtml(resetUrl: string): string {
         Recibimos una solicitud para restablecer la contrasena de tu cuenta. Hace click en el boton de abajo para crear una nueva contrasena.
       </p>
       <div style="text-align:center;margin-bottom:24px;">
-        <a href="${resetUrl}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#6366F1,#22D3EE);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">
+        <a href="${resetUrl}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#4ADE80,#22c55e);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">
           Restablecer contrasena
         </a>
       </div>
@@ -35,7 +35,7 @@ function getResetEmailHtml(resetUrl: string): string {
       </p>
     </div>
     <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">
-      Aktivo &middot; Plataforma de gestion para negocios de servicios
+      Jiku &middot; Plataforma de gestion para negocios de servicios
     </p>
   </div>
 </body>
@@ -51,9 +51,9 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   }
 
   const result = await resend.emails.send({
-    from: process.env.RESEND_FROM || "Aktivo <onboarding@resend.dev>",
+    from: process.env.RESEND_FROM || "Jiku <onboarding@resend.dev>",
     to: email,
-    subject: "Recupera tu contrasena — Aktivo",
+    subject: "Recupera tu contrasena — Jiku",
     html: getResetEmailHtml(resetUrl),
   });
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 
 const tabs = [
   { name: "Perfil", href: "/mi-cuenta/perfil" },
@@ -20,7 +20,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
       <header className="border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/">
-            <AktivoLogo size="sm" />
+            <JikuLogo size="sm" />
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">{session.user.name}</span>

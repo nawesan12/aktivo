@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 import { toast } from "sonner";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <AktivoLogo size="md" />
+            <JikuLogo size="md" />
           </Link>
           <h1 className="text-2xl font-heading font-bold">Bienvenido de vuelta</h1>
           <p className="text-muted-foreground text-sm mt-1">Ingresa a tu cuenta</p>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Shield, LayoutDashboard, Building2, Users, Settings, ArrowLeft, LogOut } from "lucide-react";
-import { AktivoLogo } from "@/components/brand/aktivo-logo";
+import { JikuLogo } from "@/components/brand/jiku-logo";
 
 const adminNav = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <aside className="hidden lg:flex flex-col w-64 border-r border-sidebar-border bg-[#0a0a0d]">
         <div className="flex h-16 items-center px-4 border-b border-sidebar-border gap-2">
           <Shield className="w-5 h-5 text-primary" />
-          <span className="font-heading text-lg font-bold">Aktivo Admin</span>
+          <span className="font-heading text-lg font-bold">Jiku Admin</span>
         </div>
         <nav className="flex-1 py-4 px-2 space-y-1">
           {adminNav.map((item) => (
@@ -53,7 +53,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <div className="flex-1 flex flex-col">
         <header className="h-16 border-b border-border bg-background/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6">
           <div className="lg:hidden">
-            <AktivoLogo size="sm" />
+            <JikuLogo size="sm" />
           </div>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-4">

@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       select: { name: true },
     });
 
-    await sendInviteEmail(email.toLowerCase(), token, business?.name || "Aktivo");
+    await sendInviteEmail(email.toLowerCase(), token, business?.name || "Jiku");
 
     await logAction({
       businessId: session.businessId,
