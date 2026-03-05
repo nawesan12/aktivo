@@ -34,7 +34,23 @@ export type Permission =
   | "billing:read"
   | "billing:manage"
   | "audit:read"
-  | "admin:access";
+  | "admin:access"
+  // Sprint 7
+  | "clients:tags"
+  | "reviews:read"
+  | "reviews:manage"
+  // Sprint 8
+  | "campaigns:read"
+  | "campaigns:manage"
+  | "noshow:read"
+  | "noshow:manage"
+  // Sprint 9
+  | "group:read"
+  | "group:manage"
+  | "group:reports"
+  // Sprint 10
+  | "analytics:read"
+  | "widget:manage";
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   PLATFORM_ADMIN: [
@@ -51,6 +67,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "billing:read", "billing:manage",
     "audit:read",
     "admin:access",
+    "clients:tags", "reviews:read", "reviews:manage",
+    "campaigns:read", "campaigns:manage", "noshow:read", "noshow:manage",
+    "group:read", "group:manage", "group:reports",
+    "analytics:read", "widget:manage",
   ],
   BUSINESS_OWNER: [
     "appointments:read", "appointments:create", "appointments:update", "appointments:delete",
@@ -65,6 +85,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "team:read", "team:invite", "team:manage",
     "billing:read", "billing:manage",
     "audit:read",
+    "clients:tags", "reviews:read", "reviews:manage",
+    "campaigns:read", "campaigns:manage", "noshow:read", "noshow:manage",
+    "group:read", "group:manage", "group:reports",
+    "analytics:read", "widget:manage",
   ],
   BUSINESS_MANAGER: [
     "appointments:read", "appointments:create", "appointments:update", "appointments:delete",
@@ -78,6 +102,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "settings:read",
     "team:read",
     "audit:read",
+    "clients:tags", "reviews:read",
+    "campaigns:read", "noshow:read",
+    "group:read",
+    "analytics:read",
   ],
   STAFF_MEMBER: [
     "appointments:read", "appointments:create", "appointments:update",
@@ -85,6 +113,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "clients:read",
     "schedule:read", "schedule:update",
     "reports:read",
+    "clients:tags", "reviews:read",
+    "noshow:read",
   ],
   RECEPTIONIST: [
     "appointments:read", "appointments:create", "appointments:update",

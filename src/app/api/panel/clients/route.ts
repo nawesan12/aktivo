@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "20");
     const search = searchParams.get("search");
+    const tagId = searchParams.get("tag");
 
     // Get registered users who have appointments with this business
     const userWhere: Record<string, unknown> = {
@@ -24,6 +25,9 @@ export async function GET(request: NextRequest) {
         { phone: { contains: search } },
       ];
     }
+    if (tagId) {
+      userWhere.tagAssignments = { some: { tagId } };
+    }
 
     // Get guest clients for this business
     const guestWhere: Record<string, unknown> = {
@@ -35,6 +39,9 @@ export async function GET(request: NextRequest) {
         { phone: { contains: search } },
         { email: { contains: search, mode: "insensitive" } },
       ];
+    }
+    if (tagId) {
+      guestWhere.tagAssignments = { some: { tagId } };
     }
 
     const [users, guests, userCount, guestCount] = await Promise.all([

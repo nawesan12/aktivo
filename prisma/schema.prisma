@@ -140,6 +140,18 @@ model User {
   appointments  Appointment[]
   auditLogs     AuditLog[]
   notifications Notification[]
+  // Sprint 7
+  tagAssignments ClientTagAssignment[]
+  authoredNotes  ClientNote[]          @relation("AuthoredNotes")
+  clientNotes    ClientNote[]          @relation("ClientNotes")
+  reviews        Review[]
+  reviewTokens   ReviewToken[]
+  // Sprint 8
+  penalties          ClientPenalty[]
+  clientProfiles     ClientProfile[]
+  campaignExecutions CampaignExecution[]
+  // Sprint 9
+  ownedGroups BusinessGroup[]
 
   @@index([email])
 }
@@ -180,8 +192,23 @@ model Business {
   notifications Notification[]
   auditLogs    AuditLog[]
   guestClients GuestClient[]
+  // Sprint 7
+  clientTags   ClientTag[]
+  clientNotes  ClientNote[]
+  reviews      Review[]
+  reviewTokens ReviewToken[]
+  // Sprint 8
+  penalties       ClientPenalty[]
+  clientProfiles  ClientProfile[]
+  campaigns       Campaign[]
+  // Sprint 9
+  groupId  String?
+  group    BusinessGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  // Sprint 10
+  analyticsSnapshots AnalyticsSnapshot[]
 
   @@index([slug])
+  @@index([groupId])
 }
 
 // Junction: User <-> Business (multi-business support)
@@ -219,6 +246,16 @@ model BusinessSettings {
   cancellationPolicy String?     @db.Text
   timezone           String      @default("America/Argentina/Buenos_Aires")
   currency           String      @default("ARS")
+  // Sprint 7 — Reviews
+  reviewRequestDelayHours Int    @default(2)
+  // Sprint 8 — No-Show
+  noShowThreshold    Int         @default(3)
+  noShowPenaltyDays  Int         @default(30)
+  noShowAutoMark     Boolean     @default(false)
+  // Sprint 10 — Widget
+  widgetEnabled      Boolean     @default(false)
+  widgetTheme        String      @default("dark")
+  widgetPosition     String      @default("bottom-right")
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
@@ -407,6 +444,9 @@ model Appointment {
   guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
   payment     Payment?
   notifications Notification[]
+  // Sprint 7
+  review      Review?
+  reviewToken ReviewToken?
 
   @@index([businessId, dateTime])
   @@index([staffId, dateTime])
@@ -429,6 +469,15 @@ model GuestClient {
 
   business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   appointments Appointment[]
+  // Sprint 7
+  tagAssignments ClientTagAssignment[]
+  clientNotes    ClientNote[]
+  reviews        Review[]
+  reviewTokens   ReviewToken[]
+  // Sprint 8
+  penalties          ClientPenalty[]
+  clientProfiles     ClientProfile[]
+  campaignExecutions CampaignExecution[]
 
   @@unique([businessId, phone])
   @@index([businessId])
@@ -504,4 +553,249 @@ model AuditLog {
   @@index([businessId, createdAt])
   @@index([entity, createdAt])
   @@index([userId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 7: Client Tags
+// ──────────────────────────────────────────
+
+model ClientTag {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  color      String   @default("#6366F1")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business    Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  assignments ClientTagAssignment[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+model ClientTagAssignment {
+  id            String  @id @default(cuid())
+  tagId         String
+  userId        String?
+  guestClientId String?
+  createdAt     DateTime @default(now())
+
+  tag         ClientTag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, userId])
+  @@unique([tagId, guestClientId])
+  @@index([userId])
+  @@index([guestClientId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 7: Client Notes
+// ──────────────────────────────────────────
+
+model ClientNote {
+  id            String   @id @default(cuid())
+  businessId    String
+  authorId      String
+  userId        String?
+  guestClientId String?
+  content       String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  author      User         @relation("AuthoredNotes", fields: [authorId], references: [id], onDelete: Cascade)
+  user        User?        @relation("ClientNotes", fields: [userId], references: [id], onDelete: Cascade)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([userId])
+  @@index([guestClientId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 7: Reviews
+// ──────────────────────────────────────────
+
+model Review {
+  id            String   @id @default(cuid())
+  businessId    String
+  appointmentId String   @unique
+  userId        String?
+  guestClientId String?
+  rating        Int      // 1-5
+  comment       String?  @db.Text
+  isVisible     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([rating])
+}
+
+model ReviewToken {
+  id            String    @id @default(cuid())
+  token         String    @unique @default(cuid())
+  businessId    String
+  appointmentId String    @unique
+  userId        String?
+  guestClientId String?
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
+
+  @@index([token])
+  @@index([businessId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 8: No-Show Penalties
+// ──────────────────────────────────────────
+
+model ClientPenalty {
+  id            String    @id @default(cuid())
+  businessId    String
+  userId        String?
+  guestClientId String?
+  reason        String    @default("NO_SHOW")
+  blockedUntil  DateTime
+  liftedAt      DateTime?
+  liftedBy      String?
+  createdAt     DateTime  @default(now())
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([userId])
+  @@index([guestClientId])
+  @@index([blockedUntil])
+}
+
+// ──────────────────────────────────────────
+// Sprint 8: Client Profile (birthday)
+// ──────────────────────────────────────────
+
+model ClientProfile {
+  id            String    @id @default(cuid())
+  businessId    String
+  userId        String?
+  guestClientId String?
+  birthday      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId])
+  @@unique([businessId, guestClientId])
+  @@index([businessId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 8: Campaigns
+// ──────────────────────────────────────────
+
+enum CampaignType {
+  BIRTHDAY
+  REBOOKING
+  INACTIVITY
+  CUSTOM
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  businessId   String
+  name         String
+  type         CampaignType
+  status       CampaignStatus @default(DRAFT)
+  triggerConfig Json?         // JSON: days thresholds, conditions
+  messageSubject String?
+  messageBody  String         @db.Text
+  targetTagIds String[]       // Array of tag IDs for segmentation
+  channel      NotificationChannel @default(EMAIL)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  business   Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  executions CampaignExecution[]
+
+  @@index([businessId])
+  @@index([status])
+}
+
+model CampaignExecution {
+  id            String   @id @default(cuid())
+  campaignId    String
+  userId        String?
+  guestClientId String?
+  recipient     String   // email or phone
+  status        NotificationStatus @default(PENDING)
+  error         String?
+  sentAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([guestClientId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 9: Multi-Location
+// ──────────────────────────────────────────
+
+model BusinessGroup {
+  id        String   @id @default(cuid())
+  ownerId   String
+  name      String
+  logo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner      User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  businesses Business[]
+
+  @@index([ownerId])
+}
+
+// ──────────────────────────────────────────
+// Sprint 10: Analytics Snapshot
+// ──────────────────────────────────────────
+
+model AnalyticsSnapshot {
+  id         String   @id @default(cuid())
+  businessId String
+  date       DateTime @db.Date
+  metrics    Json     // { retention, ltv, peakHours, churn, revenue, appointments, newClients }
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, date])
+  @@index([businessId, date])
 }

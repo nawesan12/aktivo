@@ -16,6 +16,10 @@ import {
   Shield,
   ChevronLeft,
   BarChart2,
+  Star,
+  Megaphone,
+  MapPin,
+  Activity,
 } from "lucide-react";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
@@ -33,6 +37,10 @@ const navigation = [
   { name: "Horarios", href: "/panel/horarios", icon: Clock },
   { name: "Pagos", href: "/panel/pagos", icon: CreditCard },
   { name: "Notificaciones", href: "/panel/notificaciones", icon: Bell },
+  { name: "Reseñas", href: "/panel/reviews", icon: Star },
+  { name: "Campañas", href: "/panel/campanas", icon: Megaphone },
+  { name: "Sucursales", href: "/panel/sucursales", icon: MapPin },
+  { name: "Analytics", href: "/panel/analytics", icon: Activity },
   { name: "Reportes", href: "/panel/reportes", icon: BarChart2 },
   { name: "Configuracion", href: "/panel/configuracion", icon: Settings },
   { name: "Audit Log", href: "/panel/audit", icon: Shield },
