@@ -6,7 +6,6 @@ import { MapPin, Plus, Building2, Users, Scissors, Calendar, Loader2 } from "luc
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Location {
   id: string;
@@ -20,9 +19,9 @@ interface Location {
 }
 
 export function LocationsManager() {
-  const { data: groupData, isLoading: groupLoading, mutate: mutateGroup } = useSWR("/api/panel/group", fetcher);
-  const { data: locationsData, isLoading: locsLoading, mutate: mutateLocations } = useSWR("/api/panel/group/locations", fetcher);
-  const { data: reportsData } = useSWR("/api/panel/group/reports?range=30d", fetcher);
+  const { data: groupData, isLoading: groupLoading, mutate: mutateGroup } = useSWR("/api/panel/group");
+  const { data: locationsData, isLoading: locsLoading, mutate: mutateLocations } = useSWR("/api/panel/group/locations");
+  const { data: reportsData } = useSWR("/api/panel/group/reports?range=30d");
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showAddLocation, setShowAddLocation] = useState(false);

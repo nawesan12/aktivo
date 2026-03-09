@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError } from "@/lib/api-errors";
 import { sendCampaignEmail } from "@/lib/notifications/campaign-email";
+
+const BATCH_SIZE = 5;
 
 export async function POST(
   _request: NextRequest,
@@ -21,10 +24,18 @@ export async function POST(
       return NextResponse.json({ error: "Campaña no encontrada" }, { status: 404 });
     }
 
+    // Get already-sent recipients for idempotency
+    const alreadySent = await db.campaignExecution.findMany({
+      where: { campaignId: campaign.id, status: "SENT" },
+      select: { userId: true, guestClientId: true },
+    });
+    const sentKeys = new Set(
+      alreadySent.map((e) => e.userId || e.guestClientId || "")
+    );
+
     // Get target clients based on tags
     const hasTagFilter = campaign.targetTagIds.length > 0;
 
-    // Registered users
     const userWhere: Record<string, unknown> = {
       appointments: { some: { businessId: session.businessId } },
     };
@@ -39,7 +50,6 @@ export async function POST(
       select: { id: true, name: true, email: true, phone: true },
     });
 
-    // Guest clients
     const guestWhere: Record<string, unknown> = {
       businessId: session.businessId,
     };
@@ -59,54 +69,73 @@ export async function POST(
       select: { name: true },
     });
 
+    // Build recipients, skip already-sent
+    const allClients = [
+      ...users.map((u) => ({ ...u, type: "user" as const })),
+      ...guests.map((g) => ({ ...g, type: "guest" as const })),
+    ].filter((c) => !sentKeys.has(c.id));
+
     let sentCount = 0;
     let errorCount = 0;
 
-    // Send to all recipients
-    for (const client of [...users.map((u) => ({ ...u, type: "user" as const })), ...guests.map((g) => ({ ...g, type: "guest" as const }))]) {
-      const recipient = campaign.channel === "EMAIL" ? client.email : client.phone;
-      if (!recipient) continue;
+    // Send in parallel batches of BATCH_SIZE
+    for (let i = 0; i < allClients.length; i += BATCH_SIZE) {
+      const batch = allClients.slice(i, i + BATCH_SIZE);
 
-      const variables: Record<string, string> = {
-        clientName: client.name || "Cliente",
-        businessName: business?.name || "",
-      };
+      const results = await Promise.allSettled(
+        batch.map(async (client) => {
+          const recipient = campaign.channel === "EMAIL" ? client.email : client.phone;
+          if (!recipient) return { success: false, skipped: true };
 
-      const result = await sendCampaignEmail({
-        to: recipient,
-        subject: campaign.messageSubject || campaign.name,
-        body: campaign.messageBody,
-        businessName: business?.name || "",
-        variables,
-      });
+          const variables: Record<string, string> = {
+            clientName: client.name || "Cliente",
+            businessName: business?.name || "",
+          };
 
-      await db.campaignExecution.create({
-        data: {
-          campaignId: campaign.id,
-          userId: client.type === "user" ? client.id : undefined,
-          guestClientId: client.type === "guest" ? client.id : undefined,
-          recipient,
-          status: result.success ? "SENT" : "FAILED",
-          error: result.error || undefined,
-          sentAt: result.success ? new Date() : undefined,
-        },
-      });
+          const result = await sendCampaignEmail({
+            to: recipient,
+            subject: campaign.messageSubject || campaign.name,
+            body: campaign.messageBody,
+            businessName: business?.name || "",
+            variables,
+          });
 
-      if (result.success) sentCount++;
-      else errorCount++;
+          await db.campaignExecution.create({
+            data: {
+              campaignId: campaign.id,
+              userId: client.type === "user" ? client.id : undefined,
+              guestClientId: client.type === "guest" ? client.id : undefined,
+              recipient,
+              status: result.success ? "SENT" : "FAILED",
+              error: result.error || undefined,
+              sentAt: result.success ? new Date() : undefined,
+            },
+          });
+
+          return result;
+        })
+      );
+
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          if (r.value && "skipped" in r.value) continue;
+          if (r.value?.success) sentCount++;
+          else errorCount++;
+        } else {
+          errorCount++;
+        }
+      }
     }
 
-    // Update campaign status
+    // Set status: COMPLETED only if at least one sent; keep DRAFT if all failed
+    const newStatus = sentCount > 0 ? "COMPLETED" : errorCount > 0 ? "DRAFT" : "COMPLETED";
     await db.campaign.update({
       where: { id: campaign.id },
-      data: { status: "COMPLETED" },
+      data: { status: newStatus },
     });
 
     return NextResponse.json({ sent: sentCount, errors: errorCount });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError, ValidationError } from "@/lib/api-errors";
+import { tagSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -16,10 +18,7 @@ export async function GET() {
 
     return NextResponse.json({ data: tags });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -29,28 +28,21 @@ export async function POST(request: NextRequest) {
     requirePermission(session.role, "clients:tags");
 
     const body = await request.json();
-    const { name, color } = body;
-
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
+    const parsed = tagSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new ValidationError(parsed.error.issues[0]?.message || "Datos inválidos");
     }
 
     const tag = await db.clientTag.create({
       data: {
         businessId: session.businessId,
-        name: name.trim(),
-        color: color || "#6366F1",
+        name: parsed.data.name.trim(),
+        color: parsed.data.color,
       },
     });
 
     return NextResponse.json(tag, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    if (message.includes("Unique constraint")) {
-      return NextResponse.json({ error: "Ya existe un tag con ese nombre" }, { status: 409 });
-    }
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

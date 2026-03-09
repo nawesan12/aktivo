@@ -2,6 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError, NotFoundError, ValidationError } from "@/lib/api-errors";
+import { noteSchema } from "@/lib/validations";
+
+async function verifyClientBelongsToBusiness(clientId: string, businessId: string) {
+  // Check if registered user has appointments with this business
+  const user = await db.user.findUnique({ where: { id: clientId } });
+  if (user) {
+    const hasRelation = await db.appointment.findFirst({
+      where: { userId: clientId, businessId },
+      select: { id: true },
+    });
+    if (!hasRelation) throw new NotFoundError("Cliente no encontrado");
+    return "user" as const;
+  }
+  // Check if guest client belongs to this business
+  const guest = await db.guestClient.findFirst({
+    where: { id: clientId, businessId },
+    select: { id: true },
+  });
+  if (!guest) throw new NotFoundError("Cliente no encontrado");
+  return "guest" as const;
+}
 
 export async function GET(
   _request: NextRequest,
@@ -27,10 +49,7 @@ export async function GET(
 
     return NextResponse.json({ data: notes });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -44,16 +63,16 @@ export async function POST(
     const { id } = await params;
 
     const body = await request.json();
-    const { content } = body;
-
-    if (!content?.trim()) {
-      return NextResponse.json({ error: "Contenido requerido" }, { status: 400 });
+    const parsed = noteSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new ValidationError(parsed.error.issues[0]?.message || "Datos inválidos");
     }
 
-    const user = await db.user.findUnique({ where: { id } });
-    const data = user
-      ? { businessId: session.businessId, authorId: session.userId, userId: id, content: content.trim() }
-      : { businessId: session.businessId, authorId: session.userId, guestClientId: id, content: content.trim() };
+    const clientType = await verifyClientBelongsToBusiness(id, session.businessId);
+    const content = parsed.data.content.trim();
+    const data = clientType === "user"
+      ? { businessId: session.businessId, authorId: session.userId, userId: id, content }
+      : { businessId: session.businessId, authorId: session.userId, guestClientId: id, content };
 
     const note = await db.clientNote.create({
       data,
@@ -64,9 +83,6 @@ export async function POST(
 
     return NextResponse.json(note, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

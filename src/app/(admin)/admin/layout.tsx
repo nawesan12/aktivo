@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Shield, LayoutDashboard, Building2, Users, Settings, ArrowLeft, LogOut } from "lucide-react";
-import { JikuLogo } from "@/components/brand/jiku-logo";
+import { AdminMobileHeader } from "@/components/admin/admin-mobile-header";
 
 const adminNav = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -53,7 +53,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <div className="flex-1 flex flex-col">
         <header className="h-16 border-b border-border bg-background/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6">
           <div className="lg:hidden">
-            <JikuLogo size="sm" />
+            <AdminMobileHeader />
           </div>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-4">

@@ -8,7 +8,6 @@ import { Save, Loader2, Plus, X, Clock, CalendarOff } from "lucide-react";
 import { toast } from "sonner";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
 
@@ -33,7 +32,7 @@ interface RecurringBlock {
 }
 
 export function ScheduleEditor() {
-  const { data: staffData, isLoading: loadingStaff } = useSWR("/api/panel/staff", fetcher);
+  const { data: staffData, isLoading: loadingStaff } = useSWR("/api/panel/staff");
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
@@ -49,9 +48,7 @@ export function ScheduleEditor() {
   const staff = staffData?.data || [];
 
   const { data: scheduleData, isLoading: loadingSchedule } = useSWR(
-    selectedStaffId ? `/api/panel/staff/${selectedStaffId}/schedule` : null,
-    fetcher
-  );
+    selectedStaffId ? `/api/panel/staff/${selectedStaffId}/schedule` : null);
 
   useEffect(() => {
     if (staff.length > 0 && !selectedStaffId) {

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Building2, ArrowRight } from "lucide-react";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const planLabels: Record<string, string> = {
   FREE: "Free",
@@ -22,7 +21,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function BusinessesPage() {
-  const { data, isLoading } = useSWR("/api/account/profile", fetcher);
+  const { data, isLoading } = useSWR("/api/account/profile");
 
   if (isLoading) return <FormSkeleton />;
 

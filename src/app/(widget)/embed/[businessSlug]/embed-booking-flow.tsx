@@ -6,7 +6,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar, Clock, User, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface EmbedProps {
   businessId: string;
@@ -31,21 +30,15 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
   const [booked, setBooked] = useState(false);
 
   const { data: servicesData } = useSWR(
-    `/api/businesses/${businessSlug}/services`,
-    fetcher
-  );
+    `/api/businesses/${businessSlug}/services`);
 
   const { data: staffData } = useSWR(
-    selectedService ? `/api/businesses/${businessSlug}/staff?serviceId=${selectedService}` : null,
-    fetcher
-  );
+    selectedService ? `/api/businesses/${businessSlug}/staff?serviceId=${selectedService}` : null);
 
   const { data: slotsData } = useSWR(
     selectedStaff && selectedDate && selectedService
       ? `/api/businesses/${businessSlug}/availability/slots?staffId=${selectedStaff}&date=${selectedDate}&serviceId=${selectedService}`
-      : null,
-    fetcher
-  );
+      : null);
 
   const services = servicesData?.data || servicesData || [];
   const staffList = staffData?.data || staffData || [];

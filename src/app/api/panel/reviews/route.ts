@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,9 +66,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

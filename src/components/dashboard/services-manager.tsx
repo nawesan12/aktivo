@@ -20,7 +20,6 @@ import { serviceSchema } from "@/lib/validations";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { ImageUploader } from "@/components/upload/image-uploader";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Service {
   id: string;
@@ -42,9 +41,9 @@ interface Category {
 }
 
 export function ServicesManager() {
-  const { data: servicesData, isLoading: loadingServices, mutate: mutateServices } = useSWR("/api/panel/services", fetcher);
-  const { data: categoriesData, mutate: mutateCategories } = useSWR("/api/panel/categories", fetcher);
-  const { data: staffData } = useSWR("/api/panel/staff", fetcher);
+  const { data: servicesData, isLoading: loadingServices, mutate: mutateServices } = useSWR("/api/panel/services");
+  const { data: categoriesData, mutate: mutateCategories } = useSWR("/api/panel/categories");
+  const { data: staffData } = useSWR("/api/panel/staff");
 
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);

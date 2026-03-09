@@ -8,7 +8,6 @@ import { Star, Eye, EyeOff, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Review {
   id: string;
@@ -48,9 +47,7 @@ export function ReviewsDashboard() {
   if (visibleFilter) params.set("visible", visibleFilter);
 
   const { data, isLoading, mutate } = useSWR(
-    `/api/panel/reviews?${params}`,
-    fetcher,
-    { refreshInterval: 60000 }
+    `/api/panel/reviews?${params}`, { refreshInterval: 60000 }
   );
 
   async function toggleVisibility(id: string, isVisible: boolean) {

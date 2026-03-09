@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Activity, Users, TrendingUp, AlertTriangle } from "lucide-react";
+import { Activity, Users, TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { AnalyticsRetentionChart } from "./analytics-retention-chart";
 import { AnalyticsLTVChart } from "./analytics-ltv-chart";
 import { AnalyticsPeakHeatmap } from "./analytics-peak-heatmap";
 import { AnalyticsChurnList } from "./analytics-churn-list";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type Tab = "retention" | "ltv" | "peak" | "churn";
 
@@ -20,13 +18,37 @@ const tabs: { id: Tab; label: string; icon: typeof Activity }[] = [
   { id: "churn", label: "Churn", icon: AlertTriangle },
 ];
 
+function TabSkeleton() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
 export function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("retention");
-  const { data, isLoading } = useSWR("/api/panel/analytics", fetcher);
 
-  if (isLoading) return <TableSkeleton rows={8} />;
+  // KPI summary — always loaded
+  const { data: summaryData, isLoading: summaryLoading } = useSWR("/api/panel/analytics");
 
-  const { retention, ltv, peakHours, churn } = data || {};
+  // Per-tab conditional fetching — only loads when tab is active
+  const { data: retentionData, isLoading: retentionLoading } = useSWR(
+    activeTab === "retention" ? "/api/panel/analytics/retention" : null
+  );
+  const { data: ltvData, isLoading: ltvLoading } = useSWR(
+    activeTab === "ltv" ? "/api/panel/analytics/ltv" : null
+  );
+  const { data: peakData, isLoading: peakLoading } = useSWR(
+    activeTab === "peak" ? "/api/panel/analytics/peak-hours" : null
+  );
+  const { data: churnData, isLoading: churnLoading } = useSWR(
+    activeTab === "churn" ? "/api/panel/analytics/churn" : null
+  );
+
+  if (summaryLoading) return <TableSkeleton rows={8} />;
+
+  const { retention, ltv, peakHours, churn } = summaryData || {};
 
   return (
     <div className="space-y-6">
@@ -74,10 +96,18 @@ export function AnalyticsDashboard() {
 
       {/* Tab Content */}
       <div className="glass rounded-xl p-6">
-        {activeTab === "retention" && <AnalyticsRetentionChart data={retention || []} />}
-        {activeTab === "ltv" && <AnalyticsLTVChart data={ltv || { clients: [], averageLTV: 0 }} />}
-        {activeTab === "peak" && <AnalyticsPeakHeatmap data={peakHours || { heatmap: [], busiestDay: 0, busiestHour: 0, totalAppointments: 0 }} />}
-        {activeTab === "churn" && <AnalyticsChurnList data={churn || { atRiskClients: [], totalAtRisk: 0 }} />}
+        {activeTab === "retention" && (
+          retentionLoading ? <TabSkeleton /> : <AnalyticsRetentionChart data={retentionData?.data || retentionData || []} />
+        )}
+        {activeTab === "ltv" && (
+          ltvLoading ? <TabSkeleton /> : <AnalyticsLTVChart data={ltvData?.data || ltvData || { clients: [], averageLTV: 0 }} />
+        )}
+        {activeTab === "peak" && (
+          peakLoading ? <TabSkeleton /> : <AnalyticsPeakHeatmap data={peakData?.data || peakData || { heatmap: [], busiestDay: 0, busiestHour: 0, totalAppointments: 0 }} />
+        )}
+        {activeTab === "churn" && (
+          churnLoading ? <TabSkeleton /> : <AnalyticsChurnList data={churnData?.data || churnData || { atRiskClients: [], totalAtRisk: 0 }} />
+        )}
       </div>
     </div>
   );

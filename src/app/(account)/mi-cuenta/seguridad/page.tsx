@@ -6,10 +6,9 @@ import { Loader2, Shield, Info } from "lucide-react";
 import { toast } from "sonner";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function SecurityPage() {
-  const { data, isLoading } = useSWR("/api/account/profile", fetcher);
+  const { data, isLoading } = useSWR("/api/account/profile");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

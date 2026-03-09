@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { logAction } from "@/lib/audit";
+import { handleApiError, ValidationError } from "@/lib/api-errors";
+import { settingsSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -39,10 +41,7 @@ export async function GET() {
       settings: business.settings,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -52,14 +51,16 @@ export async function PATCH(request: NextRequest) {
     requirePermission(session.role, "settings:update");
 
     const body = await request.json();
-    const { business: businessData, settings: settingsData } = body;
+    const parsed = settingsSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new ValidationError(parsed.error.issues[0]?.message || "Datos inválidos");
+    }
+    const { business: businessData, settings: settingsData } = parsed.data;
 
     if (businessData) {
-      // Don't allow slug changes
-      const { slug: _slug, id: _id, ...updateData } = businessData;
       await db.business.update({
         where: { id: session.businessId },
-        data: updateData,
+        data: businessData,
       });
     }
 
@@ -85,9 +86,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

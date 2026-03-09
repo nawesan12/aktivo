@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface AuditEntry {
   id: string;
@@ -39,7 +38,7 @@ export function AuditLog() {
   if (dateFrom) params.set("dateFrom", dateFrom);
   if (dateTo) params.set("dateTo", dateTo);
 
-  const { data, isLoading } = useSWR(`/api/panel/audit?${params.toString()}`, fetcher);
+  const { data, isLoading } = useSWR(`/api/panel/audit?${params.toString()}`);
 
   if (isLoading) return <TableSkeleton rows={8} />;
 

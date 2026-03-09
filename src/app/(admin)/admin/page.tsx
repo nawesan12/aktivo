@@ -7,10 +7,9 @@ import { es } from "date-fns/locale";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AdminDashboardPage() {
-  const { data, isLoading } = useSWR("/api/admin/stats", fetcher);
+  const { data, isLoading } = useSWR("/api/admin/stats");
 
   if (isLoading) return <DashboardSkeleton />;
 

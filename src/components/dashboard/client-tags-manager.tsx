@@ -5,7 +5,6 @@ import useSWR from "swr";
 import { Plus, X, Tag, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface ClientTag {
   id: string;
@@ -20,7 +19,7 @@ const PRESET_COLORS = [
 ];
 
 export function ClientTagsManager() {
-  const { data, mutate } = useSWR<{ data: ClientTag[] }>("/api/panel/tags", fetcher);
+  const { data, mutate } = useSWR<{ data: ClientTag[] }>("/api/panel/tags");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -178,10 +177,9 @@ export function TagBadge({ name, color }: { name: string; color: string }) {
 
 // Tag assignment widget for client detail panel
 export function ClientTagAssigner({ clientId }: { clientId: string }) {
-  const { data: allTags } = useSWR<{ data: ClientTag[] }>("/api/panel/tags", fetcher);
+  const { data: allTags } = useSWR<{ data: ClientTag[] }>("/api/panel/tags");
   const { data: clientTags, mutate: mutateClientTags } = useSWR<{ data: { id: string; name: string; color: string }[] }>(
-    `/api/panel/clients/${clientId}/tags`,
-    fetcher
+    `/api/panel/clients/${clientId}/tags`
   );
   const [assigning, setAssigning] = useState(false);
 

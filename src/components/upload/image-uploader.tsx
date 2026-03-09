@@ -1,7 +1,6 @@
 "use client";
 
-import { CldUploadWidget, CldImage } from "next-cloudinary";
-import { Camera, ImageIcon } from "lucide-react";
+import { Camera, ImageIcon, CloudOff } from "lucide-react";
 import { toast } from "sonner";
 import { cloudinaryConfig } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
@@ -14,6 +13,8 @@ interface ImageUploaderProps {
   className?: string;
 }
 
+const isCloudinaryConfigured = !!cloudinaryConfig.cloudName;
+
 export function ImageUploader({
   value,
   onChange,
@@ -22,6 +23,24 @@ export function ImageUploader({
   className,
 }: ImageUploaderProps) {
   const isSquare = aspectRatio === "1:1";
+
+  if (!isCloudinaryConfigured) {
+    return (
+      <div
+        className={cn(
+          "relative rounded-xl border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 text-muted-foreground",
+          isSquare ? "w-32 h-32" : "w-full h-40",
+          className
+        )}
+      >
+        <CloudOff className="w-5 h-5 opacity-50" />
+        <span className="text-xs text-center px-2">Cloudinary no configurado</span>
+      </div>
+    );
+  }
+
+  // Dynamic import to avoid errors when credentials are missing
+  const { CldUploadWidget, CldImage } = require("next-cloudinary");
 
   return (
     <CldUploadWidget
@@ -33,14 +52,14 @@ export function ImageUploader({
         cropping: true,
         croppingAspectRatio: isSquare ? 1 : 16 / 9,
       }}
-      onSuccess={(result) => {
+      onSuccess={(result: { info?: { secure_url?: string } }) => {
         if (typeof result.info === "object" && result.info?.secure_url) {
           onChange(result.info.secure_url);
           toast.success("Imagen subida");
         }
       }}
     >
-      {({ open }) => (
+      {({ open }: { open: () => void }) => (
         <button
           type="button"
           onClick={() => open()}

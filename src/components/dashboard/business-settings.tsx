@@ -8,10 +8,9 @@ import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { ImageUploader } from "@/components/upload/image-uploader";
 import { getUploadFolder } from "@/lib/cloudinary";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function BusinessSettings() {
-  const { data, isLoading, mutate } = useSWR("/api/panel/settings", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/panel/settings");
   const [saving, setSaving] = useState(false);
 
   const [business, setBusiness] = useState({

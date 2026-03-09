@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { UserRole } from "@/generated/prisma/client";
+import { AuthError } from "@/lib/api-errors";
 
 export interface SessionBusiness {
   userId: string;
@@ -20,11 +21,11 @@ export async function getSessionBusiness(): Promise<SessionBusiness> {
   const session = await auth();
 
   if (!session?.user?.id) {
-    throw new Error("No autenticado");
+    throw new AuthError();
   }
 
   if (!session.user.businessId) {
-    throw new Error("Sin negocio asociado");
+    throw new AuthError("Sin negocio asociado");
   }
 
   return {

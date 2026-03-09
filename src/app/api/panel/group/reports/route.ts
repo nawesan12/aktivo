@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,37 +32,44 @@ export async function GET(request: NextRequest) {
 
     const locationIds = locations.map((l) => l.id);
 
-    // Aggregate stats per location
-    const locationStats = await Promise.all(
-      locations.map(async (loc) => {
-        const [appointments, revenue, clients] = await Promise.all([
-          db.appointment.count({
-            where: { businessId: loc.id, dateTime: { gte: since } },
-          }),
-          db.payment.aggregate({
-            where: {
-              businessId: loc.id,
-              status: "APPROVED",
-              createdAt: { gte: since },
-            },
-            _sum: { amount: true },
-          }),
-          db.appointment.groupBy({
-            by: ["userId", "guestClientId"],
-            where: { businessId: loc.id, dateTime: { gte: since } },
-          }),
-        ]);
+    // 3 bulk queries instead of N*3
+    const [appointmentCounts, revenueSums, clientGroups] = await Promise.all([
+      db.appointment.groupBy({
+        by: ["businessId"],
+        where: { businessId: { in: locationIds }, dateTime: { gte: since } },
+        _count: true,
+      }),
+      db.payment.groupBy({
+        by: ["businessId"],
+        where: {
+          businessId: { in: locationIds },
+          status: "APPROVED",
+          createdAt: { gte: since },
+        },
+        _sum: { amount: true },
+      }),
+      db.appointment.groupBy({
+        by: ["businessId", "userId", "guestClientId"],
+        where: { businessId: { in: locationIds }, dateTime: { gte: since } },
+      }),
+    ]);
 
-        return {
-          id: loc.id,
-          name: loc.name,
-          slug: loc.slug,
-          appointments,
-          revenue: revenue._sum.amount || 0,
-          uniqueClients: clients.length,
-        };
-      })
-    );
+    // Build lookup maps
+    const apptMap = new Map(appointmentCounts.map((r) => [r.businessId, r._count]));
+    const revMap = new Map(revenueSums.map((r) => [r.businessId, r._sum.amount || 0]));
+    const clientCountMap = new Map<string, number>();
+    for (const row of clientGroups) {
+      clientCountMap.set(row.businessId, (clientCountMap.get(row.businessId) || 0) + 1);
+    }
+
+    const locationStats = locations.map((loc) => ({
+      id: loc.id,
+      name: loc.name,
+      slug: loc.slug,
+      appointments: apptMap.get(loc.id) || 0,
+      revenue: revMap.get(loc.id) || 0,
+      uniqueClients: clientCountMap.get(loc.id) || 0,
+    }));
 
     // Totals
     const totals = locationStats.reduce(
@@ -79,9 +87,6 @@ export async function GET(request: NextRequest) {
       locationCount: locationIds.length,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

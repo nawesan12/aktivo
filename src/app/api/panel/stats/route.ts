@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError } from "@/lib/api-errors";
 import { nowInArgentina } from "@/lib/timezone";
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, subDays } from "date-fns";
 
@@ -68,23 +69,21 @@ export async function GET() {
         },
         _sum: { amount: true },
       }),
-      // Active clients (with appointments this month)
-      db.appointment.findMany({
+      // Active clients (with appointments this month) — groupBy instead of findMany+distinct
+      db.appointment.groupBy({
+        by: ["userId", "guestClientId"],
         where: {
           businessId: session.businessId,
           dateTime: { gte: monthStart, lte: monthEnd },
         },
-        select: { userId: true, guestClientId: true },
-        distinct: ["userId", "guestClientId"],
       }),
       // Previous month clients
-      db.appointment.findMany({
+      db.appointment.groupBy({
+        by: ["userId", "guestClientId"],
         where: {
           businessId: session.businessId,
           dateTime: { gte: prevMonthStart, lte: prevMonthEnd },
         },
-        select: { userId: true, guestClientId: true },
-        distinct: ["userId", "guestClientId"],
       }),
       // Month total appointments (for occupancy)
       db.appointment.count({
@@ -98,39 +97,28 @@ export async function GET() {
       db.staffMember.count({
         where: { businessId: session.businessId, isActive: true },
       }),
-      // Last 7 days appointment counts
-      Promise.all(
-        Array.from({ length: 7 }, (_, i) => {
-          const day = subDays(now, 6 - i);
-          return db.appointment.count({
-            where: {
-              businessId: session.businessId,
-              dateTime: { gte: startOfDay(day), lte: endOfDay(day) },
-              status: { notIn: ["CANCELLED"] },
-            },
-          }).then((count) => ({
-            date: startOfDay(day).toISOString(),
-            count,
-          }));
-        })
-      ),
-      // Last 6 months revenue
-      Promise.all(
-        Array.from({ length: 6 }, (_, i) => {
-          const month = subMonths(now, 5 - i);
-          return db.payment.aggregate({
-            where: {
-              businessId: session.businessId,
-              status: "APPROVED",
-              createdAt: { gte: startOfMonth(month), lte: endOfMonth(month) },
-            },
-            _sum: { amount: true },
-          }).then((result) => ({
-            month: startOfMonth(month).toISOString(),
-            revenue: result._sum.amount || 0,
-          }));
-        })
-      ),
+      // Last 7 days — single raw query grouped by date
+      db.$queryRaw<{ day: Date; count: bigint }[]>`
+        SELECT DATE_TRUNC('day', "dateTime") as day, COUNT(*)::bigint as count
+        FROM "Appointment"
+        WHERE "businessId" = ${session.businessId}
+          AND "dateTime" >= ${startOfDay(subDays(now, 6))}
+          AND "dateTime" <= ${todayEnd}
+          AND "status" != 'CANCELLED'
+        GROUP BY DATE_TRUNC('day', "dateTime")
+        ORDER BY day ASC
+      `,
+      // Last 6 months revenue — single raw query grouped by month
+      db.$queryRaw<{ month: Date; revenue: number }[]>`
+        SELECT DATE_TRUNC('month', "createdAt") as month, COALESCE(SUM(amount), 0)::float as revenue
+        FROM "Payment"
+        WHERE "businessId" = ${session.businessId}
+          AND "status" = 'APPROVED'
+          AND "createdAt" >= ${startOfMonth(subMonths(now, 5))}
+          AND "createdAt" <= ${monthEnd}
+        GROUP BY DATE_TRUNC('month', "createdAt")
+        ORDER BY month ASC
+      `,
       // Next 5 upcoming appointments
       db.appointment.findMany({
         where: {
@@ -170,6 +158,26 @@ export async function GET() {
     const estimatedCapacity = Math.max(monthSlots * 22 * 8, 1);
     const occupancy = Math.min(Math.round((monthAppointments / estimatedCapacity) * 100), 100);
 
+    // Build last7Days from grouped raw data
+    const dayMap = new Map<string, number>();
+    for (const row of last7Days) {
+      dayMap.set(startOfDay(new Date(row.day)).toISOString(), Number(row.count));
+    }
+    const last7DaysChart = Array.from({ length: 7 }, (_, i) => {
+      const day = startOfDay(subDays(now, 6 - i));
+      return { date: day.toISOString(), count: dayMap.get(day.toISOString()) || 0 };
+    });
+
+    // Build last6Months from grouped raw data
+    const monthRevMap = new Map<string, number>();
+    for (const row of last6Months) {
+      monthRevMap.set(startOfMonth(new Date(row.month)).toISOString(), row.revenue);
+    }
+    const last6MonthsChart = Array.from({ length: 6 }, (_, i) => {
+      const month = startOfMonth(subMonths(now, 5 - i));
+      return { month: month.toISOString(), revenue: monthRevMap.get(month.toISOString()) || 0 };
+    });
+
     return NextResponse.json({
       kpis: {
         todayAppointments: todayCount,
@@ -181,8 +189,8 @@ export async function GET() {
         occupancy,
       },
       charts: {
-        last7Days,
-        last6Months,
+        last7Days: last7DaysChart,
+        last6Months: last6MonthsChart,
       },
       upcoming: upcoming.map((a) => ({
         id: a.id,
@@ -202,9 +210,6 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

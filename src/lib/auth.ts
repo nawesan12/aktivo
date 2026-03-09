@@ -49,7 +49,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
-      if (user) {
+      const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+
+      if (user || !token.lastRefreshed || Date.now() - (token.lastRefreshed as number) > REFRESH_INTERVAL_MS) {
         const dbUser = await db.user.findUnique({
           where: { email: token.email! },
           select: {
@@ -75,6 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.businessSlug = primaryBusiness.business.slug;
             token.role = primaryBusiness.role;
           }
+          token.lastRefreshed = Date.now();
         }
       }
       return token;

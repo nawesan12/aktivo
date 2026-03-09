@@ -30,7 +30,6 @@ import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { CalendarSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { toast } from "sonner";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type ViewMode = "month" | "week" | "day";
 
@@ -97,9 +96,7 @@ export function CalendarView() {
   });
 
   const { data, isLoading, mutate } = useSWR(
-    `/api/panel/appointments?${params.toString()}`,
-    fetcher
-  );
+    `/api/panel/appointments?${params.toString()}`);
 
   const appointments: CalendarAppointment[] = data?.data || [];
 

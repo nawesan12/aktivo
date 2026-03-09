@@ -9,7 +9,6 @@ import { es } from "date-fns/locale";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const roleLabels: Record<string, string> = {
   BUSINESS_OWNER: "Propietario",
@@ -19,7 +18,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export function TeamManager() {
-  const { data, isLoading, mutate } = useSWR("/api/panel/team", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/panel/team");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("STAFF_MEMBER");
   const [sending, setSending] = useState(false);

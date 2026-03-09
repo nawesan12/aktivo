@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -10,8 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { campaignSchema, type CampaignInput } from "@/lib/validations";
 
 interface Campaign {
   id: string;
@@ -43,70 +44,60 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export function CampaignsManager() {
-  const { data, isLoading, mutate } = useSWR("/api/panel/campaigns", fetcher);
-  const { data: tagsData } = useSWR("/api/panel/tags", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/panel/campaigns");
+  const { data: tagsData } = useSWR("/api/panel/tags");
   const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [executing, setExecuting] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Form state
-  const [name, setName] = useState("");
-  const [type, setType] = useState<string>("CUSTOM");
-  const [messageSubject, setMessageSubject] = useState("");
-  const [messageBody, setMessageBody] = useState("");
-  const [channel, setChannel] = useState<string>("EMAIL");
-  const [targetTagIds, setTargetTagIds] = useState<string[]>([]);
-  const [triggerDays, setTriggerDays] = useState("30");
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<CampaignInput>({
+    resolver: zodResolver(campaignSchema),
+    defaultValues: {
+      name: "",
+      type: "CUSTOM",
+      messageSubject: "",
+      messageBody: "",
+      channel: "EMAIL",
+      targetTagIds: [],
+      triggerConfig: null,
+    },
+  });
 
   const campaigns: Campaign[] = data?.data || [];
   const tags = tagsData?.data || [];
+  const watchType = watch("type");
+  const watchTargetTagIds = watch("targetTagIds");
 
-  async function handleCreate() {
-    if (!name.trim() || !messageBody.trim()) return;
-    setSaving(true);
-
+  async function onSubmit(formData: CampaignInput) {
     try {
-      const triggerConfig = type === "INACTIVITY"
-        ? { inactivityDays: parseInt(triggerDays) }
-        : type === "REBOOKING"
-          ? { rebookingDays: parseInt(triggerDays) }
-          : null;
-
       const res = await fetch("/api/panel/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          type,
-          messageSubject: messageSubject.trim() || null,
-          messageBody: messageBody.trim(),
-          channel,
-          targetTagIds,
-          triggerConfig,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (!res.ok) throw new Error((await res.json()).error);
 
       toast.success("Campaña creada");
-      resetForm();
+      setShowForm(false);
+      reset();
       mutate();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al crear");
-    } finally {
-      setSaving(false);
     }
   }
 
-  function resetForm() {
+  function handleCancel() {
     setShowForm(false);
-    setName("");
-    setType("CUSTOM");
-    setMessageSubject("");
-    setMessageBody("");
-    setChannel("EMAIL");
-    setTargetTagIds([]);
-    setTriggerDays("30");
+    reset();
   }
 
   async function toggleStatus(campaign: Campaign) {
@@ -115,6 +106,7 @@ export function CampaignsManager() {
       : null;
 
     if (!newStatus) return;
+    setTogglingId(campaign.id);
 
     try {
       const res = await fetch(`/api/panel/campaigns/${campaign.id}`, {
@@ -127,6 +119,8 @@ export function CampaignsManager() {
       mutate();
     } catch {
       toast.error("Error al actualizar");
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -146,6 +140,7 @@ export function CampaignsManager() {
   }
 
   async function deleteCampaign(id: string) {
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/panel/campaigns/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -153,6 +148,8 @@ export function CampaignsManager() {
       mutate();
     } catch {
       toast.error("Error al eliminar");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -176,24 +173,23 @@ export function CampaignsManager() {
 
       {/* Create Form */}
       {showForm && (
-        <div className="glass rounded-xl p-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="glass rounded-xl p-6 space-y-4">
           <h3 className="font-medium">Nueva Campaña</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-muted-foreground">Nombre</label>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register("name")}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
                 placeholder="Ej: Reactivación clientes inactivos"
               />
+              {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Tipo</label>
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+                {...register("type")}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               >
                 <option value="CUSTOM">Personalizada</option>
@@ -204,15 +200,19 @@ export function CampaignsManager() {
             </div>
           </div>
 
-          {(type === "INACTIVITY" || type === "REBOOKING") && (
+          {(watchType === "INACTIVITY" || watchType === "REBOOKING") && (
             <div>
               <label className="text-sm text-muted-foreground">
-                {type === "INACTIVITY" ? "Días de inactividad" : "Días desde último turno"}
+                {watchType === "INACTIVITY" ? "Días de inactividad" : "Días desde último turno"}
               </label>
               <input
                 type="number"
-                value={triggerDays}
-                onChange={(e) => setTriggerDays(e.target.value)}
+                defaultValue={30}
+                onChange={(e) => {
+                  const days = parseInt(e.target.value) || 30;
+                  const key = watchType === "INACTIVITY" ? "inactivityDays" : "rebookingDays";
+                  setValue("triggerConfig", { [key]: days });
+                }}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
                 min="1"
               />
@@ -222,8 +222,7 @@ export function CampaignsManager() {
           <div>
             <label className="text-sm text-muted-foreground">Asunto del email</label>
             <input
-              value={messageSubject}
-              onChange={(e) => setMessageSubject(e.target.value)}
+              {...register("messageSubject")}
               className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               placeholder="Ej: ¡Te extrañamos, {{clientName}}!"
             />
@@ -234,20 +233,19 @@ export function CampaignsManager() {
               Mensaje <span className="text-xs">(Variables: {"{{clientName}}"}, {"{{businessName}}"})</span>
             </label>
             <textarea
-              value={messageBody}
-              onChange={(e) => setMessageBody(e.target.value)}
+              {...register("messageBody")}
               rows={4}
               className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm resize-none"
               placeholder="Hola {{clientName}}, te esperamos en {{businessName}}..."
             />
+            {errors.messageBody && <p className="text-xs text-destructive mt-1">{errors.messageBody.message}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-muted-foreground">Canal</label>
               <select
-                value={channel}
-                onChange={(e) => setChannel(e.target.value)}
+                {...register("channel")}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               >
                 <option value="EMAIL">Email</option>
@@ -260,18 +258,19 @@ export function CampaignsManager() {
                 {tags.map((tag: { id: string; name: string; color: string }) => (
                   <button
                     key={tag.id}
+                    type="button"
                     onClick={() => {
-                      setTargetTagIds((prev) =>
-                        prev.includes(tag.id)
-                          ? prev.filter((id) => id !== tag.id)
-                          : [...prev, tag.id]
-                      );
+                      const current = watchTargetTagIds || [];
+                      const next = current.includes(tag.id)
+                        ? current.filter((id: string) => id !== tag.id)
+                        : [...current, tag.id];
+                      setValue("targetTagIds", next);
                     }}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors"
                     style={{
-                      backgroundColor: targetTagIds.includes(tag.id) ? `${tag.color}20` : "transparent",
-                      borderColor: targetTagIds.includes(tag.id) ? tag.color : "var(--border)",
-                      color: targetTagIds.includes(tag.id) ? tag.color : "var(--muted-foreground)",
+                      backgroundColor: watchTargetTagIds?.includes(tag.id) ? `${tag.color}20` : "transparent",
+                      borderColor: watchTargetTagIds?.includes(tag.id) ? tag.color : "var(--border)",
+                      color: watchTargetTagIds?.includes(tag.id) ? tag.color : "var(--muted-foreground)",
                     }}
                   >
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
@@ -284,17 +283,17 @@ export function CampaignsManager() {
 
           <div className="flex gap-2">
             <button
-              onClick={handleCreate}
-              disabled={saving || !name.trim() || !messageBody.trim()}
+              type="submit"
+              disabled={isSubmitting}
               className="px-4 py-2 text-sm rounded-lg brand-gradient text-white disabled:opacity-50"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear Campaña"}
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear Campaña"}
             </button>
-            <button onClick={resetForm} className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80">
+            <button type="button" onClick={handleCancel} className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80">
               Cancelar
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* Campaigns List */}
@@ -331,16 +330,23 @@ export function CampaignsManager() {
                 {campaign.status !== "COMPLETED" && (
                   <button
                     onClick={() => toggleStatus(campaign)}
-                    className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={togglingId === campaign.id}
+                    className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                     title={campaign.status === "ACTIVE" ? "Pausar" : "Activar"}
                   >
-                    {campaign.status === "ACTIVE" ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    {togglingId === campaign.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : campaign.status === "ACTIVE" ? (
+                      <Pause className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
                   </button>
                 )}
                 <button
                   onClick={() => executeCampaign(campaign.id)}
                   disabled={executing === campaign.id}
-                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
                   title="Ejecutar ahora"
                 >
                   {executing === campaign.id ? (
@@ -351,10 +357,15 @@ export function CampaignsManager() {
                 </button>
                 <button
                   onClick={() => deleteCampaign(campaign.id)}
-                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-destructive transition-colors"
+                  disabled={deletingId === campaign.id}
+                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
                   title="Eliminar"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  {deletingId === campaign.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>

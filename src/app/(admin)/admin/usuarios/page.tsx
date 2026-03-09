@@ -7,7 +7,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const roleLabels: Record<string, string> = {
   PLATFORM_ADMIN: "Admin",
@@ -22,9 +21,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const { data, isLoading } = useSWR(
-    `/api/admin/users?page=${page}&limit=20&q=${encodeURIComponent(search)}`,
-    fetcher
-  );
+    `/api/admin/users?page=${page}&limit=20&q=${encodeURIComponent(search)}`);
 
   return (
     <div className="space-y-6">

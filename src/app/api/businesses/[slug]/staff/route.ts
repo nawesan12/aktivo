@@ -23,9 +23,10 @@ export async function GET(
     };
 
     if (serviceId) {
-      where.services = {
-        some: { serviceId },
-      };
+      where.OR = [
+        { services: { some: { serviceId } } },
+        { services: { none: {} } },
+      ];
     }
 
     const staff = await db.staffMember.findMany({

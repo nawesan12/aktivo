@@ -6,10 +6,9 @@ import { Code, Copy, Check, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function WidgetSettings() {
-  const { data, isLoading, mutate } = useSWR("/api/panel/widget", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/panel/widget");
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 

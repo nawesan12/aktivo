@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { liftPenalty } from "@/lib/no-show";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   _request: NextRequest,
@@ -25,10 +26,7 @@ export async function GET(
 
     return NextResponse.json({ data: penalties });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -52,9 +50,6 @@ export async function PATCH(
 
     return NextResponse.json(penalty);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

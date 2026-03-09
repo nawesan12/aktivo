@@ -12,11 +12,10 @@ import { paymentConfigSchema, type PaymentConfigInput } from "@/lib/validations"
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { PermissionGate } from "@/components/auth/permission-gate";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function PaymentConfig() {
-  const { data, isLoading, mutate } = useSWR("/api/panel/payments/config", fetcher);
-  const { data: paymentsData, mutate: mutatePayments } = useSWR("/api/panel/payments", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/panel/payments/config");
+  const { data: paymentsData, mutate: mutatePayments } = useSWR("/api/panel/payments");
   const [cancellationPolicy, setCancellationPolicy] = useState("");
   const [refundingId, setRefundingId] = useState<string | null>(null);
 

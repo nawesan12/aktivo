@@ -5,10 +5,9 @@ import useSWR from "swr";
 import { MapPin, ChevronDown, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function LocationSwitcher() {
-  const { data } = useSWR("/api/panel/group", fetcher);
+  const { data } = useSWR("/api/panel/group");
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 

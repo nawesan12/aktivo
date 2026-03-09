@@ -20,11 +20,15 @@ export async function getLTVData(
   businessId: string,
   limit: number = 20
 ): Promise<{ clients: ClientLTV[]; averageLTV: number }> {
-  // Get completed appointments with payment info
+  // Get completed appointments with payment info (bounded to last 2 years)
+  const twoYearsAgo = new Date();
+  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
   const appointments = await db.appointment.findMany({
     where: {
       businessId,
       status: "COMPLETED",
+      dateTime: { gte: twoYearsAgo },
     },
     select: {
       userId: true,

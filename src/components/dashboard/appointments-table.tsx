@@ -15,13 +15,13 @@ import {
   XCircle,
   UserX,
   Calendar as CalendarIcon,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Appointment {
   id: string;
@@ -60,6 +60,7 @@ export function AppointmentsTable() {
   const [dateTo, setDateTo] = useState("");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [mutatingId, setMutatingId] = useState<string | null>(null);
 
   const params = new URLSearchParams({ page: String(page), pageSize: "20" });
   if (search) params.set("search", search);
@@ -68,13 +69,12 @@ export function AppointmentsTable() {
   if (dateTo) params.set("dateTo", dateTo);
 
   const { data, isLoading, mutate } = useSWR(
-    `/api/panel/appointments?${params.toString()}`,
-    fetcher,
-    { refreshInterval: 30000 }
+    `/api/panel/appointments?${params.toString()}`, { refreshInterval: 30000 }
   );
 
   const handleStatusChange = useCallback(
     async (id: string, newStatus: string) => {
+      setMutatingId(id);
       try {
         const res = await fetch(`/api/panel/appointments/${id}`, {
           method: "PATCH",
@@ -93,6 +93,8 @@ export function AppointmentsTable() {
         setOpenMenu(null);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Error al actualizar");
+      } finally {
+        setMutatingId(null);
       }
     },
     [mutate]
@@ -190,9 +192,14 @@ export function AppointmentsTable() {
                       <div className="relative">
                         <button
                           onClick={() => setOpenMenu(openMenu === apt.id ? null : apt.id)}
-                          className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center"
+                          disabled={mutatingId === apt.id}
+                          className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50"
                         >
-                          <MoreHorizontal className="w-4 h-4" />
+                          {mutatingId === apt.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <MoreHorizontal className="w-4 h-4" />
+                          )}
                         </button>
                         {openMenu === apt.id && (
                           <>

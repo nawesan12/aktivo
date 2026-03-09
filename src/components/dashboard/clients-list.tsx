@@ -19,7 +19,6 @@ import {
 import { StatusBadge } from "./status-badge";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Client {
   id: string;
@@ -60,11 +59,9 @@ export function ClientsList() {
   const params = new URLSearchParams({ page: String(page), pageSize: "20" });
   if (search) params.set("search", search);
 
-  const { data, isLoading } = useSWR(`/api/panel/clients?${params.toString()}`, fetcher);
+  const { data, isLoading } = useSWR(`/api/panel/clients?${params.toString()}`);
   const { data: clientDetail } = useSWR(
-    selectedClientId ? `/api/panel/clients/${selectedClientId}` : null,
-    fetcher
-  );
+    selectedClientId ? `/api/panel/clients/${selectedClientId}` : null);
 
   if (isLoading) return <TableSkeleton rows={8} />;
 

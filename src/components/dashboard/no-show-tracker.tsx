@@ -4,10 +4,9 @@ import useSWR from "swr";
 import { AlertTriangle, ShieldAlert, Ban, TrendingUp } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function NoShowTracker() {
-  const { data, isLoading } = useSWR("/api/panel/no-shows", fetcher, {
+  const { data, isLoading } = useSWR("/api/panel/no-shows", {
     refreshInterval: 60000,
   });
 

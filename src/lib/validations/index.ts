@@ -100,6 +100,63 @@ export const paymentConfigSchema = z.object({
   mpAccessToken: z.string().optional(),
 });
 
+// ── Campaigns ───────────────────────────
+
+export const campaignSchema = z.object({
+  name: z.string().min(1, "Nombre requerido").max(100),
+  type: z.enum(["BIRTHDAY", "REBOOKING", "INACTIVITY", "CUSTOM"]),
+  messageSubject: z.string().max(200).optional().nullable(),
+  messageBody: z.string().min(1, "Mensaje requerido").max(5000),
+  channel: z.enum(["EMAIL", "WHATSAPP"]).default("EMAIL"),
+  targetTagIds: z.array(z.string()).default([]),
+  triggerConfig: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+
+// ── Tags ────────────────────────────────
+
+export const tagSchema = z.object({
+  name: z.string().min(1, "Nombre requerido").max(50),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color hexadecimal inválido").default("#6366F1"),
+});
+
+// ── Notes ───────────────────────────────
+
+export const noteSchema = z.object({
+  content: z.string().min(1, "Contenido requerido").max(2000),
+});
+
+// ── Settings ────────────────────────────
+
+export const settingsSchema = z.object({
+  business: z.object({
+    name: z.string().min(2).optional(),
+    description: z.string().optional(),
+    phone: z.string().optional(),
+    whatsapp: z.string().optional(),
+    email: z.string().email().optional().or(z.literal("")),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    province: z.string().optional(),
+    website: z.string().optional(),
+    primaryColor: z.string().optional(),
+    accentColor: z.string().optional(),
+  }).optional(),
+  settings: z.object({
+    slotInterval: z.number().min(5).max(120).optional(),
+    minAdvanceHours: z.number().min(0).optional(),
+    maxAdvanceDays: z.number().min(1).max(365).optional(),
+    bufferMinutes: z.number().min(0).max(60).optional(),
+    allowGuestBooking: z.boolean().optional(),
+    reviewRequestDelayHours: z.number().min(0).optional(),
+    noShowThreshold: z.number().min(1).optional(),
+    noShowPenaltyDays: z.number().min(1).optional(),
+    noShowAutoMark: z.boolean().optional(),
+    widgetEnabled: z.boolean().optional(),
+    widgetTheme: z.string().optional(),
+    widgetPosition: z.string().optional(),
+  }).optional(),
+});
+
 // ── Types ────────────────────────────────
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -111,3 +168,7 @@ export type AppointmentInput = z.infer<typeof appointmentSchema>;
 export type GuestInfoInput = z.infer<typeof guestInfoSchema>;
 export type WorkingHoursInput = z.infer<typeof workingHoursSchema>;
 export type PaymentConfigInput = z.infer<typeof paymentConfigSchema>;
+export type CampaignInput = z.input<typeof campaignSchema>;
+export type TagInput = z.infer<typeof tagSchema>;
+export type NoteInput = z.infer<typeof noteSchema>;
+export type SettingsInput = z.infer<typeof settingsSchema>;

@@ -9,7 +9,6 @@ import { PermissionGate } from "@/components/auth/permission-gate";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { cn } from "@/lib/utils";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const ranges = [
   { label: "7 dias", value: "7d" },
@@ -21,7 +20,7 @@ const CHART_COLORS = ["#6366F1", "#22D3EE", "#10B981", "#F59E0B", "#EF4444", "#8
 
 export function ReportsDashboard() {
   const [range, setRange] = useState("30d");
-  const { data, isLoading } = useSWR(`/api/panel/reports?range=${range}`, fetcher);
+  const { data, isLoading } = useSWR(`/api/panel/reports?range=${range}`);
 
   function handleExport(type: string) {
     window.open(`/api/panel/reports/export?type=${type}&format=csv`, "_blank");

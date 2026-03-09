@@ -7,7 +7,6 @@ import { es } from "date-fns/locale";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Note {
   id: string;
@@ -18,8 +17,7 @@ interface Note {
 
 export function ClientNotesPanel({ clientId }: { clientId: string }) {
   const { data, mutate } = useSWR<{ data: Note[] }>(
-    `/api/panel/clients/${clientId}/notes`,
-    fetcher
+    `/api/panel/clients/${clientId}/notes`
   );
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);

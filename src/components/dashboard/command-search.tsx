@@ -23,7 +23,6 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const typeIcons: Record<string, typeof Calendar> = {
   appointment: Calendar,
@@ -55,9 +54,7 @@ export function CommandSearch() {
   }, [query]);
 
   const { data } = useSWR(
-    debouncedQuery.length >= 2 ? `/api/panel/search?q=${encodeURIComponent(debouncedQuery)}` : null,
-    fetcher
-  );
+    debouncedQuery.length >= 2 ? `/api/panel/search?q=${encodeURIComponent(debouncedQuery)}` : null);
 
   // Global keyboard shortcut
   useEffect(() => {

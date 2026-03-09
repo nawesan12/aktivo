@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const statusColors: Record<string, string> = {
   SENT: "bg-emerald-500",
@@ -26,7 +25,7 @@ const typeLabels: Record<string, string> = {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const { data } = useSWR("/api/panel/notifications/unread", fetcher, {
+  const { data } = useSWR("/api/panel/notifications/unread", {
     refreshInterval: 30000,
   });
 

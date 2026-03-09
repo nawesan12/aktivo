@@ -25,7 +25,6 @@ import { UpcomingList } from "@/components/dashboard/upcoming-list";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -36,7 +35,7 @@ function formatCurrency(value: number) {
 }
 
 export default function DashboardPage() {
-  const { data, isLoading } = useSWR("/api/panel/stats", fetcher, {
+  const { data, isLoading } = useSWR("/api/panel/stats", {
     refreshInterval: 60000,
   });
 

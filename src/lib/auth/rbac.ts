@@ -1,4 +1,5 @@
 import type { UserRole } from "@/generated/prisma/client";
+import { ForbiddenError } from "@/lib/api-errors";
 
 export type Permission =
   | "appointments:read"
@@ -138,6 +139,6 @@ export function getPermissions(role: UserRole): Permission[] {
 
 export function requirePermission(role: UserRole | undefined, permission: Permission): void {
   if (!role || !hasPermission(role, permission)) {
-    throw new Error(`Permisos insuficientes: requiere ${permission}`);
+    throw new ForbiddenError(`Permisos insuficientes: requiere ${permission}`);
   }
 }

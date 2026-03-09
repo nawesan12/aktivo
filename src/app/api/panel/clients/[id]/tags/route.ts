@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError, NotFoundError } from "@/lib/api-errors";
 
 export async function GET(
   _request: NextRequest,
@@ -15,8 +16,8 @@ export async function GET(
     // Determine if this is a user or guest client
     const user = await db.user.findUnique({ where: { id } });
     const where = user
-      ? { userId: id }
-      : { guestClientId: id };
+      ? { userId: id, tag: { businessId: session.businessId } }
+      : { guestClientId: id, tag: { businessId: session.businessId } };
 
     const assignments = await db.clientTagAssignment.findMany({
       where,
@@ -25,10 +26,7 @@ export async function GET(
 
     return NextResponse.json({ data: assignments.map((a) => a.tag) });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -66,13 +64,7 @@ export async function POST(
 
     return NextResponse.json(assignment, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    if (message.includes("Unique constraint")) {
-      return NextResponse.json({ error: "Tag ya asignado" }, { status: 409 });
-    }
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -92,6 +84,12 @@ export async function DELETE(
       return NextResponse.json({ error: "tagId requerido" }, { status: 400 });
     }
 
+    // Verify tag belongs to this business
+    const tag = await db.clientTag.findFirst({
+      where: { id: tagId, businessId: session.businessId },
+    });
+    if (!tag) throw new NotFoundError("Tag no encontrado");
+
     const user = await db.user.findUnique({ where: { id } });
     const where = user
       ? { tagId_userId: { tagId, userId: id } }
@@ -101,10 +99,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403
-      : message.includes("not found") ? 404 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

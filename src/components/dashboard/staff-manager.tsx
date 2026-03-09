@@ -21,7 +21,6 @@ import { staffSchema, type StaffInput } from "@/lib/validations";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { ImageUploader } from "@/components/upload/image-uploader";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface StaffMember {
   id: string;
@@ -37,8 +36,8 @@ interface StaffMember {
 }
 
 export function StaffManager() {
-  const { data, isLoading, mutate } = useSWR("/api/panel/staff", fetcher);
-  const { data: servicesData } = useSWR("/api/panel/services", fetcher);
+  const { data, isLoading, mutate } = useSWR("/api/panel/staff");
+  const { data: servicesData } = useSWR("/api/panel/services");
 
   const [showForm, setShowForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);

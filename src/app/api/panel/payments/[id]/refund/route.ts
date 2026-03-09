@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/rbac";
 import { getMPClient } from "@/lib/mercadopago";
 import { sendNotification } from "@/lib/notifications";
 import { logAction } from "@/lib/audit";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function POST(
   _request: Request,
@@ -97,10 +98,6 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Refund error:", error);
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

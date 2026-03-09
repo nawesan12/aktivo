@@ -8,11 +8,10 @@ import { es } from "date-fns/locale";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function AppointmentsPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSWR(`/api/account/appointments?page=${page}&limit=20`, fetcher);
+  const { data, isLoading } = useSWR(`/api/account/appointments?page=${page}&limit=20`);
 
   if (isLoading) return <TableSkeleton />;
 

@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Notification {
   id: string;
@@ -58,7 +57,7 @@ export function NotificationsLog() {
   if (dateFrom) params.set("dateFrom", dateFrom);
   if (dateTo) params.set("dateTo", dateTo);
 
-  const { data, isLoading } = useSWR(`/api/panel/notifications?${params.toString()}`, fetcher);
+  const { data, isLoading } = useSWR(`/api/panel/notifications?${params.toString()}`);
 
   if (isLoading) return <TableSkeleton rows={8} />;
 
