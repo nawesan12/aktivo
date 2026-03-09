@@ -9,6 +9,7 @@ import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
 import { getAvailableSlots } from "@/lib/availability";
 import { parseDateInArgentina } from "@/lib/timezone";
 import { addMinutes } from "date-fns";
+import { checkAppointmentLimit } from "@/lib/subscription/enforcement";
 
 export async function POST(request: Request) {
   try {
@@ -41,6 +42,9 @@ export async function POST(request: Request) {
 
     const business = service.business;
     const settings = business.settings;
+
+    // Check appointment limit for business plan
+    await checkAppointmentLimit(business.id);
 
     // Check auth session
     const session = await auth();

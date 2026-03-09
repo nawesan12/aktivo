@@ -5,6 +5,8 @@ import { requirePermission } from "@/lib/auth/rbac";
 import { logAction } from "@/lib/audit";
 import { paymentConfigSchema } from "@/lib/validations";
 import { getMPClient } from "@/lib/mercadopago";
+import { handleApiError } from "@/lib/api-errors";
+import { requirePlan } from "@/lib/subscription/enforcement";
 
 export async function GET() {
   try {
@@ -40,10 +42,7 @@ export async function GET() {
       hasMpToken: !!mpConfig?.value,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -51,6 +50,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
     requirePermission(session.role, "payments:configure");
+    await requirePlan(session.businessId, "PROFESSIONAL");
 
     const body = await request.json();
     const parsed = paymentConfigSchema.safeParse(body);
@@ -127,9 +127,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

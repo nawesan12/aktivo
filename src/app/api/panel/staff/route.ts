@@ -4,6 +4,8 @@ import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { logAction } from "@/lib/audit";
 import { staffSchema } from "@/lib/validations";
+import { handleApiError } from "@/lib/api-errors";
+import { checkStaffLimit } from "@/lib/subscription/enforcement";
 
 export async function GET() {
   try {
@@ -28,10 +30,7 @@ export async function GET() {
 
     return NextResponse.json({ data: flat });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -39,6 +38,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
     requirePermission(session.role, "staff:create");
+    await checkStaffLimit(session.businessId);
 
     const body = await request.json();
     const parsed = staffSchema.safeParse(body);
@@ -100,9 +100,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(staff, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

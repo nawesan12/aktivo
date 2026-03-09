@@ -20,6 +20,7 @@ import {
   Megaphone,
   MapPin,
   Activity,
+  Sparkles,
 } from "lucide-react";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ const navigation = [
   { name: "Sucursales", href: "/panel/sucursales", icon: MapPin },
   { name: "Analytics", href: "/panel/analytics", icon: Activity },
   { name: "Reportes", href: "/panel/reportes", icon: BarChart2 },
+  { name: "Suscripción", href: "/panel/suscripcion", icon: Sparkles },
   { name: "Configuracion", href: "/panel/configuracion", icon: Settings },
   { name: "Audit Log", href: "/panel/audit", icon: Shield },
 ];

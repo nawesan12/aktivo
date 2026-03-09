@@ -38,13 +38,25 @@ export async function GET(request: Request) {
           isActive: true,
           createdAt: true,
           _count: { select: { members: true, appointments: true } },
+          subscriptions: {
+            where: { status: { in: ["AUTHORIZED", "PAUSED", "PENDING"] } },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { status: true },
+          },
         },
       }),
       db.business.count({ where }),
     ]);
 
+    const data = businesses.map((b) => ({
+      ...b,
+      subscriptionStatus: b.subscriptions[0]?.status || null,
+      subscriptions: undefined,
+    }));
+
     return NextResponse.json({
-      data: businesses,
+      data,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {

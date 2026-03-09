@@ -45,6 +45,14 @@ enum PaymentStatus {
   IN_PROCESS
 }
 
+enum SubscriptionStatus {
+  PENDING
+  AUTHORIZED
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
 enum PaymentMode {
   DISABLED
   FULL
@@ -206,6 +214,8 @@ model Business {
   group    BusinessGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   // Sprint 10
   analyticsSnapshots AnalyticsSnapshot[]
+  // Subscriptions
+  subscriptions Subscription[]
 
   @@index([slug])
   @@index([groupId])
@@ -610,8 +620,8 @@ model ClientNote {
   user        User?        @relation("ClientNotes", fields: [userId], references: [id], onDelete: Cascade)
   guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: Cascade)
 
-  @@index([businessId])
-  @@index([userId])
+  @@index([businessId, userId])
+  @@index([businessId, guestClientId])
   @@index([guestClientId])
 }
 
@@ -635,7 +645,7 @@ model Review {
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
 
-  @@index([businessId])
+  @@index([businessId, createdAt])
   @@index([rating])
 }
 
@@ -655,7 +665,6 @@ model ReviewToken {
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
 
-  @@index([token])
   @@index([businessId])
 }
 
@@ -797,5 +806,36 @@ model AnalyticsSnapshot {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, date])
-  @@index([businessId, date])
+}
+
+// ──────────────────────────────────────────
+// Subscriptions (B2B billing)
+// ──────────────────────────────────────────
+
+model Subscription {
+  id                String             @id @default(cuid())
+  businessId        String
+  mpPreapprovalId   String?            @unique
+  plan              BusinessPlan
+  status            SubscriptionStatus @default(PENDING)
+  payerEmail        String?
+  amount            Float
+  currency          String             @default("ARS")
+  startDate         DateTime?
+  endDate           DateTime?
+  nextPaymentDate   DateTime?
+  lastPaymentDate   DateTime?
+  gracePeriodEnd    DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  mpInitPoint       String?
+  externalReference String?            @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([status])
+  @@index([mpPreapprovalId])
 }

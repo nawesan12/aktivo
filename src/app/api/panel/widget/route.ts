@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
+import { handleApiError } from "@/lib/api-errors";
+import { requirePlan } from "@/lib/subscription/enforcement";
 
 export async function GET() {
   try {
@@ -31,10 +33,7 @@ export async function GET() {
       previewUrl: `${baseUrl}/embed/${business?.slug}`,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -42,6 +41,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
     requirePermission(session.role, "widget:manage");
+    await requirePlan(session.businessId, "PROFESSIONAL");
 
     const body = await request.json();
     const { widgetEnabled, widgetTheme, widgetPosition } = body;
@@ -57,9 +57,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(settings);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    const status = message.includes("No autenticado") || message.includes("Sin negocio") ? 401
-      : message.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

@@ -8,7 +8,6 @@ import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const plans = ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"];
 
@@ -16,9 +15,7 @@ export default function AdminBusinessesPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const { data, isLoading, mutate } = useSWR(
-    `/api/admin/businesses?page=${page}&limit=20&q=${encodeURIComponent(search)}`,
-    fetcher
-  );
+    `/api/admin/businesses?page=${page}&limit=20&q=${encodeURIComponent(search)}`);
 
   async function handleUpdate(id: string, updates: Record<string, unknown>) {
     try {
@@ -64,6 +61,7 @@ export default function AdminBusinessesPage() {
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nombre</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Slug</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Plan</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Suscripción</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Miembros</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Turnos</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Creado</th>
@@ -85,6 +83,9 @@ export default function AdminBusinessesPage() {
                         >
                           {plans.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <SubscriptionBadge status={biz.subscriptionStatus as string | undefined} />
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{counts.members}</td>
                       <td className="px-4 py-3 text-muted-foreground">{counts.appointments}</td>
@@ -127,5 +128,21 @@ export default function AdminBusinessesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SubscriptionBadge({ status }: { status?: string }) {
+  if (!status) return <span className="text-xs text-muted-foreground">—</span>;
+  const colors: Record<string, string> = {
+    AUTHORIZED: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    PENDING: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+    PAUSED: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+    CANCELLED: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+    EXPIRED: "bg-red-500/10 text-red-400 border-red-500/20",
+  };
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full border ${colors[status] || "bg-muted text-muted-foreground border-border"}`}>
+      {status}
+    </span>
   );
 }

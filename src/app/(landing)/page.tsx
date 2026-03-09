@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 
 export default function LandingPage() {
   const navRef = useRef<HTMLElement>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     // Nav scroll effect
@@ -78,8 +79,38 @@ export default function LandingPage() {
               Empezar gratis →
             </Link>
           </div>
+          <button
+            className={`nav-hamburger ${mobileOpen ? "open" : ""}`}
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Menu"
+          >
+            <span /><span /><span />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile menu overlay */}
+      {mobileOpen && (
+        <div className="nav-mobile-overlay" onClick={() => setMobileOpen(false)}>
+          <div className="nav-mobile-menu" onClick={(e) => e.stopPropagation()}>
+            <a href="#features" onClick={(e) => { handleSmoothScroll(e, "#features"); setMobileOpen(false); }}>
+              Funciones
+            </a>
+            <a href="#pricing" onClick={(e) => { handleSmoothScroll(e, "#pricing"); setMobileOpen(false); }}>
+              Planes
+            </a>
+            <a href="#testimonials" onClick={(e) => { handleSmoothScroll(e, "#testimonials"); setMobileOpen(false); }}>
+              Reseñas
+            </a>
+            <Link href="/iniciar-sesion" onClick={() => setMobileOpen(false)}>
+              Iniciar sesión
+            </Link>
+            <Link href="/registrarse" className="btn btn-jade" onClick={() => setMobileOpen(false)}>
+              Empezar gratis →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* HERO */}
       <section className="hero">
@@ -442,7 +473,7 @@ export default function LandingPage() {
               <div className="price-tier">Pro</div>
               <div className="price-amount">
                 <span className="price-sign">$</span>
-                <span className="price-val">14</span>
+                <span className="price-val">4.990</span>
                 <span
                   style={{
                     fontSize: "0.85rem",
@@ -453,7 +484,7 @@ export default function LandingPage() {
                   /mes
                 </span>
               </div>
-              <div className="price-period">USD · Facturación mensual</div>
+              <div className="price-period">ARS · Facturación mensual</div>
               <p className="price-desc">
                 Para negocios que quieren crecer en serio.
               </p>
@@ -474,7 +505,7 @@ export default function LandingPage() {
                   <span className="price-check">✓</span> Reportes avanzados
                 </li>
               </ul>
-              <Link href="/registrarse" className="btn btn-jade">
+              <Link href="/registrarse?plan=PROFESSIONAL" className="btn btn-jade">
                 Elegir Pro →
               </Link>
             </div>
@@ -482,7 +513,7 @@ export default function LandingPage() {
               <div className="price-tier">Business</div>
               <div className="price-amount">
                 <span className="price-sign">$</span>
-                <span className="price-val">39</span>
+                <span className="price-val">9.990</span>
                 <span
                   style={{
                     fontSize: "0.85rem",
@@ -493,7 +524,7 @@ export default function LandingPage() {
                   /mes
                 </span>
               </div>
-              <div className="price-period">USD · Facturación mensual</div>
+              <div className="price-period">ARS · Facturación mensual</div>
               <p className="price-desc">
                 Multi-sucursal, equipo grande, automatización total.
               </p>
@@ -515,8 +546,8 @@ export default function LandingPage() {
                   <span className="price-check">✓</span> Marca blanca
                 </li>
               </ul>
-              <Link href="/registrarse" className="btn btn-ghost">
-                Contactar ventas
+              <Link href="/registrarse?plan=ENTERPRISE" className="btn btn-ghost">
+                Elegir Business →
               </Link>
             </div>
           </div>
@@ -1561,6 +1592,73 @@ const landingStyles = `
   color: var(--text-muted);
 }
 
+/* ═══ MOBILE NAV ═══ */
+.jiku-landing .nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 1001;
+}
+.jiku-landing .nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.jiku-landing .nav-hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.jiku-landing .nav-hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+.jiku-landing .nav-hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+.jiku-landing .nav-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+.jiku-landing .nav-mobile-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100%;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  padding: 80px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideIn 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.jiku-landing .nav-mobile-menu a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.3s;
+}
+.jiku-landing .nav-mobile-menu a:hover { color: var(--text); }
+.jiku-landing .nav-mobile-menu .btn {
+  margin-top: 16px;
+  justify-content: center;
+}
+
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 968px) {
   .jiku-landing .hero-content { grid-template-columns: 1fr; text-align: center; }
@@ -1576,7 +1674,8 @@ const landingStyles = `
   .jiku-landing .big-feature-grid { grid-template-columns: 1fr; gap: 40px; }
   .jiku-landing .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .jiku-landing .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
-  .jiku-landing .nav-links a:not(.btn):not(.nav-link-login) { display: none; }
+  .jiku-landing .nav-links { display: none; }
+  .jiku-landing .nav-hamburger { display: flex; }
 }
 @media (max-width: 600px) {
   .jiku-landing .hero-metrics { flex-direction: column; gap: 16px; }
