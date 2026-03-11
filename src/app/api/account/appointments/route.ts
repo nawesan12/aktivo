@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 
 export async function GET(request: Request) {
   try {
@@ -13,10 +14,33 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
+    const status = searchParams.get("status");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const search = searchParams.get("search");
+
+    const where: Prisma.AppointmentWhereInput = { userId: session.user.id };
+
+    if (status) {
+      where.status = status as Prisma.EnumAppointmentStatusFilter;
+    }
+    if (from) {
+      where.dateTime = { ...((where.dateTime as Prisma.DateTimeFilter) || {}), gte: new Date(from) };
+    }
+    if (to) {
+      where.dateTime = { ...((where.dateTime as Prisma.DateTimeFilter) || {}), lte: new Date(to) };
+    }
+    if (search) {
+      where.OR = [
+        { service: { name: { contains: search, mode: "insensitive" } } },
+        { staff: { name: { contains: search, mode: "insensitive" } } },
+        { business: { name: { contains: search, mode: "insensitive" } } },
+      ];
+    }
 
     const [appointments, total] = await Promise.all([
       db.appointment.findMany({
-        where: { userId: session.user.id },
+        where,
         orderBy: { dateTime: "desc" },
         skip,
         take: limit,
@@ -25,13 +49,15 @@ export async function GET(request: Request) {
           dateTime: true,
           status: true,
           notes: true,
-          service: { select: { name: true, duration: true, price: true } },
-          staff: { select: { name: true } },
+          serviceId: true,
+          staffId: true,
+          service: { select: { id: true, name: true, duration: true, price: true } },
+          staff: { select: { id: true, name: true } },
           business: { select: { name: true, slug: true } },
           payment: { select: { status: true, amount: true } },
         },
       }),
-      db.appointment.count({ where: { userId: session.user.id } }),
+      db.appointment.count({ where }),
     ]);
 
     return NextResponse.json({

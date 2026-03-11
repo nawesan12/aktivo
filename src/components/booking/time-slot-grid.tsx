@@ -31,8 +31,9 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect }: TimeSlotGridProp
           type="button"
           disabled={!slot.available}
           onClick={() => slot.available && onSelect(slot.time, slot.display)}
+          aria-label={slot.available ? `Seleccionar ${slot.display}` : `${slot.display} no disponible`}
           className={cn(
-            "time-slot-pill py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 text-center",
+            "time-slot-pill min-h-[44px] py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 text-center",
             slot.available && slot.time !== selectedTime && "glass hover:bg-primary/10 hover:text-primary cursor-pointer",
             slot.available && slot.time === selectedTime && "brand-gradient text-white shadow-lg shadow-primary/20",
             !slot.available && "bg-secondary/50 text-muted-foreground/40 cursor-not-allowed line-through"

@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Star, Eye, EyeOff, Trash2, Loader2 } from "lucide-react";
+import { Star, Eye, EyeOff, Trash2, Loader2, MessageSquare, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
@@ -13,6 +13,8 @@ interface Review {
   id: string;
   rating: number;
   comment: string | null;
+  response: string | null;
+  respondedAt: string | null;
   isVisible: boolean;
   createdAt: string;
   appointment: {
@@ -41,6 +43,9 @@ export function ReviewsDashboard() {
   const [page, setPage] = useState(1);
   const [ratingFilter, setRatingFilter] = useState<string>("");
   const [visibleFilter, setVisibleFilter] = useState<string>("");
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
+  const [respondingLoading, setRespondingLoading] = useState(false);
 
   const params = new URLSearchParams({ page: String(page), pageSize: "20" });
   if (ratingFilter) params.set("rating", ratingFilter);
@@ -62,6 +67,26 @@ export function ReviewsDashboard() {
       mutate();
     } catch {
       toast.error("Error al actualizar reseña");
+    }
+  }
+
+  async function submitResponse(id: string) {
+    setRespondingLoading(true);
+    try {
+      const res = await fetch(`/api/panel/reviews/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: responseText }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Respuesta guardada");
+      setRespondingTo(null);
+      setResponseText("");
+      mutate();
+    } catch {
+      toast.error("Error al guardar respuesta");
+    } finally {
+      setRespondingLoading(false);
     }
   }
 
@@ -156,6 +181,16 @@ export function ReviewsDashboard() {
               </div>
               <div className="flex items-center gap-1">
                 <button
+                  onClick={() => {
+                    setRespondingTo(respondingTo === review.id ? null : review.id);
+                    setResponseText(review.response || "");
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                  title="Responder"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => toggleVisibility(review.id, review.isVisible)}
                   className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                   title={review.isVisible ? "Ocultar" : "Mostrar"}
@@ -171,6 +206,44 @@ export function ReviewsDashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Existing response */}
+            {review.response && respondingTo !== review.id && (
+              <div className="mt-3 bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1 font-medium">Respuesta del negocio</p>
+                <p className="text-sm">{review.response}</p>
+              </div>
+            )}
+
+            {/* Response form */}
+            {respondingTo === review.id && (
+              <div className="mt-3 space-y-2">
+                <textarea
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  placeholder="Escribe tu respuesta..."
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  rows={3}
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => { setRespondingTo(null); setResponseText(""); }}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-muted"
+                  >
+                    <X className="w-3 h-3 inline mr-1" />
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => submitResponse(review.id)}
+                    disabled={!responseText.trim() || respondingLoading}
+                    className="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-1"
+                  >
+                    {respondingLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                    Responder
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
         {reviews.length === 0 && (

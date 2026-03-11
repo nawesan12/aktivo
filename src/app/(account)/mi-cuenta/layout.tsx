@@ -1,13 +1,20 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 const tabs = [
   { name: "Perfil", href: "/mi-cuenta/perfil" },
   { name: "Seguridad", href: "/mi-cuenta/seguridad" },
   { name: "Mis Turnos", href: "/mi-cuenta/turnos" },
+  { name: "Notificaciones", href: "/mi-cuenta/notificaciones" },
+  { name: "Referidos", href: "/mi-cuenta/referidos" },
   { name: "Negocios", href: "/mi-cuenta/negocios" },
 ];
 

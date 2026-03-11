@@ -7,8 +7,8 @@ export default function LandingLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Jiku",
-    url: "https://jiku.app",
-    logo: "https://jiku.app/jiku-logo.svg",
+    url: "https://jikuapp.com",
+    logo: "https://jikuapp.com/jiku-logo.svg",
     description:
       "Plataforma de gestión de turnos, CRM, pagos y fidelización para negocios de servicios en Argentina.",
   };
@@ -17,7 +17,7 @@ export default function LandingLayout({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Jiku",
-    url: "https://jiku.app",
+    url: "https://jikuapp.com",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: [
@@ -50,12 +50,6 @@ export default function LandingLayout({
           "Todo de Starter, staff ilimitado, CRM avanzado, branding personalizado, API access",
       },
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "150",
-      bestRating: "5",
-    },
   };
 
   const faqJsonLd = {
@@ -133,10 +127,10 @@ export default function LandingLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Jiku",
-    url: "https://jiku.app",
+    url: "https://jikuapp.com",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://jiku.app/{search_term_string}",
+      target: "https://jikuapp.com/explorar?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };

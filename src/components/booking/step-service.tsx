@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import gsap from "gsap";
 import { useBookingStore } from "@/stores/booking-store";
 import { ServiceCard } from "./service-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 interface ServiceCategory {
   id: string;
@@ -27,12 +27,31 @@ export function StepService({ slug }: { slug: string }) {
   const { data: categories, isLoading } = useSWR<ServiceCategory[]>(`/api/businesses/${slug}/services`);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const [autoSelected, setAutoSelected] = useState(false);
 
   useEffect(() => {
     if (categories && categories.length > 0 && !activeCategory) {
       setActiveCategory(categories[0].id);
     }
   }, [categories, activeCategory]);
+
+  // Auto-select service from URL params (rebook flow)
+  useEffect(() => {
+    if (autoSelected || !categories || isLoading) return;
+    const preselectedServiceId = searchParams.get("serviceId");
+    if (preselectedServiceId) {
+      for (const cat of categories) {
+        const svc = cat.services.find((s) => s.id === preselectedServiceId);
+        if (svc) {
+          setService(svc.id, svc.name, svc.duration, svc.price);
+          setAutoSelected(true);
+          setStep(1);
+          break;
+        }
+      }
+    }
+  }, [categories, isLoading, searchParams, autoSelected, setService, setStep]);
 
   useEffect(() => {
     if (!gridRef.current || isLoading) return;

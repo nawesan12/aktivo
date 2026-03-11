@@ -26,6 +26,7 @@ interface ReviewData {
   id: string;
   rating: number;
   comment: string | null;
+  response?: string | null;
   createdAt: string;
   clientName: string;
 }
@@ -560,6 +561,14 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
                   <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
                     {review.comment}
                   </p>
+                )}
+                {review.response && (
+                  <div className="mt-3 pl-3 border-l-2 border-primary/30">
+                    <p className="text-[10px] uppercase tracking-wider text-primary/70 mb-1">Respuesta del negocio</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                      {review.response}
+                    </p>
+                  </div>
                 )}
               </div>
             ))}

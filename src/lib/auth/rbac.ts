@@ -51,7 +51,12 @@ export type Permission =
   | "group:reports"
   // Sprint 10
   | "analytics:read"
-  | "widget:manage";
+  | "widget:manage"
+  // Client UX
+  | "coupons:read"
+  | "coupons:manage"
+  | "referrals:read"
+  | "referrals:manage";
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   PLATFORM_ADMIN: [
@@ -72,6 +77,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "campaigns:read", "campaigns:manage", "noshow:read", "noshow:manage",
     "group:read", "group:manage", "group:reports",
     "analytics:read", "widget:manage",
+    "coupons:read", "coupons:manage", "referrals:read", "referrals:manage",
   ],
   BUSINESS_OWNER: [
     "appointments:read", "appointments:create", "appointments:update", "appointments:delete",
@@ -90,6 +96,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "campaigns:read", "campaigns:manage", "noshow:read", "noshow:manage",
     "group:read", "group:manage", "group:reports",
     "analytics:read", "widget:manage",
+    "coupons:read", "coupons:manage", "referrals:read", "referrals:manage",
   ],
   BUSINESS_MANAGER: [
     "appointments:read", "appointments:create", "appointments:update", "appointments:delete",
@@ -107,6 +114,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "campaigns:read", "noshow:read",
     "group:read",
     "analytics:read",
+    "coupons:read", "coupons:manage", "referrals:read",
   ],
   STAFF_MEMBER: [
     "appointments:read", "appointments:create", "appointments:update",

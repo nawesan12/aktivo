@@ -8,6 +8,7 @@ import { MagneticButton } from "@/components/premium/magnetic-button";
 import {
   Check,
   Calendar,
+  CalendarPlus,
   Clock,
   User,
   Scissors,
@@ -15,6 +16,7 @@ import {
   Mail,
   ArrowRight,
 } from "lucide-react";
+import { downloadICS } from "@/lib/ics-generator";
 
 function formatPrice(price: number): string {
   return price.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 });
@@ -195,7 +197,25 @@ export function ConfirmationContent({ slug }: { slug: string }) {
         </div>
 
         {/* CTA */}
-        <div className="confirm-cta opacity-0">
+        <div className="confirm-cta opacity-0 flex flex-col items-center gap-3">
+          {booking.serviceName && booking.date && booking.time && (
+            <button
+              onClick={() => {
+                const start = new Date(`${booking.date}T${booking.time}`);
+                const end = new Date(start.getTime() + (booking.serviceDuration || 30) * 60 * 1000);
+                downloadICS({
+                  title: `${booking.serviceName}${booking.staffName ? ` con ${booking.staffName}` : ""}`,
+                  description: `Turno: ${booking.serviceName}. Profesional: ${booking.staffName || ""}`,
+                  start,
+                  end,
+                });
+              }}
+              className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              <CalendarPlus className="w-4 h-4" />
+              Agregar al calendario
+            </button>
+          )}
           <Link href={`/${slug}/reservar`}>
             <MagneticButton className="brand-gradient text-white px-6 py-3 rounded-xl font-medium inline-flex items-center gap-2 glow-primary cursor-pointer">
               Reservar otro turno

@@ -14,11 +14,18 @@ export async function PATCH(
     const { id } = await params;
 
     const body = await request.json();
-    const { isVisible } = body;
+    const { isVisible, response } = body;
+
+    const data: Record<string, unknown> = {};
+    if (isVisible !== undefined) data.isVisible = isVisible;
+    if (response !== undefined) {
+      data.response = response;
+      data.respondedAt = response ? new Date() : null;
+    }
 
     const review = await db.review.update({
       where: { id, businessId: session.businessId },
-      data: { isVisible },
+      data,
     });
 
     return NextResponse.json(review);

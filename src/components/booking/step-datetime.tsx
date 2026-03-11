@@ -11,11 +11,13 @@ import { TimeSlotGrid } from "./time-slot-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Bell, Loader2, Check, ChevronDown, Repeat } from "lucide-react";
+import { ArrowRight, Bell, Loader2, Check, ChevronDown, Repeat, Sparkles } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface AvailableDate {
   date: string;
   hasSlots: boolean;
+  slotCount?: number;
 }
 
 interface SlotData {
@@ -43,6 +45,7 @@ export function StepDatetime({ slug }: { slug: string }) {
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [waitlistName, setWaitlistName] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
+  const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistLoading, setWaitlistLoading] = useState(false);
   const [waitlistSuccess, setWaitlistSuccess] = useState(false);
   // Recurrence state
@@ -50,9 +53,13 @@ export function StepDatetime({ slug }: { slug: string }) {
 
   const dateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
 
-  // Fetch available dates
+  // Fetch available dates (with slot counts when serviceId/duration available)
   const { data: availableDates, isLoading: loadingDates } = useSWR<AvailableDate[]>(
-    staffId ? `/api/businesses/${slug}/availability?staffId=${staffId}` : null
+    staffId
+      ? serviceId && serviceDuration
+        ? `/api/businesses/${slug}/availability?staffId=${staffId}&serviceId=${serviceId}&duration=${serviceDuration}`
+        : `/api/businesses/${slug}/availability?staffId=${staffId}`
+      : null
   );
 
   // Fetch slots for selected date
@@ -66,6 +73,22 @@ export function StepDatetime({ slug }: { slug: string }) {
   const availableDateSet = new Set(
     availableDates?.filter((d) => d.hasSlots).map((d) => format(new Date(d.date), "yyyy-MM-dd")) ?? []
   );
+
+  // Build slot count map for calendar dots
+  const slotCountMap = new Map<string, number>(
+    availableDates
+      ?.filter((d) => d.hasSlots && d.slotCount !== undefined)
+      .map((d) => [format(new Date(d.date), "yyyy-MM-dd"), d.slotCount!]) ?? []
+  );
+
+  // Time suggestions for authenticated users
+  const { data: session } = useSession();
+  const { data: suggestion } = useSWR(
+    session?.user && serviceId && staffId
+      ? `/api/businesses/${slug}/suggestions?serviceId=${serviceId}&staffId=${staffId}`
+      : null
+  );
+  const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
   // Animate slots in
   useEffect(() => {
@@ -98,6 +121,28 @@ export function StepDatetime({ slug }: { slug: string }) {
       <h2 className="text-xl font-heading font-bold mb-1">Elegir fecha y hora</h2>
       <p className="text-sm text-muted-foreground mb-6">Seleccioná cuándo querés tu turno</p>
 
+      {/* Time suggestion for returning clients */}
+      {suggestion && suggestion.suggestedDay !== undefined && suggestion.suggestedDay !== null && (
+        <div className="glass rounded-xl p-4 mb-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium">Tu horario habitual</p>
+            <p className="text-xs text-muted-foreground">
+              {dayNames[suggestion.suggestedDay]} {suggestion.suggestedTime}
+            </p>
+          </div>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+            suggestion.confidence === "high" ? "bg-green-500/10 text-green-500"
+            : suggestion.confidence === "medium" ? "bg-yellow-500/10 text-yellow-500"
+            : "bg-zinc-500/10 text-zinc-400"
+          }`}>
+            {suggestion.confidence === "high" ? "Frecuente" : suggestion.confidence === "medium" ? "Habitual" : "Sugerido"}
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Calendar */}
         <div className="glass rounded-xl p-4">
@@ -121,7 +166,7 @@ export function StepDatetime({ slug }: { slug: string }) {
                 available: (d) => availableDateSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
-                available: "font-bold",
+                available: "font-bold relative after:content-[''] after:absolute after:bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-emerald-400",
               }}
               className="w-full"
             />
@@ -183,6 +228,12 @@ export function StepDatetime({ slug }: { slug: string }) {
                         value={waitlistPhone}
                         onChange={(e) => setWaitlistPhone(e.target.value)}
                       />
+                      <Input
+                        placeholder="Tu email (opcional)"
+                        type="email"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                      />
                       <Button
                         onClick={async () => {
                           setWaitlistLoading(true);
@@ -193,6 +244,7 @@ export function StepDatetime({ slug }: { slug: string }) {
                               body: JSON.stringify({
                                 name: waitlistName,
                                 phone: waitlistPhone,
+                                email: waitlistEmail || undefined,
                                 serviceId,
                                 staffId,
                                 preferredDate: format(selectedDate!, "yyyy-MM-dd"),

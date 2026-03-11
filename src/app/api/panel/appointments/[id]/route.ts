@@ -75,7 +75,7 @@ export async function PATCH(
         type: "cancellation",
       }).catch(console.error);
 
-      // Notify waitlist entries for the same service/date (Feature 4)
+      // Notify waitlist entries for the same service/date (Feature 4 + F8)
       const bookingUrl = `${process.env.NEXTAUTH_URL}/${appointment.business.slug}/reservar`;
       db.waitlistEntry.findMany({
         where: {
@@ -91,10 +91,25 @@ export async function PATCH(
         take: 5,
       }).then(async (entries) => {
         for (const entry of entries) {
-          sendWhatsAppText(
-            entry.phone,
-            `Se libero un turno para ${appointment.service.name} el ${appointment.dateTime.toLocaleDateString("es-AR")}. Reserva ahora en ${bookingUrl}`
-          ).catch(console.error);
+          const message = `Se liberó un turno para ${appointment.service.name} el ${appointment.dateTime.toLocaleDateString("es-AR")}. Reservá ahora en ${bookingUrl}`;
+
+          // Send WhatsApp
+          sendWhatsAppText(entry.phone, message).catch(console.error);
+
+          // Send Email if available
+          if (entry.email) {
+            const { sendEmail } = await import("@/lib/notifications/email");
+            sendEmail({
+              to: entry.email,
+              type: "cancellation",
+              businessName: appointment.business.name,
+              clientName: entry.name,
+              serviceName: appointment.service.name,
+              staffName: appointment.staff.name,
+              dateTime: appointment.dateTime,
+            }).catch(console.error);
+          }
+
           await db.waitlistEntry.update({
             where: { id: entry.id },
             data: { notified: true, notifiedAt: new Date() },

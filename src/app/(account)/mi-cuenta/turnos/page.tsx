@@ -2,21 +2,48 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Calendar } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Search, Filter, RotateCcw, CalendarPlus, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { Input } from "@/components/ui/input";
+import { downloadICS } from "@/lib/ics-generator";
+import { RescheduleModal } from "@/components/booking/reschedule-modal";
 
+interface Appointment {
+  id: string;
+  dateTime: string;
+  status: string;
+  serviceId: string;
+  staffId: string;
+  service: { id: string; name: string; duration: number; price: number };
+  staff: { id: string; name: string };
+  business: { name: string; slug: string };
+}
 
 export default function AppointmentsPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSWR(`/api/account/appointments?page=${page}&limit=20`);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [rescheduleAppt, setRescheduleAppt] = useState<Appointment | null>(null);
+
+  const params = new URLSearchParams({ page: String(page), limit: "20" });
+  if (statusFilter) params.set("status", statusFilter);
+  if (searchQuery) params.set("search", searchQuery);
+  if (dateFrom) params.set("from", dateFrom);
+  if (dateTo) params.set("to", dateTo);
+
+  const { data, isLoading, mutate } = useSWR(`/api/account/appointments?${params}`);
 
   if (isLoading) return <TableSkeleton />;
 
-  const appointments = data?.data || [];
+  const appointments: Appointment[] = data?.data || [];
   const pagination = data?.pagination;
+  const now = new Date();
 
   return (
     <div className="space-y-6">
@@ -25,45 +52,132 @@ export default function AppointmentsPage() {
         <p className="text-muted-foreground text-sm mt-1">Historial de turnos en todos tus negocios</p>
       </div>
 
+      {/* Filters */}
+      <div className="glass rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Filter className="w-4 h-4" />
+          Filtros
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              className="pl-9"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="h-10 px-3 bg-background border border-border rounded-lg text-sm"
+          >
+            <option value="">Todos los estados</option>
+            <option value="PENDING">Pendiente</option>
+            <option value="CONFIRMED">Confirmado</option>
+            <option value="COMPLETED">Completado</option>
+            <option value="CANCELLED">Cancelado</option>
+            <option value="NO_SHOW">No asistió</option>
+          </select>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+            placeholder="Desde"
+          />
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+            placeholder="Hasta"
+          />
+        </div>
+      </div>
+
       {appointments.length === 0 ? (
         <div className="glass rounded-xl p-12 flex flex-col items-center justify-center">
           <Calendar className="w-10 h-10 mb-3 text-muted-foreground/30" />
-          <p className="text-muted-foreground text-sm">No tenes turnos registrados</p>
+          <p className="text-muted-foreground text-sm">No se encontraron turnos</p>
         </div>
       ) : (
-        <div className="glass rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Negocio</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Servicio</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Profesional</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appt: Record<string, unknown>) => (
-                  <tr key={appt.id as string} className="border-b border-border/50 hover:bg-muted/20">
-                    <td className="px-4 py-3">{(appt.business as Record<string, string>).name}</td>
-                    <td className="px-4 py-3">{(appt.service as Record<string, string>).name}</td>
-                    <td className="px-4 py-3">{(appt.staff as Record<string, string>).name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {format(new Date(appt.dateTime as string), "d MMM yyyy HH:mm", { locale: es })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={appt.status as string} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Card layout */}
+          <div className="space-y-3">
+            {appointments.map((appt) => {
+              const isPast = new Date(appt.dateTime) < now;
+              const isUpcoming = !isPast && (appt.status === "PENDING" || appt.status === "CONFIRMED");
+
+              return (
+                <div key={appt.id} className="glass rounded-xl p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium text-sm">{appt.service.name}</p>
+                        <StatusBadge status={appt.status} />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {appt.business.name} · {appt.staff.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(appt.dateTime), "EEEE d MMM yyyy · HH:mm", { locale: es })}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Add to calendar for upcoming */}
+                      {isUpcoming && (
+                        <button
+                          onClick={() => {
+                            const start = new Date(appt.dateTime);
+                            const end = new Date(start.getTime() + appt.service.duration * 60 * 1000);
+                            downloadICS({
+                              title: `${appt.service.name} - ${appt.business.name}`,
+                              description: `Turno con ${appt.staff.name}`,
+                              start,
+                              end,
+                            });
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                          title="Agregar al calendario"
+                        >
+                          <CalendarPlus className="w-4 h-4" />
+                        </button>
+                      )}
+
+                      {/* Reschedule for upcoming */}
+                      {isUpcoming && (
+                        <button
+                          onClick={() => setRescheduleAppt(appt)}
+                          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
+                          title="Reprogramar"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                      )}
+
+                      {/* Rebook for past completed */}
+                      {isPast && appt.status === "COMPLETED" && (
+                        <Link
+                          href={`/${appt.business.slug}/reservar?serviceId=${appt.serviceId}&staffId=${appt.staffId}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Volver a reservar
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          {/* Pagination */}
           {pagination && pagination.pages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                Pagina {pagination.page} de {pagination.pages}
+                Página {pagination.page} de {pagination.pages}
               </p>
               <div className="flex gap-2">
                 <button
@@ -83,7 +197,25 @@ export default function AppointmentsPage() {
               </div>
             </div>
           )}
-        </div>
+        </>
+      )}
+
+      {/* Reschedule modal */}
+      {rescheduleAppt && (
+        <RescheduleModal
+          appointmentId={rescheduleAppt.id}
+          slug={rescheduleAppt.business.slug}
+          currentDateTime={rescheduleAppt.dateTime}
+          serviceDuration={rescheduleAppt.service.duration}
+          serviceId={rescheduleAppt.serviceId}
+          staffId={rescheduleAppt.staffId}
+          rescheduleUrl={`/api/account/appointments/${rescheduleAppt.id}/reschedule`}
+          onClose={() => setRescheduleAppt(null)}
+          onSuccess={() => {
+            setRescheduleAppt(null);
+            mutate();
+          }}
+        />
       )}
     </div>
   );

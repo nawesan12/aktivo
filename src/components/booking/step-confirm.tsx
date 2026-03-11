@@ -20,6 +20,8 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
+import { CouponInput } from "./coupon-input";
+import { ReferralInput } from "./referral-input";
 
 interface PaymentConfig {
   paymentMode: "DISABLED" | "FULL" | "PERCENTAGE" | "FIXED";
@@ -85,6 +87,8 @@ export function StepConfirm({ slug }: { slug: string }) {
         staffId: store.staffId,
         dateTime: `${store.date}T${store.time}`,
         notes: store.notes || undefined,
+        couponCode: store.couponCode || undefined,
+        referralCode: store.referralCode || undefined,
       };
 
       if (!session?.user) {
@@ -200,6 +204,20 @@ export function StepConfirm({ slug }: { slug: string }) {
           </>
         )}
       </div>
+
+      {/* Coupon & Referral */}
+      <div className="space-y-3 mb-6">
+        <CouponInput slug={slug} serviceId={store.serviceId || ""} />
+        <ReferralInput slug={slug} />
+      </div>
+
+      {/* Discount display */}
+      {store.discountAmount && store.discountAmount > 0 && (
+        <div className="glass rounded-xl p-4 mb-4 flex items-center justify-between">
+          <span className="text-sm text-emerald-400">Descuento aplicado</span>
+          <span className="text-sm font-bold text-emerald-400">-{formatPrice(store.discountAmount)}</span>
+        </div>
+      )}
 
       {/* Payment section */}
       {loadingPayment ? (

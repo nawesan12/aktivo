@@ -63,11 +63,12 @@ async function sendRequest(
 
 function formatPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, "");
-  // Ensure country code for Argentina
-  if (cleaned.startsWith("549")) return cleaned;
+  // Meta WhatsApp API expects: 54 + area code + number (WITHOUT the mobile "9")
+  // e.g. +54 223 6327551 → 542236327551
+  if (cleaned.startsWith("549")) return `54${cleaned.slice(3)}`; // strip the 9
   if (cleaned.startsWith("54")) return cleaned;
   if (cleaned.startsWith("0")) return `54${cleaned.slice(1)}`;
-  if (cleaned.length === 10) return `549${cleaned}`;
+  if (cleaned.length === 10) return `54${cleaned}`;
   return cleaned;
 }
 

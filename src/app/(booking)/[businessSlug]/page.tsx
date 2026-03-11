@@ -22,9 +22,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${business.name} - Reserva tu turno`,
     description: business.description || `Reserva turnos online en ${business.name}. Rapido, simple y seguro con Jiku.`,
+    alternates: {
+      canonical: `https://jikuapp.com/${businessSlug}`,
+    },
     openGraph: {
       title: `${business.name} - Reserva tu turno`,
       description: business.description || `Reserva turnos online en ${business.name}`,
+      url: `https://jikuapp.com/${businessSlug}`,
       ...(ogImage && { images: [{ url: ogImage }] }),
     },
     twitter: {
@@ -138,12 +142,45 @@ export default async function BusinessProfilePage({ params }: Props) {
     id: r.id,
     rating: r.rating,
     comment: r.comment,
+    response: r.response,
     createdAt: r.createdAt.toISOString(),
     clientName: r.user?.name || r.guestClient?.name || "Cliente",
   }));
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: business.name,
+    ...(business.description && { description: business.description }),
+    url: `https://jikuapp.com/${business.slug}`,
+    ...(business.logo && { image: business.logo }),
+    ...(business.phone && { telephone: business.phone }),
+    ...((business.address || business.city) && {
+      address: {
+        "@type": "PostalAddress",
+        ...(business.address && { streetAddress: business.address }),
+        ...(business.city && { addressLocality: business.city }),
+        ...(business.province && { addressRegion: business.province }),
+        addressCountry: "AR",
+      },
+    }),
+    ...(reviewAgg._count > 0 && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: String(reviewAgg._avg.rating?.toFixed(1) ?? "0"),
+        reviewCount: String(reviewAgg._count),
+        bestRating: "5",
+      },
+    }),
+  };
+
   return (
-    <BusinessProfile
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <BusinessProfile
       business={{
         id: business.id,
         name: business.name,
@@ -166,5 +203,6 @@ export default async function BusinessProfilePage({ params }: Props) {
       averageRating={reviewAgg._avg.rating ?? 0}
       reviewCount={reviewAgg._count}
     />
+    </>
   );
 }

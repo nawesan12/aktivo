@@ -21,6 +21,9 @@ export interface BookingState {
   notes: string | null;
   recurrenceFrequency: RecurrenceFrequency | null;
   recurrenceCount: number | null;
+  couponCode: string | null;
+  discountAmount: number | null;
+  referralCode: string | null;
 
   setStep: (step: number) => void;
   setBusiness: (id: string, slug: string) => void;
@@ -30,6 +33,8 @@ export interface BookingState {
   setGuestInfo: (name: string, phone: string, email?: string) => void;
   setNotes: (notes: string) => void;
   setRecurrence: (frequency: RecurrenceFrequency | null, count: number | null) => void;
+  setCoupon: (code: string | null, discount: number | null) => void;
+  setReferralCode: (code: string | null) => void;
   reset: () => void;
 }
 
@@ -51,6 +56,9 @@ const initialState = {
   notes: null,
   recurrenceFrequency: null,
   recurrenceCount: null,
+  couponCode: null,
+  discountAmount: null,
+  referralCode: null,
 };
 
 export const useBookingStore = create<BookingState>()(
@@ -73,6 +81,9 @@ export const useBookingStore = create<BookingState>()(
       setNotes: (notes) => set({ notes }),
       setRecurrence: (frequency, count) =>
         set({ recurrenceFrequency: frequency, recurrenceCount: count }),
+      setCoupon: (code, discount) =>
+        set({ couponCode: code, discountAmount: discount }),
+      setReferralCode: (code) => set({ referralCode: code }),
       reset: () => set(initialState),
     }),
     {

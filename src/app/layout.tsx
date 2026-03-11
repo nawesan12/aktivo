@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, Cormorant_Garamond, IBM_Plex_Mono, Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -31,8 +31,18 @@ const inter = Inter({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://jiku.app"),
+  metadataBase: new URL("https://jikuapp.com"),
   title: {
     default: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
     template: "%s | Jiku",
@@ -71,10 +81,12 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
       { url: "/jiku-logo.svg", type: "image/svg+xml" },
+      { url: "/jiku-logo-192.png", type: "image/png", sizes: "192x192" },
       { url: "/jiku-logo.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: { url: "/jiku-logo.png", sizes: "512x512" },
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
   openGraph: {
     type: "website",
@@ -83,7 +95,7 @@ export const metadata: Metadata = {
     title: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
     description:
       "Turnos, CRM, pagos y fidelización para barberías, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
-    url: "https://jiku.app",
+    url: "https://jikuapp.com",
   },
   twitter: {
     card: "summary_large_image",
@@ -103,7 +115,10 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://jiku.app",
+    canonical: "https://jikuapp.com",
+  },
+  verification: {
+    google: "YOUR_CODE",
   },
   authors: [{ name: "Jiku" }],
   creator: "Jiku",

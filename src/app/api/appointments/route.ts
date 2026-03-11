@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     }
 
     const { serviceId, staffId, dateTime, notes, recurrenceFrequency, recurrenceCount } = parsed.data;
+    const { couponCode, referralCode } = body;
 
     // Fetch service with business first (needed for businessId)
     const service = await db.service.findUnique({
@@ -184,6 +185,70 @@ export async function POST(request: Request) {
         } catch {
           // Skip unavailable dates
         }
+      }
+    }
+
+    // Handle coupon redemption
+    let couponDiscount = 0;
+    if (couponCode && typeof couponCode === "string") {
+      try {
+        const coupon = await db.coupon.findFirst({
+          where: {
+            businessId: business.id,
+            code: { equals: couponCode, mode: "insensitive" },
+            isActive: true,
+            validFrom: { lte: new Date() },
+            OR: [
+              { validUntil: null },
+              { validUntil: { gte: new Date() } },
+            ],
+          },
+        });
+        if (coupon && (!coupon.maxUses || coupon.usedCount < coupon.maxUses)) {
+          couponDiscount = coupon.type === "PERCENTAGE"
+            ? Math.round(Number(service.price) * coupon.value / 100)
+            : Math.min(coupon.value, Number(service.price));
+
+          await db.couponRedemption.create({
+            data: {
+              couponId: coupon.id,
+              appointmentId: appointment.id,
+              userId,
+              guestClientId,
+              discount: couponDiscount,
+            },
+          });
+          await db.coupon.update({
+            where: { id: coupon.id },
+            data: { usedCount: { increment: 1 } },
+          });
+        }
+      } catch (e) {
+        console.error("Coupon redemption error:", e);
+      }
+    }
+
+    // Handle referral tracking
+    if (referralCode && typeof referralCode === "string") {
+      try {
+        const referral = await db.referral.findFirst({
+          where: {
+            businessId: business.id,
+            code: { equals: referralCode, mode: "insensitive" },
+          },
+        });
+        if (referral) {
+          await db.referralRedemption.create({
+            data: {
+              referralId: referral.id,
+              appointmentId: appointment.id,
+              referredUserId: userId,
+              referredGuestId: guestClientId,
+            },
+          });
+        }
+      } catch (e) {
+        console.error("Referral tracking error:", e);
       }
     }
 

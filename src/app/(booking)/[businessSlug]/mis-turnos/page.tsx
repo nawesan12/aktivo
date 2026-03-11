@@ -4,17 +4,30 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Phone, ArrowRight, KeyRound, Calendar, Clock, User, X, Loader2 } from "lucide-react";
+import { Phone, ArrowRight, KeyRound, Calendar, Clock, User, X, Loader2, CalendarPlus, RefreshCw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { downloadICS } from "@/lib/ics-generator";
+import { RescheduleModal } from "@/components/booking/reschedule-modal";
+import Link from "next/link";
 
 interface Appointment {
   id: string;
   dateTime: string;
   status: string;
+  serviceId: string;
+  staffId: string;
   service: { name: string; duration: number };
   staff: { name: string };
+}
+
+interface WaitlistEntry {
+  id: string;
+  preferredDate: string;
+  service: { name: string };
+  notified: boolean;
+  createdAt: string;
 }
 
 type PortalState = "phone" | "code" | "appointments";
@@ -28,7 +41,9 @@ export default function MisTurnosPage() {
   const [error, setError] = useState("");
   const [upcoming, setUpcoming] = useState<Appointment[]>([]);
   const [past, setPast] = useState<Appointment[]>([]);
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [rescheduleAppt, setRescheduleAppt] = useState<Appointment | null>(null);
 
   const handleSendCode = async () => {
     setError("");
@@ -67,6 +82,7 @@ export default function MisTurnosPage() {
         return;
       }
       await fetchAppointments();
+      await fetchWaitlist();
       setState("appointments");
     } catch {
       setError("Error de conexión");
@@ -81,6 +97,18 @@ export default function MisTurnosPage() {
     if (res.ok) {
       setUpcoming(data.upcoming);
       setPast(data.past);
+    }
+  };
+
+  const fetchWaitlist = async () => {
+    try {
+      const res = await fetch(`/api/businesses/${businessSlug}/waitlist`);
+      if (res.ok) {
+        const data = await res.json();
+        setWaitlistEntries(data.entries || []);
+      }
+    } catch {
+      // Waitlist fetch is optional
     }
   };
 
@@ -188,9 +216,18 @@ export default function MisTurnosPage() {
 
       {state === "appointments" && (
         <div className="space-y-6">
-          <div className="text-center">
-            <h1 className="text-xl font-heading font-bold mb-1">Mis turnos</h1>
-            <p className="text-sm text-muted-foreground">{phone}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-heading font-bold mb-1">Mis turnos</h1>
+              <p className="text-sm text-muted-foreground">{phone}</p>
+            </div>
+            <Link
+              href={`/${businessSlug}/mis-turnos/notificaciones`}
+              className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              title="Preferencias de notificación"
+            >
+              <Settings className="w-5 h-5" />
+            </Link>
           </div>
 
           {/* Upcoming */}
@@ -201,7 +238,7 @@ export default function MisTurnosPage() {
             {upcoming.length === 0 ? (
               <div className="glass rounded-xl p-6 text-center">
                 <Calendar className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No tenes turnos próximos</p>
+                <p className="text-sm text-muted-foreground">No tenés turnos próximos</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -225,10 +262,36 @@ export default function MisTurnosPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         <span className={cn("text-xs px-2 py-0.5 rounded-full", statusLabel[apt.status]?.className)}>
                           {statusLabel[apt.status]?.label}
                         </span>
+                        {/* Add to calendar */}
+                        <button
+                          onClick={() => {
+                            const start = new Date(apt.dateTime);
+                            const end = new Date(start.getTime() + apt.service.duration * 60 * 1000);
+                            downloadICS({
+                              title: apt.service.name,
+                              description: `Turno con ${apt.staff.name}`,
+                              start,
+                              end,
+                            });
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                          title="Agregar al calendario"
+                        >
+                          <CalendarPlus className="w-4 h-4" />
+                        </button>
+                        {/* Reschedule */}
+                        <button
+                          onClick={() => setRescheduleAppt(apt)}
+                          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
+                          title="Reprogramar"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                        {/* Cancel */}
                         <button
                           onClick={() => handleCancel(apt.id)}
                           disabled={cancelling === apt.id}
@@ -248,6 +311,35 @@ export default function MisTurnosPage() {
               </div>
             )}
           </div>
+
+          {/* Waitlist */}
+          {waitlistEntries.length > 0 && (
+            <div>
+              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                Lista de espera
+              </h2>
+              <div className="space-y-2">
+                {waitlistEntries.map((entry) => (
+                  <div key={entry.id} className="glass rounded-xl p-4 opacity-80">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-sm">{entry.service.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Fecha preferida: {format(new Date(entry.preferredDate), "d MMM yyyy", { locale: es })}
+                        </p>
+                      </div>
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full",
+                        entry.notified ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"
+                      )}>
+                        {entry.notified ? "Notificado" : "En espera"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Past */}
           {past.length > 0 && (
@@ -282,6 +374,24 @@ export default function MisTurnosPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Reschedule modal */}
+      {rescheduleAppt && (
+        <RescheduleModal
+          appointmentId={rescheduleAppt.id}
+          slug={businessSlug}
+          currentDateTime={rescheduleAppt.dateTime}
+          serviceDuration={rescheduleAppt.service.duration}
+          serviceId={rescheduleAppt.serviceId}
+          staffId={rescheduleAppt.staffId}
+          rescheduleUrl={`/api/businesses/${businessSlug}/guest-appointments/reschedule`}
+          onClose={() => setRescheduleAppt(null)}
+          onSuccess={() => {
+            setRescheduleAppt(null);
+            fetchAppointments();
+          }}
+        />
       )}
     </div>
   );
