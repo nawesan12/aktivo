@@ -16,10 +16,12 @@ import {
   UserX,
   Calendar as CalendarIcon,
   Loader2,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
+import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 
@@ -71,6 +73,13 @@ export function AppointmentsTable() {
   const { data, isLoading, mutate } = useSWR(
     `/api/panel/appointments?${params.toString()}`, { refreshInterval: 30000 }
   );
+  const { data: settingsData } = useSWR("/api/panel/settings");
+
+  async function handleExportPdf() {
+    const { exportAppointmentsPdf } = await import("@/lib/pdf/export-appointments");
+    const businessName = settingsData?.business?.name || "Mi Negocio";
+    await exportAppointmentsPdf(appointments, businessName);
+  }
 
   const handleStatusChange = useCallback(
     async (id: string, newStatus: string) => {
@@ -143,6 +152,14 @@ export function AppointmentsTable() {
             className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
+        <PermissionGate permission="reports:export">
+          <button
+            onClick={handleExportPdf}
+            className="h-9 px-3 rounded-lg border border-border text-xs font-medium hover:bg-muted flex items-center gap-1 shrink-0"
+          >
+            <FileText className="w-3 h-3" /> Exportar PDF
+          </button>
+        </PermissionGate>
       </div>
 
       {/* Table */}
