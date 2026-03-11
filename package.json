@@ -29,6 +29,8 @@
     "googleapis": "^171.4.0",
     "gsap": "^3.14.2",
     "jose": "^6.2.1",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.576.0",
     "mercadopago": "^2.12.0",
     "next": "16.1.6",

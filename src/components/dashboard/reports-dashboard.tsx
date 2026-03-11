@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Download, Calendar, DollarSign, Users } from "lucide-react";
+import { Download, FileText, Calendar, DollarSign, Users } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PermissionGate } from "@/components/auth/permission-gate";
@@ -21,9 +21,20 @@ const CHART_COLORS = ["#6366F1", "#22D3EE", "#10B981", "#F59E0B", "#EF4444", "#8
 export function ReportsDashboard() {
   const [range, setRange] = useState("30d");
   const { data, isLoading } = useSWR(`/api/panel/reports?range=${range}`);
+  const { data: settingsData } = useSWR("/api/panel/settings");
 
   function handleExport(type: string) {
     window.open(`/api/panel/reports/export?type=${type}&format=csv`, "_blank");
+  }
+
+  async function handleExportPdf() {
+    const { exportReportsPdf } = await import("@/lib/pdf/export-reports");
+    const businessName = settingsData?.business?.name || "Mi Negocio";
+    await exportReportsPdf(
+      { summary, byStaff, byService },
+      range,
+      businessName
+    );
   }
 
   if (isLoading) return <DashboardSkeleton />;
@@ -66,6 +77,12 @@ export function ReportsDashboard() {
               className="h-8 px-3 rounded-lg border border-border text-xs font-medium hover:bg-muted flex items-center gap-1"
             >
               <Download className="w-3 h-3" /> Exportar Clientes CSV
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="h-8 px-3 rounded-lg border border-border text-xs font-medium hover:bg-muted flex items-center gap-1"
+            >
+              <FileText className="w-3 h-3" /> Exportar PDF
             </button>
           </div>
         </PermissionGate>

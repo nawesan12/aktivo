@@ -46,6 +46,6 @@ export const config = {
     "/registrarse",
     "/recuperar-contrasena",
     "/invitacion",
-    "/((?!_next/static|_next/image|favicon.ico|api/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|widget/|embed/).*)",
   ],
 };
