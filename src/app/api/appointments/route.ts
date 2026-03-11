@@ -8,8 +8,10 @@ import { getMPClient, calculatePaymentAmount } from "@/lib/mercadopago";
 import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
 import { getAvailableSlots } from "@/lib/availability";
 import { parseDateInArgentina } from "@/lib/timezone";
-import { addMinutes } from "date-fns";
-import { checkAppointmentLimit } from "@/lib/subscription/enforcement";
+import { addMinutes, addWeeks, addMonths } from "date-fns";
+import { randomUUID } from "crypto";
+import { checkAppointmentLimit, getPlanForBusiness } from "@/lib/subscription/enforcement";
+import { PLAN_LIMITS } from "@/lib/subscription/config";
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Datos invalidos", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { serviceId, staffId, dateTime, notes } = parsed.data;
+    const { serviceId, staffId, dateTime, notes, recurrenceFrequency, recurrenceCount } = parsed.data;
 
     // Fetch service with business first (needed for businessId)
     const service = await db.service.findUnique({
@@ -82,6 +84,7 @@ export async function POST(request: Request) {
     // Verify staff exists and belongs to this business
     const staff = await db.staffMember.findFirst({
       where: { id: staffId, businessId: business.id, isActive: true },
+      select: { id: true, name: true, userId: true },
     });
 
     if (!staff) {
@@ -109,9 +112,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "El horario seleccionado ya no esta disponible" }, { status: 409 });
     }
 
-    // Determine payment mode
-    const paymentMode = settings?.paymentMode ?? "DISABLED";
+    // Determine payment mode — enforce plan limits
+    const effectivePlan = await getPlanForBusiness(business.id);
+    const planLimits = PLAN_LIMITS[effectivePlan];
+    const paymentMode = planLimits.mpPayments ? (settings?.paymentMode ?? "DISABLED") : "DISABLED";
     const initialStatus = paymentMode === "DISABLED" ? "CONFIRMED" : "PENDING_PAYMENT";
+
+    // Handle recurring appointments (Feature 5)
+    const isRecurring = recurrenceFrequency && recurrenceCount && recurrenceCount > 1 && paymentMode === "DISABLED";
+    const recurrenceGroupId = isRecurring ? randomUUID() : null;
 
     // Create appointment
     const appointment = await db.appointment.create({
@@ -125,8 +134,58 @@ export async function POST(request: Request) {
         endTime: addMinutes(slot.time, service.duration),
         status: initialStatus,
         notes: notes || null,
+        recurrenceGroupId,
+        recurrenceFrequency: isRecurring ? recurrenceFrequency : null,
+        recurrenceCount: isRecurring ? recurrenceCount : null,
+        recurrenceIndex: isRecurring ? 0 : null,
       },
     });
+
+    // Create recurring sibling appointments
+    const recurringAppointments: string[] = [];
+    if (isRecurring && recurrenceGroupId) {
+      const addDateFn = recurrenceFrequency === "MONTHLY" ? addMonths
+        : recurrenceFrequency === "BIWEEKLY" ? (d: Date, n: number) => addWeeks(d, n * 2)
+        : addWeeks;
+
+      for (let i = 1; i < recurrenceCount; i++) {
+        const recurDate = addDateFn(slot.time, i);
+        try {
+          const recurSlots = await getAvailableSlots({
+            businessId: business.id,
+            staffId,
+            date: recurDate,
+            serviceDuration: service.duration,
+            slotInterval: settings?.slotInterval ?? 30,
+            minHoursAdvance: 0, // Don't check advance for future recurring
+            bufferMinutes: settings?.bufferMinutes ?? 0,
+          });
+          const recurSlot = recurSlots.find((s) => s.display === requestedTime);
+          if (recurSlot?.available) {
+            const recApt = await db.appointment.create({
+              data: {
+                businessId: business.id,
+                serviceId,
+                staffId,
+                userId,
+                guestClientId,
+                dateTime: recurSlot.time,
+                endTime: addMinutes(recurSlot.time, service.duration),
+                status: "CONFIRMED",
+                notes: notes || null,
+                recurrenceGroupId,
+                recurrenceFrequency,
+                recurrenceCount,
+                recurrenceIndex: i,
+              },
+            });
+            recurringAppointments.push(recApt.id);
+          }
+        } catch {
+          // Skip unavailable dates
+        }
+      }
+    }
 
     // Handle payment if enabled
     let paymentUrl: string | null = null;
@@ -216,6 +275,10 @@ export async function POST(request: Request) {
       type: "confirmation",
     }).catch((err) => console.error("Notification error:", err));
 
+    // Google Calendar sync (Feature 6) — temporarily disabled
+    // TODO: re-enable once googleCalendarEnabled field is migrated
+    // if (staff.googleCalendarEnabled && staff.userId) { ... }
+
     // Audit log
     await logAction({
       businessId: business.id,
@@ -237,6 +300,10 @@ export async function POST(request: Request) {
       status: appointment.status,
       dateTime: appointment.dateTime,
       paymentUrl,
+      ...(recurringAppointments.length > 0 && {
+        recurringCount: recurringAppointments.length + 1,
+        recurringIds: [appointment.id, ...recurringAppointments],
+      }),
     }, { status: 201 });
   } catch (error) {
     console.error("Error creating appointment:", error);

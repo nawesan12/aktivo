@@ -12,10 +12,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const business = await db.business.findUnique({
     where: { slug: businessSlug },
-    select: { name: true, description: true },
+    select: { name: true, description: true, coverImage: true, logo: true },
   });
 
   if (!business) return { title: "Negocio no encontrado" };
+
+  const ogImage = business.coverImage || business.logo || undefined;
 
   return {
     title: `${business.name} - Reserva tu turno`,
@@ -23,6 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${business.name} - Reserva tu turno`,
       description: business.description || `Reserva turnos online en ${business.name}`,
+      ...(ogImage && { images: [{ url: ogImage }] }),
+    },
+    twitter: {
+      card: business.coverImage ? "summary_large_image" : "summary",
     },
   };
 }
@@ -69,6 +75,7 @@ export default async function BusinessProfilePage({ params }: Props) {
         description: s.description,
         duration: s.duration,
         price: Number(s.price),
+        image: s.image,
       })),
     }));
 
@@ -91,6 +98,7 @@ export default async function BusinessProfilePage({ params }: Props) {
         description: s.description,
         duration: s.duration,
         price: Number(s.price),
+        image: s.image,
       })),
     });
   }
@@ -106,6 +114,32 @@ export default async function BusinessProfilePage({ params }: Props) {
       startTime: wh.startTime,
       endTime: wh.endTime,
     })),
+  }));
+
+  // Fetch reviews for public display
+  const [reviewsRaw, reviewAgg] = await Promise.all([
+    db.review.findMany({
+      where: { businessId: business.id, isVisible: true },
+      take: 10,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { name: true } },
+        guestClient: { select: { name: true } },
+      },
+    }),
+    db.review.aggregate({
+      where: { businessId: business.id, isVisible: true },
+      _avg: { rating: true },
+      _count: true,
+    }),
+  ]);
+
+  const reviews = reviewsRaw.map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.createdAt.toISOString(),
+    clientName: r.user?.name || r.guestClient?.name || "Cliente",
   }));
 
   return (
@@ -128,6 +162,9 @@ export default async function BusinessProfilePage({ params }: Props) {
       }}
       categories={categories}
       staff={staffData}
+      reviews={reviews}
+      averageRating={reviewAgg._avg.rating ?? 0}
+      reviewCount={reviewAgg._count}
     />
   );
 }

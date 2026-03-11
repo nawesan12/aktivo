@@ -12,12 +12,22 @@ import {
   ArrowRight,
   Sparkles,
   ChevronDown,
+  Star,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MagneticButton } from "@/components/premium/magnetic-button";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
+}
+
+interface ReviewData {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  clientName: string;
 }
 
 interface BusinessProfileProps {
@@ -46,6 +56,7 @@ interface BusinessProfileProps {
       description: string | null;
       duration: number;
       price: number;
+      image: string | null;
     }>;
   }>;
   staff: Array<{
@@ -60,9 +71,12 @@ interface BusinessProfileProps {
       endTime: string;
     }>;
   }>;
+  reviews?: ReviewData[];
+  averageRating?: number;
+  reviewCount?: number;
 }
 
-const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
@@ -84,10 +98,38 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function BusinessProfile({ business, categories, staff }: BusinessProfileProps) {
+function StarRating({ rating, color }: { rating: number; color: string }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className="w-4 h-4"
+          fill={i <= rating ? color : "transparent"}
+          stroke={i <= rating ? color : "currentColor"}
+          strokeWidth={1.5}
+        />
+      ))}
+    </div>
+  );
+}
+
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Hoy";
+  if (diffDays === 1) return "Ayer";
+  if (diffDays < 7) return `Hace ${diffDays} días`;
+  if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+  return `Hace ${Math.floor(diffDays / 30)} meses`;
+}
+
+export function BusinessProfile({ business, categories, staff, reviews = [], averageRating = 0, reviewCount = 0 }: BusinessProfileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const staffRef = useRef<HTMLDivElement>(null);
+  const reviewsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -155,6 +197,21 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
           scrollTrigger: { trigger: ".bp-hours", start: "top 85%" },
         }
       );
+
+      // Reviews stagger
+      if (reviewsRef.current) {
+        gsap.fromTo(
+          ".bp-review-card",
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            stagger: 0.08,
+            scrollTrigger: { trigger: reviewsRef.current, start: "top 80%" },
+          }
+        );
+      }
     }, containerRef.current);
 
     return () => ctx.revert();
@@ -180,9 +237,25 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
       label: "WhatsApp",
       href: `https://wa.me/${business.whatsapp.replace(/\D/g, "")}`,
     },
+    {
+      icon: CalendarCheck,
+      label: "Mis turnos",
+      href: `/${business.slug}/mis-turnos`,
+    },
   ].filter(Boolean) as Array<{ icon: typeof Phone; label: string; href: string }>;
 
   const allServices = categories.flatMap((c) => c.services);
+
+  const primary = business.primaryColor || "#6366f1";
+  const accent = business.accentColor || "#22d3ee";
+  const gradientStyle = { background: `linear-gradient(135deg, ${primary}, ${accent})` };
+  const gradientTextStyle = {
+    background: `linear-gradient(135deg, ${primary}, ${accent})`,
+    WebkitBackgroundClip: "text" as const,
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+  };
+  const glowStyle = { boxShadow: `0 0 30px ${primary}40, 0 0 60px ${primary}20` };
 
   return (
     <div ref={containerRef} className="min-h-screen pb-24 md:pb-8">
@@ -199,7 +272,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
           </>
         ) : (
           <>
-            <div className="absolute inset-0 brand-gradient opacity-[0.12]" />
+            <div className="absolute inset-0 opacity-[0.12]" style={gradientStyle} />
             <div className="absolute inset-0 bg-grid-pattern" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
           </>
@@ -235,7 +308,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-2 ring-white/10 shadow-2xl"
               />
             ) : (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl brand-gradient flex items-center justify-center text-white text-2xl sm:text-3xl font-heading font-bold shadow-2xl ring-2 ring-white/10">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-heading font-bold shadow-2xl ring-2 ring-white/10" style={gradientStyle}>
                 {getInitials(business.name)}
               </div>
             )}
@@ -253,7 +326,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
 
           <div className="bp-hero-cta opacity-0">
             <Link href={`/${business.slug}/reservar`}>
-              <MagneticButton className="brand-gradient text-white px-8 py-3.5 rounded-xl font-medium text-lg inline-flex items-center gap-2.5 glow-primary cursor-pointer">
+              <MagneticButton className="text-white px-8 py-3.5 rounded-xl font-medium text-lg inline-flex items-center gap-2.5 cursor-pointer" style={{ ...gradientStyle, ...glowStyle }}>
                 <Sparkles className="w-5 h-5" />
                 Reservar turno
                 <ArrowRight className="w-5 h-5" />
@@ -263,7 +336,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
 
           {/* Scroll hint */}
           <div className="bp-hero-scroll opacity-0 mt-12 flex flex-col items-center gap-1 text-muted-foreground/50">
-            <span className="text-xs">Conoce mas</span>
+            <span className="text-xs">Conocé más</span>
             <ChevronDown className="w-4 h-4 animate-bounce" />
           </div>
         </div>
@@ -298,7 +371,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
       {allServices.length > 0 && (
         <section ref={servicesRef} className="max-w-4xl mx-auto px-4 mb-16">
           <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            Servicios
+            <span style={gradientTextStyle}>Servicios</span>
           </h2>
 
           {categories
@@ -307,7 +380,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
               <div key={category.id} className="mb-8 last:mb-0">
                 {categories.length > 1 && (
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full brand-gradient" />
+                    <div className="w-1.5 h-1.5 rounded-full" style={gradientStyle} />
                     {category.name}
                   </h3>
                 )}
@@ -316,11 +389,19 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
                   {category.services.map((service) => (
                     <div
                       key={service.id}
-                      className="bp-service-card opacity-0 glass rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/5 group"
+                      className="bp-service-card opacity-0 glass rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg group"
+                      style={{ "--tw-shadow-color": `${primary}10` } as React.CSSProperties}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 p-5">
+                        {service.image && (
+                          <img
+                            src={service.image}
+                            alt={service.name}
+                            className="w-16 h-16 rounded-lg object-cover shrink-0 ring-1 ring-white/10"
+                          />
+                        )}
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-heading font-semibold text-base mb-1 group-hover:text-primary transition-colors">
+                          <h4 className="font-heading font-semibold text-base mb-1">
                             {service.name}
                           </h4>
                           {service.description && (
@@ -336,7 +417,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="text-lg font-heading font-bold brand-text">
+                          <span className="text-lg font-heading font-bold" style={gradientTextStyle}>
                             {formatPrice(service.price)}
                           </span>
                         </div>
@@ -353,32 +434,35 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
       {staff.length > 0 && (
         <section ref={staffRef} className="max-w-4xl mx-auto px-4 mb-16">
           <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            Nuestro equipo
+            <span style={gradientTextStyle}>Nuestro equipo</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {staff.map((member) => (
               <div
                 key={member.id}
-                className="bp-staff-card opacity-0 glass rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/5"
+                className="bp-staff-card opacity-0 glass rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                style={{ "--tw-shadow-color": `${primary}10` } as React.CSSProperties}
               >
                 <div className="flex items-start gap-4">
-                  {/* Avatar */}
                   {member.image ? (
                     <img
                       src={member.image}
                       alt={member.name}
-                      className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
+                      className="w-20 h-20 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
                     />
                   ) : (
-                    <div className="w-14 h-14 rounded-xl brand-gradient flex items-center justify-center text-white font-heading font-bold text-lg shrink-0 ring-1 ring-white/10">
+                    <div className="w-20 h-20 rounded-xl flex items-center justify-center text-white font-heading font-bold text-xl shrink-0 ring-1 ring-white/10" style={gradientStyle}>
                       {getInitials(member.name)}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <h4 className="font-heading font-semibold text-base">{member.name}</h4>
                     {member.specialty && (
-                      <span className="inline-block mt-1 mb-2 px-2.5 py-0.5 rounded-full text-xs bg-primary/10 text-primary font-medium">
+                      <span
+                        className="inline-block mt-1 mb-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        style={{ backgroundColor: `${primary}15`, color: primary }}
+                      >
                         {member.specialty}
                       </span>
                     )}
@@ -399,7 +483,7 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
       {hoursSource.length > 0 && (
         <section className="max-w-4xl mx-auto px-4 mb-16">
           <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            Horarios
+            <span style={gradientTextStyle}>Horarios</span>
           </h2>
 
           <div className="bp-hours opacity-0 glass rounded-xl p-5 sm:p-6 max-w-md">
@@ -432,11 +516,63 @@ export function BusinessProfile({ business, categories, staff }: BusinessProfile
         </section>
       )}
 
+      {/* ─── Reviews ─── */}
+      {reviews.length > 0 && (
+        <section ref={reviewsRef} className="max-w-4xl mx-auto px-4 mb-16">
+          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-2">
+            <span style={gradientTextStyle}>Reseñas</span>
+          </h2>
+
+          <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center gap-1.5">
+              <StarRating rating={Math.round(averageRating)} color={primary} />
+              <span className="text-lg font-heading font-bold" style={gradientTextStyle}>
+                {averageRating.toFixed(1)}
+              </span>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              ({reviewCount} {reviewCount === 1 ? "reseña" : "reseñas"})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {reviews.map((review) => (
+              <div
+                key={review.id}
+                className="bp-review-card opacity-0 glass rounded-xl p-5 transition-all duration-300 hover:scale-[1.02]"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                      style={gradientStyle}
+                    >
+                      {review.clientName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{review.clientName}</p>
+                      <p className="text-xs text-muted-foreground">{formatRelativeDate(review.createdAt)}</p>
+                    </div>
+                  </div>
+                  <StarRating rating={review.rating} color={primary} />
+                </div>
+                {review.comment && (
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    {review.comment}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ─── Floating Mobile CTA ─── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
         <Link
           href={`/${business.slug}/reservar`}
-          className="block w-full brand-gradient text-white text-center py-3.5 rounded-xl font-medium text-base glow-primary"
+          className="block w-full text-white text-center py-3.5 rounded-xl font-medium text-base"
+          style={{ ...gradientStyle, ...glowStyle }}
         >
           Reservar turno
         </Link>

@@ -82,7 +82,7 @@ export function BusinessSettings() {
         throw new Error(err.error);
       }
 
-      toast.success("Configuracion guardada");
+      toast.success("Configuración guardada");
       mutate();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al guardar");
@@ -245,7 +245,7 @@ export function BusinessSettings() {
       {/* Booking settings */}
       <div className="glass rounded-xl p-6 space-y-4">
         <h3 className="font-heading font-semibold flex items-center gap-2">
-          <Settings className="w-4 h-4" /> Configuracion de turnos
+          <Settings className="w-4 h-4" /> Configuración de turnos
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

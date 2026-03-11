@@ -80,7 +80,7 @@ export function StepInfo({ slug }: { slug: string }) {
 
           <div>
             <Label htmlFor="phone" className="text-sm font-medium mb-1.5 block">
-              Telefono *
+              Teléfono *
             </Label>
             <Input
               id="phone"

@@ -56,7 +56,7 @@ export function PaymentConfig() {
         throw new Error(err.error);
       }
 
-      toast.success("Configuracion de pagos guardada");
+      toast.success("Configuración de pagos guardada");
       mutate();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al guardar");
@@ -107,8 +107,8 @@ export function PaymentConfig() {
           {[
             { value: "DISABLED", label: "Deshabilitado", desc: "Sin cobro online" },
             { value: "FULL", label: "Pago total", desc: "Cobrar el total del servicio" },
-            { value: "PERCENTAGE", label: "Porcentaje", desc: "Cobrar un porcentaje como sena" },
-            { value: "FIXED", label: "Monto fijo", desc: "Cobrar un monto fijo como sena" },
+            { value: "PERCENTAGE", label: "Porcentaje", desc: "Cobrar un porcentaje como seña" },
+            { value: "FIXED", label: "Monto fijo", desc: "Cobrar un monto fijo como seña" },
           ].map((opt) => (
             <label
               key={opt.value}
@@ -134,7 +134,7 @@ export function PaymentConfig() {
 
         {paymentMode === "PERCENTAGE" && (
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Porcentaje de sena (%)</label>
+            <label className="text-sm font-medium mb-1.5 block">Porcentaje de seña (%)</label>
             <input
               {...register("depositPercentage", { valueAsNumber: true })}
               type="number"
@@ -190,12 +190,12 @@ export function PaymentConfig() {
 
       {/* Cancellation policy */}
       <div className="glass rounded-xl p-6 space-y-4">
-        <h3 className="font-heading font-semibold">Politica de cancelacion</h3>
+        <h3 className="font-heading font-semibold">Política de cancelación</h3>
         <textarea
           value={cancellationPolicy}
           onChange={(e) => setCancellationPolicy(e.target.value)}
           rows={4}
-          placeholder="Describe tu politica de cancelacion y reembolsos..."
+          placeholder="Describe tu política de cancelación y reembolsos..."
           className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
         />
       </div>
@@ -208,7 +208,7 @@ export function PaymentConfig() {
           className="h-10 px-6 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center gap-2"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Guardar configuracion
+          Guardar configuración
         </button>
       </div>
     </form>

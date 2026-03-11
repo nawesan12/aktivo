@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const sizes = {
   xs: { icon: 16, text: "text-sm" },
@@ -12,57 +15,52 @@ interface JikuLogoProps {
   size?: keyof typeof sizes;
   iconOnly?: boolean;
   className?: string;
+  animated?: boolean;
 }
 
-/**
- * Jiku brand icon — axis circle (circle with vertical + horizontal lines)
- * in jade green. Represents the central axis around which everything revolves.
- */
-function LogoIcon({ size = 24 }: { size?: number }) {
+function LogoIcon({ size = 24, animated = false }: { size?: number; animated?: boolean }) {
   return (
-    <svg
+    <Image
+      src="/jiku-logo.png"
+      alt=""
       width={size}
       height={size}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Circle */}
-      <circle cx="24" cy="24" r="21" stroke="#4ADE80" strokeWidth="3" fill="none" />
-      {/* Vertical axis */}
-      <line x1="24" y1="8" x2="24" y2="40" stroke="#4ADE80" strokeWidth="3" strokeLinecap="round" />
-      {/* Horizontal axis */}
-      <line x1="8" y1="24" x2="40" y2="24" stroke="#4ADE80" strokeWidth="3" strokeLinecap="round" />
-    </svg>
+      aria-hidden
+      className={animated ? "jiku-logo-animated" : undefined}
+      style={{ width: size, height: size }}
+      priority
+    />
   );
 }
 
-export function JikuLogo({ size = "sm", iconOnly = false, className }: JikuLogoProps) {
+export function JikuLogo({ size = "sm", iconOnly = false, className, animated = false }: JikuLogoProps) {
   const config = sizes[size];
 
   if (iconOnly) {
     return (
       <div className={cn("shrink-0", className)}>
-        <LogoIcon size={config.icon} />
+        <LogoIcon size={config.icon} animated={animated} />
       </div>
     );
   }
 
   return (
     <div className={cn("flex items-center gap-2 shrink-0", className)}>
-      <LogoIcon size={config.icon} />
-      <span className={cn("font-heading font-bold", config.text)} style={{ color: "#4ADE80" }}>
+      <LogoIcon size={config.icon} animated={animated} />
+      <span
+        className={cn("font-heading font-bold", config.text)}
+        style={{ color: "#4ADE80", letterSpacing: "-0.03em" }}
+      >
         jiku
       </span>
     </div>
   );
 }
 
-export function JikuIcon({ size = 24, className }: { size?: number; className?: string }) {
+export function JikuIcon({ size = 24, className, animated = false }: { size?: number; className?: string; animated?: boolean }) {
   return (
     <div className={cn("shrink-0", className)}>
-      <LogoIcon size={size} />
+      <LogoIcon size={size} animated={animated} />
     </div>
   );
 }

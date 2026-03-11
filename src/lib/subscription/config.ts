@@ -65,6 +65,7 @@ export const PLAN_PRICES: Record<string, { amount: number; currency: string }> =
 };
 
 export const GRACE_PERIOD_DAYS = 7;
+export const FREE_TRIAL_DAYS = 14;
 
 const PLAN_ORDER: BusinessPlan[] = ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"];
 

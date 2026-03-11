@@ -49,7 +49,7 @@ const statuses = [
   { value: "CONFIRMED", label: "Confirmado" },
   { value: "COMPLETED", label: "Completado" },
   { value: "CANCELLED", label: "Cancelado" },
-  { value: "NO_SHOW", label: "No asistio" },
+  { value: "NO_SHOW", label: "No asistió" },
 ];
 
 export function AppointmentsTable() {
@@ -231,7 +231,7 @@ export function AppointmentsTable() {
                                     onClick={() => handleStatusChange(apt.id, "NO_SHOW")}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-zinc-400"
                                   >
-                                    <UserX className="w-3.5 h-3.5" /> No asistio
+                                    <UserX className="w-3.5 h-3.5" /> No asistió
                                   </button>
                                 </>
                               )}

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import { useBookingStore } from "@/stores/booking-store";
 import { MagneticButton } from "@/components/premium/magnetic-button";
@@ -55,9 +57,9 @@ function getPaymentLabel(config: PaymentConfig): string {
     case "FULL":
       return "Pago total requerido";
     case "PERCENTAGE":
-      return `Sena del ${config.depositPercentage}%`;
+      return `Seña del ${config.depositPercentage}%`;
     case "FIXED":
-      return "Sena fija requerida";
+      return "Seña fija requerida";
     default:
       return "";
   }
@@ -114,9 +116,9 @@ export function StepConfirm({ slug }: { slug: string }) {
       }
 
       // Otherwise go to confirmation page
-      router.push(`/${slug}/reservar/confirmacion`);
+      router.push(`/${slug}/reservar/confirmacion?appointmentId=${data.id}`);
     } catch {
-      toast.error("Error de conexion. Intenta de nuevo.");
+      toast.error("Error de conexión. Intentá de nuevo.");
       setSubmitting(false);
     }
   };
@@ -166,7 +168,7 @@ export function StepConfirm({ slug }: { slug: string }) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Fecha y hora</p>
-            <p className="font-medium text-sm">{store.date} a las {store.time}</p>
+            <p className="font-medium text-sm">{format(parseISO(store.date), "EEEE d 'de' MMMM", { locale: es })} a las {store.time}</p>
           </div>
         </div>
 
@@ -212,7 +214,7 @@ export function StepConfirm({ slug }: { slug: string }) {
               <div className="flex-1">
                 <p className="text-sm font-medium">{getPaymentLabel(paymentConfig)}</p>
                 <p className="text-xs text-muted-foreground">
-                  Se procesara via MercadoPago
+                  Se procesará vía MercadoPago
                 </p>
               </div>
               <span className="text-lg font-heading font-bold brand-text">

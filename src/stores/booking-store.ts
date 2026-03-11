@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+export type RecurrenceFrequency = "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+
 export interface BookingState {
   step: number;
   businessId: string | null;
@@ -17,6 +19,8 @@ export interface BookingState {
   guestPhone: string | null;
   guestEmail: string | null;
   notes: string | null;
+  recurrenceFrequency: RecurrenceFrequency | null;
+  recurrenceCount: number | null;
 
   setStep: (step: number) => void;
   setBusiness: (id: string, slug: string) => void;
@@ -25,6 +29,7 @@ export interface BookingState {
   setDateTime: (date: string, time: string) => void;
   setGuestInfo: (name: string, phone: string, email?: string) => void;
   setNotes: (notes: string) => void;
+  setRecurrence: (frequency: RecurrenceFrequency | null, count: number | null) => void;
   reset: () => void;
 }
 
@@ -44,6 +49,8 @@ const initialState = {
   guestPhone: null,
   guestEmail: null,
   notes: null,
+  recurrenceFrequency: null,
+  recurrenceCount: null,
 };
 
 export const useBookingStore = create<BookingState>()(
@@ -64,6 +71,8 @@ export const useBookingStore = create<BookingState>()(
       setGuestInfo: (name, phone, email) =>
         set({ guestName: name, guestPhone: phone, guestEmail: email || null }),
       setNotes: (notes) => set({ notes }),
+      setRecurrence: (frequency, count) =>
+        set({ recurrenceFrequency: frequency, recurrenceCount: count }),
       reset: () => set(initialState),
     }),
     {

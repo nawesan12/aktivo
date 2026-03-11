@@ -66,6 +66,8 @@ export const appointmentSchema = z.object({
   staffId: z.string().min(1, "Selecciona un profesional"),
   dateTime: z.string().min(1, "Selecciona fecha y hora"),
   notes: z.string().max(500).optional(),
+  recurrenceFrequency: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY"]).optional(),
+  recurrenceCount: z.number().min(2).max(12).optional(),
 });
 
 export const guestInfoSchema = z.object({

@@ -49,7 +49,7 @@ export default function RegisterPage() {
             <JikuLogo size="md" />
           </Link>
           <h1 className="text-2xl font-heading font-bold">Crea tu cuenta</h1>
-          <p className="text-muted-foreground text-sm mt-1">Empeza a gestionar tu negocio</p>
+          <p className="text-muted-foreground text-sm mt-1">Empezá a gestionar tu negocio</p>
         </div>
         <div className="glass rounded-2xl p-8 space-y-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -90,7 +90,7 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Contrasena</label>
+              <label className="text-sm font-medium mb-1.5 block">Contraseña</label>
               <input
                 {...register("password")}
                 type="password"
@@ -102,7 +102,7 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Confirmar contrasena</label>
+              <label className="text-sm font-medium mb-1.5 block">Confirmar contraseña</label>
               <input
                 {...register("confirmPassword")}
                 type="password"
@@ -127,7 +127,7 @@ export default function RegisterPage() {
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">o continua con</span>
+              <span className="bg-card px-2 text-muted-foreground">o continuá con</span>
             </div>
           </div>
           <button
@@ -139,9 +139,9 @@ export default function RegisterPage() {
             Google
           </button>
           <p className="text-center text-sm text-muted-foreground">
-            Ya tenes cuenta?{" "}
+            Ya tenés cuenta?{" "}
             <Link href="/iniciar-sesion" className="text-primary hover:underline">
-              Inicia sesion
+              Inicia sesión
             </Link>
           </p>
         </div>

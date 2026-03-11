@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { hexToHsl } from "@/lib/utils";
 
 export default async function BookingLayout({
   children,
@@ -31,8 +32,16 @@ export default async function BookingLayout({
     "--business-accent": business.accentColor || "#22d3ee",
   } as React.CSSProperties;
 
+  // Override Tailwind --primary so all bg-primary/text-primary use business color
+  const primaryHsl = business.primaryColor ? hexToHsl(business.primaryColor) : null;
+
   return (
     <div style={brandStyle} className="min-h-screen">
+      {primaryHsl && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root { --primary: ${primaryHsl}; }
+        ` }} />
+      )}
       {/* Minimal header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">

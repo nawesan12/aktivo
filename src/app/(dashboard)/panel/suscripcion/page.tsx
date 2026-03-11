@@ -15,28 +15,16 @@ import {
   Megaphone,
   Shield,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const PLANS = [
   {
-    key: "FREE",
-    name: "Starter",
-    price: 0,
-    period: "Gratis para siempre",
-    features: [
-      "1 profesional",
-      "Hasta 50 turnos/mes",
-      "Reservas 24/7",
-      "Recordatorios WhatsApp",
-    ],
-    icon: Calendar,
-  },
-  {
     key: "PROFESSIONAL",
     name: "Pro",
     price: 4990,
-    period: "ARS/mes",
+    period: "mes",
     features: [
       "Hasta 5 profesionales",
       "Turnos ilimitados",
@@ -53,7 +41,7 @@ const PLANS = [
     key: "ENTERPRISE",
     name: "Business",
     price: 9990,
-    period: "ARS/mes",
+    period: "mes",
     features: [
       "Profesionales ilimitados",
       "Todo lo de Pro",
@@ -150,6 +138,8 @@ export default function SubscriptionPage() {
   const usage = data?.usage;
   const subscription = data?.subscription;
   const statusInfo = subscription ? STATUS_LABELS[subscription.status] : null;
+  const trialDaysRemaining = data?.trialDaysRemaining || 0;
+  const isOnTrial = trialDaysRemaining > 0 && !subscription;
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -157,6 +147,24 @@ export default function SubscriptionPage() {
         <h1 className="text-2xl font-heading font-bold">Suscripción</h1>
         <p className="text-muted-foreground text-sm mt-1">Administrá tu plan y facturación</p>
       </div>
+
+      {/* Trial banner */}
+      {isOnTrial && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-heading font-semibold">Prueba gratuita de 14 días</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Estás disfrutando de todas las funcionalidades Pro sin costo.
+              Te {trialDaysRemaining === 1 ? "queda" : "quedan"}{" "}
+              <span className="font-semibold text-primary">{trialDaysRemaining} {trialDaysRemaining === 1 ? "día" : "días"}</span>.
+              Elegí un plan para no perder el acceso.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Current plan + status */}
       <div className="glass rounded-xl p-6 space-y-4">
@@ -167,7 +175,8 @@ export default function SubscriptionPage() {
             </div>
             <div>
               <h2 className="font-heading font-semibold">
-                Plan {currentPlan === "FREE" || currentPlan === "STARTER" ? "Starter" : currentPlan === "PROFESSIONAL" ? "Pro" : "Business"}
+                Plan {currentPlan === "PROFESSIONAL" ? "Pro" : currentPlan === "ENTERPRISE" ? "Business" : "Pro"}
+                {isOnTrial && <span className="text-sm font-normal text-muted-foreground ml-2">(Prueba gratuita)</span>}
               </h2>
               {statusInfo && (
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${statusInfo.color}`}>
@@ -218,12 +227,14 @@ export default function SubscriptionPage() {
       </div>
 
       {/* Plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
         {PLANS.map((plan) => {
-          const isCurrent = currentPlan === plan.key || (currentPlan === "STARTER" && plan.key === "FREE");
-          const isUpgrade =
-            (plan.key === "PROFESSIONAL" && (currentPlan === "FREE" || currentPlan === "STARTER")) ||
-            (plan.key === "ENTERPRISE" && currentPlan !== "ENTERPRISE");
+          const isCurrent = currentPlan === plan.key && !isOnTrial && subscription?.status === "AUTHORIZED";
+          const showSubscribe = !isCurrent && (
+            plan.key === "ENTERPRISE"
+              ? currentPlan !== "ENTERPRISE" || isOnTrial
+              : isOnTrial || currentPlan === "FREE" || currentPlan === "STARTER"
+          );
           const PlanIcon = plan.icon;
 
           return (
@@ -241,16 +252,10 @@ export default function SubscriptionPage() {
                 <h3 className="font-heading font-semibold text-lg">{plan.name}</h3>
               </div>
               <div className="mb-1">
-                {plan.price > 0 ? (
-                  <>
-                    <span className="text-3xl font-heading font-bold">{formatPrice(plan.price)}</span>
-                    <span className="text-sm text-muted-foreground ml-1">/{plan.period.replace("ARS/", "")}</span>
-                  </>
-                ) : (
-                  <span className="text-3xl font-heading font-bold">Gratis</span>
-                )}
+                <span className="text-3xl font-heading font-bold">{formatPrice(plan.price)}</span>
+                <span className="text-sm text-muted-foreground ml-1">/{plan.period}</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-4">{plan.period}</p>
+              <p className="text-xs text-muted-foreground mb-4">14 días de prueba gratis</p>
 
               <ul className="space-y-2 flex-1 mb-6">
                 {plan.features.map((f) => (
@@ -265,7 +270,7 @@ export default function SubscriptionPage() {
                 <div className="text-center text-sm font-medium text-muted-foreground py-2 border border-border rounded-lg">
                   Plan actual
                 </div>
-              ) : isUpgrade ? (
+              ) : showSubscribe ? (
                 <button
                   onClick={() => handleSubscribe(plan.key)}
                   disabled={subscribing !== null}
@@ -293,28 +298,26 @@ export default function SubscriptionPage() {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left px-6 py-3 font-medium text-muted-foreground">Funcionalidad</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Starter</th>
                 <th className="text-center px-4 py-3 font-medium text-primary">Pro</th>
                 <th className="text-center px-4 py-3 font-medium text-muted-foreground">Business</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { name: "Profesionales", free: "1", pro: "5", ent: "Ilimitados", icon: Users },
-                { name: "Turnos/mes", free: "50", pro: "Ilimitados", ent: "Ilimitados", icon: Calendar },
-                { name: "Cobros MP", free: false, pro: true, ent: true, icon: CreditCard },
-                { name: "CRM y tags", free: false, pro: true, ent: true, icon: Shield },
-                { name: "Campañas", free: false, pro: true, ent: true, icon: Megaphone },
-                { name: "Reportes avanzados", free: false, pro: true, ent: true, icon: BarChart2 },
-                { name: "Multi-sucursal", free: false, pro: false, ent: true, icon: MapPin },
-                { name: "Marca blanca", free: false, pro: false, ent: true, icon: Crown },
+                { name: "Profesionales", pro: "5", ent: "Ilimitados", icon: Users },
+                { name: "Turnos/mes", pro: "Ilimitados", ent: "Ilimitados", icon: Calendar },
+                { name: "Cobros MP", pro: true, ent: true, icon: CreditCard },
+                { name: "CRM y tags", pro: true, ent: true, icon: Shield },
+                { name: "Campañas", pro: true, ent: true, icon: Megaphone },
+                { name: "Reportes avanzados", pro: true, ent: true, icon: BarChart2 },
+                { name: "Multi-sucursal", pro: false, ent: true, icon: MapPin },
+                { name: "Marca blanca", pro: false, ent: true, icon: Crown },
               ].map((row) => (
                 <tr key={row.name} className="border-b border-border/50">
                   <td className="px-6 py-3 flex items-center gap-2">
                     <row.icon className="w-4 h-4 text-muted-foreground" />
                     {row.name}
                   </td>
-                  <td className="text-center px-4 py-3">{renderCell(row.free)}</td>
                   <td className="text-center px-4 py-3">{renderCell(row.pro)}</td>
                   <td className="text-center px-4 py-3">{renderCell(row.ent)}</td>
                 </tr>

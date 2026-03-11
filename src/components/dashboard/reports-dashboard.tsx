@@ -76,7 +76,7 @@ export function ReportsDashboard() {
         <KpiCard
           label="Turnos"
           value={summary.totalAppointments.toString()}
-          change={`Ultimos ${range === "7d" ? "7" : range === "90d" ? "90" : "30"} dias`}
+          change={`Últimos ${range === "7d" ? "7" : range === "90d" ? "90" : "30"} dias`}
           icon={Calendar}
           trend="neutral"
         />
@@ -90,7 +90,7 @@ export function ReportsDashboard() {
         <KpiCard
           label="Clientes"
           value={summary.totalClients.toString()}
-          change="Clientes unicos"
+          change="Clientes únicos"
           icon={Users}
           trend="neutral"
         />

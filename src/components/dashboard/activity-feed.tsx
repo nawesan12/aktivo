@@ -84,22 +84,23 @@ function formatAction(action: string, entity: string): string {
     Service: "servicio",
     StaffMember: "profesional",
     Business: "negocio",
-    BusinessSettings: "configuracion",
-    ServiceCategory: "categoria",
+    BusinessSettings: "configuración",
+    ServiceCategory: "categoría",
     Payment: "pago",
   };
 
   const actionNames: Record<string, string> = {
-    create: "creo",
-    update: "actualizo",
-    delete: "elimino",
-    confirm: "confirmo",
-    complete: "completo",
-    cancel: "cancelo",
+    create: "creó",
+    update: "actualizó",
+    delete: "eliminó",
+    confirm: "confirmó",
+    complete: "completó",
+    cancel: "canceló",
   };
 
   const parts = action.split(":");
-  const verb = actionNames[parts[1]] || parts[1] || action;
+  const actionKey = (parts.length > 1 ? parts[1] : parts[0]).toLowerCase();
+  const verb = actionNames[actionKey] || actionKey || action;
   const noun = entityNames[entity] || entity;
 
   return `${verb} un ${noun}`;

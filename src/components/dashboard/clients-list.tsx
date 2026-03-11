@@ -78,7 +78,7 @@ export function ClientsList() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar por nombre, telefono o email..."
+              placeholder="Buscar por nombre, teléfono o email..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-full h-9 pl-9 pr-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
@@ -93,10 +93,10 @@ export function ClientsList() {
               <thead>
                 <tr className="border-b border-border text-left">
                   <th className="p-3 text-xs font-medium text-muted-foreground">Nombre</th>
-                  <th className="p-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Telefono</th>
+                  <th className="p-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Teléfono</th>
                   <th className="p-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Email</th>
                   <th className="p-3 text-xs font-medium text-muted-foreground">Turnos</th>
-                  <th className="p-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Ultimo turno</th>
+                  <th className="p-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Último turno</th>
                   <th className="p-3 text-xs font-medium text-muted-foreground">Fuente</th>
                 </tr>
               </thead>

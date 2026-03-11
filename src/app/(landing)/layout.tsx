@@ -8,9 +8,9 @@ export default function LandingLayout({
     "@type": "Organization",
     name: "Jiku",
     url: "https://jiku.app",
-    logo: "https://jiku.app/favicon.svg",
+    logo: "https://jiku.app/jiku-logo.svg",
     description:
-      "Plataforma de gestion de turnos, CRM, pagos y fidelizacion para negocios de servicios en Argentina.",
+      "Plataforma de gestión de turnos, CRM, pagos y fidelización para negocios de servicios en Argentina.",
   };
 
   const softwareJsonLd = {
@@ -21,13 +21,6 @@ export default function LandingLayout({
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: [
-      {
-        "@type": "Offer",
-        name: "Free",
-        price: "0",
-        priceCurrency: "ARS",
-        description: "Hasta 50 turnos/mes, 1 profesional, pagina de reservas",
-      },
       {
         "@type": "Offer",
         name: "Starter",
@@ -71,66 +64,66 @@ export default function LandingLayout({
     mainEntity: [
       {
         "@type": "Question",
-        name: "Cuanto tarda la configuracion inicial?",
+        name: "¿Cuánto tarda la configuración inicial?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Menos de 5 minutos. Creas tu cuenta, agregas tus servicios y profesionales, y ya podes compartir tu link de reservas.",
+          text: "Menos de 5 minutos. Creás tu cuenta, agregás tus servicios y profesionales, y ya podés compartir tu link de reservas.",
         },
       },
       {
         "@type": "Question",
-        name: "El plan gratuito es realmente gratis?",
+        name: "¿El plan gratuito es realmente gratis?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Si, 100% gratis para siempre. Sin tarjeta de credito, sin pruebas que vencen. Incluye hasta 50 turnos por mes y 1 profesional.",
+          text: "Sí, 100% gratis para siempre. Sin tarjeta de crédito, sin pruebas que vencen. Incluye hasta 50 turnos por mes y 1 profesional.",
         },
       },
       {
         "@type": "Question",
-        name: "Como funcionan los pagos con MercadoPago?",
+        name: "¿Cómo funcionan los pagos con MercadoPago?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Conectas tu cuenta de MercadoPago en 2 clicks. Tus clientes pagan senas o el total al reservar, y el dinero va directo a tu cuenta.",
+          text: "Conectás tu cuenta de MercadoPago en 2 clicks. Tus clientes pagan señas o el total al reservar, y el dinero va directo a tu cuenta.",
         },
       },
       {
         "@type": "Question",
-        name: "Puedo migrar mis datos desde otra plataforma?",
+        name: "¿Puedo migrar mis datos desde otra plataforma?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Si, ofrecemos asistencia para migrar tu base de clientes e historial. Contacta a nuestro equipo y te ayudamos sin costo.",
+          text: "Sí, ofrecemos asistencia para migrar tu base de clientes e historial. Contactá a nuestro equipo y te ayudamos sin costo.",
         },
       },
       {
         "@type": "Question",
-        name: "Hay limite de turnos en los planes pagos?",
+        name: "¿Hay límite de turnos en los planes pagos?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "No. Los planes Starter y Professional incluyen turnos ilimitados. Solo el plan Free tiene un limite de 50 turnos por mes.",
+          text: "No. Los planes Starter y Professional incluyen turnos ilimitados.",
         },
       },
       {
         "@type": "Question",
-        name: "Puedo gestionar multiples sucursales?",
+        name: "¿Puedo gestionar múltiples sucursales?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Si, con el plan Professional podes gestionar todas tus sucursales desde una sola cuenta, cada una con su configuracion independiente.",
+          text: "Sí, con el plan Professional podés gestionar todas tus sucursales desde una sola cuenta, cada una con su configuración independiente.",
         },
       },
       {
         "@type": "Question",
-        name: "Que tipo de soporte ofrecen?",
+        name: "¿Qué tipo de soporte ofrecen?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Soporte por chat y email en espanol. Los planes pagos tienen soporte prioritario con respuesta en menos de 2 horas.",
+          text: "Soporte por chat y email en español. Los planes pagos tienen soporte prioritario con respuesta en menos de 2 horas.",
         },
       },
       {
         "@type": "Question",
-        name: "Puedo cancelar en cualquier momento?",
+        name: "¿Puedo cancelar en cualquier momento?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Si, sin preguntas ni permanencia minima. Cancelas desde tu panel y seguis usando el plan Free.",
+          text: "Sí, sin preguntas ni permanencia mínima. Cancelás desde tu panel y seguís usando la plataforma.",
         },
       },
     ],

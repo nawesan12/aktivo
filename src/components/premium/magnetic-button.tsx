@@ -6,6 +6,7 @@ import gsap from "gsap";
 interface MagneticButtonProps {
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   strength?: number;
   onClick?: () => void;
 }
@@ -13,6 +14,7 @@ interface MagneticButtonProps {
 export function MagneticButton({
   children,
   className = "",
+  style,
   strength = 0.3,
   onClick,
 }: MagneticButtonProps) {
@@ -46,6 +48,7 @@ export function MagneticButton({
     <button
       ref={ref}
       className={className}
+      style={style}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}

@@ -31,7 +31,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      toast.error("Credenciales invalidas");
+      toast.error("Credenciales inválidas");
       return;
     }
 
@@ -68,7 +68,7 @@ export default function LoginPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Contrasena</label>
+              <label className="text-sm font-medium mb-1.5 block">Contraseña</label>
               <input
                 {...register("password")}
                 type="password"
@@ -81,7 +81,7 @@ export default function LoginPage() {
             </div>
             <div className="flex justify-end">
               <Link href="/recuperar-contrasena" className="text-xs text-primary hover:underline">
-                Olvidaste tu contrasena?
+                Olvidaste tu contraseña?
               </Link>
             </div>
             <button

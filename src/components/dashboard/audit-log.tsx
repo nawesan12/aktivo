@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -53,7 +53,7 @@ export function AuditLog() {
       <div className="glass rounded-xl p-4 flex flex-wrap gap-3">
         <input
           type="text"
-          placeholder="Filtrar por accion..."
+          placeholder="Filtrar por acción..."
           value={action}
           onChange={(e) => { setAction(e.target.value); setPage(1); }}
           className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm flex-1 min-w-[150px] outline-none focus:ring-2 focus:ring-primary"
@@ -81,7 +81,7 @@ export function AuditLog() {
               <tr className="border-b border-border text-left">
                 <th className="p-3 text-xs font-medium text-muted-foreground">Fecha</th>
                 <th className="p-3 text-xs font-medium text-muted-foreground">Usuario</th>
-                <th className="p-3 text-xs font-medium text-muted-foreground">Accion</th>
+                <th className="p-3 text-xs font-medium text-muted-foreground">Acción</th>
                 <th className="p-3 text-xs font-medium text-muted-foreground">Entidad</th>
                 <th className="p-3 text-xs font-medium text-muted-foreground w-10"></th>
               </tr>
@@ -91,13 +91,13 @@ export function AuditLog() {
                 <tr>
                   <td colSpan={5} className="p-12 text-center">
                     <Shield className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-                    <p className="text-muted-foreground text-sm">Sin registros de auditoria</p>
+                    <p className="text-muted-foreground text-sm">Sin registros de auditoría</p>
                   </td>
                 </tr>
               ) : (
                 logs.map((log) => (
-                  <>
-                    <tr key={log.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
+                  <Fragment key={log.id}>
+                    <tr className="border-b border-border/50 hover:bg-muted/10 transition-colors">
                       <td className="p-3">
                         <p className="text-sm">{format(new Date(log.createdAt), "dd/MM/yy HH:mm", { locale: es })}</p>
                       </td>
@@ -138,7 +138,7 @@ export function AuditLog() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))
               )}
             </tbody>
