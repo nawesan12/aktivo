@@ -23,7 +23,7 @@ function getResetEmailHtml(resetUrl: string): string {
         Recupera tu contrasena
       </h2>
       <p style="color:#a1a1aa;font-size:16px;line-height:1.6;margin:0 0 24px 0;">
-        Recibimos una solicitud para restablecer la contrasena de tu cuenta. Hace click en el boton de abajo para crear una nueva contrasena.
+        Recibimos una solicitud para restablecer la contraseña de tu cuenta. Hace click en el boton de abajo para crear una nueva contraseña.
       </p>
       <div style="text-align:center;margin-bottom:24px;">
         <a href="${resetUrl}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#4ADE80,#22c55e);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">
