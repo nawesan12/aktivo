@@ -316,7 +316,7 @@ export function BusinessSettings() {
           className="h-10 px-6 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center gap-2"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Guardar configuracion
+          Guardar configuración
         </button>
       </div>
     </div>

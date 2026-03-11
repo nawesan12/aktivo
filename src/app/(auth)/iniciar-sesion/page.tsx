@@ -90,7 +90,7 @@ export default function LoginPage() {
               className="w-full h-10 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Iniciar sesion
+              Iniciar sesión
             </button>
           </form>
           <div className="relative">
