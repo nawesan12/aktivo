@@ -162,7 +162,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Descripcion del negocio</label>
+              <label className="text-sm font-medium mb-1.5 block">Descripción del negocio</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -172,7 +172,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Telefono</label>
+              <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -268,7 +268,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Telefono</label>
+                <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
                 <input
                   value={staffPhone}
                   onChange={(e) => setStaffPhone(e.target.value)}

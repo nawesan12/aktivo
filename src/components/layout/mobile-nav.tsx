@@ -22,6 +22,7 @@ import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { InstallPWAButton } from "@/components/dashboard/install-pwa-button";
 
 const navigation = [
   { name: "Dashboard", href: "/panel", icon: LayoutDashboard },
@@ -88,6 +89,11 @@ export function MobileNav() {
             );
           })}
         </nav>
+
+        {/* Install PWA */}
+        <div className="px-3 mt-4">
+          <InstallPWAButton />
+        </div>
       </SheetContent>
     </Sheet>
   );

@@ -84,7 +84,7 @@ export default function DashboardPage() {
           trend={kpis.clientChange >= 0 ? "up" : "down"}
         />
         <KpiCard
-          label="Tasa de ocupacion"
+          label="Tasa de ocupación"
           value={`${kpis.occupancy}%`}
           change="del mes actual"
           icon={TrendingUp}
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass rounded-xl p-6">
-          <h3 className="font-heading font-semibold mb-4">Turnos por dia</h3>
+          <h3 className="font-heading font-semibold mb-4">Turnos por día</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartDays}>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass rounded-xl p-6">
-          <h3 className="font-heading font-semibold mb-4">Proximos turnos</h3>
+          <h3 className="font-heading font-semibold mb-4">Próximos turnos</h3>
           <UpcomingList appointments={upcoming || []} />
         </div>
 

@@ -155,7 +155,7 @@ function ResetForm({ token }: { token: string }) {
         throw new Error(err.error);
       }
 
-      toast.success("Contrasena actualizada correctamente");
+      toast.success("Contraseña actualizada correctamente");
       router.push("/iniciar-sesión");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al restablecer");

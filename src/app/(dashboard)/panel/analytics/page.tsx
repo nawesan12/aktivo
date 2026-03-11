@@ -2,7 +2,7 @@ import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { WidgetSettings } from "@/components/dashboard/widget-settings";
 
 export const metadata = {
-  title: "Analytics | Jiku",
+  title: "Analytics",
 };
 
 export default function AnalyticsPage() {

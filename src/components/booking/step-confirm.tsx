@@ -168,7 +168,7 @@ export function StepConfirm({ slug }: { slug: string }) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Fecha y hora</p>
-            <p className="font-medium text-sm">{format(parseISO(store.date), "EEEE d 'de' MMMM", { locale: es })} a las {store.time}</p>
+            <p className="font-medium text-sm">{store.date ? format(parseISO(store.date), "EEEE d 'de' MMMM", { locale: es }) : store.date} a las {store.time}</p>
           </div>
         </div>
 

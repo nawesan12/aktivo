@@ -247,7 +247,7 @@ export function StaffManager() {
                   <input {...register("email")} type="email" className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Telefono</label>
+                  <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
                   <input {...register("phone")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
@@ -298,7 +298,7 @@ export function StaffManager() {
           <div className="glass rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-heading font-semibold">Eliminar profesional</h2>
             <p className="text-sm text-muted-foreground">
-              Esta accion no se puede deshacer. No se podra eliminar si tiene turnos pendientes.
+              Esta acción no se puede deshacer. No se podra eliminar si tiene turnos pendientes.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteId(null)} className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">

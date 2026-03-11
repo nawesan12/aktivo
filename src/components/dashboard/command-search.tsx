@@ -38,7 +38,7 @@ const shortcuts = [
   { label: "Clientes", href: "/panel/clientes", icon: User },
   { label: "Reportes", href: "/panel/reportes", icon: BarChart2 },
   { label: "Pagos", href: "/panel/pagos", icon: CreditCard },
-  { label: "Configuracion", href: "/panel/configuracion", icon: Settings },
+  { label: "Configuración", href: "/panel/configuracion", icon: Settings },
 ];
 
 export function CommandSearch() {
@@ -160,7 +160,7 @@ export function CommandSearch() {
 
           <CommandSeparator />
 
-          <CommandGroup heading="Acciones rapidas">
+          <CommandGroup heading="Acciones rápidas">
             {shortcuts.map((s) => (
               <CommandItem key={s.href} onSelect={() => handleSelect(s.href)}>
                 <s.icon className="w-4 h-4 mr-2 text-muted-foreground" />

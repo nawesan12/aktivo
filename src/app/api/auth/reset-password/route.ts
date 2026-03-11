@@ -14,11 +14,11 @@ export async function POST(request: Request) {
     }
 
     if (password.length < 6) {
-      return NextResponse.json({ error: "La contrasena debe tener al menos 6 caracteres" }, { status: 400 });
+      return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
     }
 
     if (password !== confirmPassword) {
-      return NextResponse.json({ error: "Las contrasenas no coinciden" }, { status: 400 });
+      return NextResponse.json({ error: "Las contraseñas no coinciden" }, { status: 400 });
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     });
 
     if (!verificationToken) {
-      return NextResponse.json({ error: "Token invalido o expirado" }, { status: 400 });
+      return NextResponse.json({ error: "Token inválido o expirado" }, { status: 400 });
     }
 
     const user = await db.user.findUnique({

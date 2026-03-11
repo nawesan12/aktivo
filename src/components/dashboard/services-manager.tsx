@@ -191,7 +191,7 @@ export function ServicesManager() {
           onClick={() => setShowCategoryForm(true)}
           className="h-9 px-4 rounded-lg border border-border bg-muted/30 text-sm font-medium hover:bg-muted/50 transition-colors flex items-center gap-2"
         >
-          <FolderPlus className="w-4 h-4" /> Nueva categoria
+          <FolderPlus className="w-4 h-4" /> Nueva categoría
         </button>
       </div>
 
@@ -199,7 +199,7 @@ export function ServicesManager() {
       {showCategoryForm && (
         <div className="glass rounded-xl p-4 flex gap-3 items-end">
           <div className="flex-1">
-            <label className="text-sm font-medium mb-1.5 block">Nombre de la categoria</label>
+            <label className="text-sm font-medium mb-1.5 block">Nombre de la categoría</label>
             <input
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
@@ -231,7 +231,7 @@ export function ServicesManager() {
               onClick={() => handleDeleteCategory(cat.id)}
               className="text-xs text-muted-foreground hover:text-destructive transition-colors"
             >
-              Eliminar categoria
+              Eliminar categoría
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -244,7 +244,7 @@ export function ServicesManager() {
               />
             ))}
             {cat.services.length === 0 && (
-              <p className="text-sm text-muted-foreground p-4 glass rounded-lg">Sin servicios en esta categoria</p>
+              <p className="text-sm text-muted-foreground p-4 glass rounded-lg">Sin servicios en esta categoría</p>
             )}
           </div>
         </div>
@@ -253,7 +253,7 @@ export function ServicesManager() {
       {/* Uncategorized */}
       {uncategorized.length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-heading font-semibold text-sm text-muted-foreground">Sin categoria</h3>
+          <h3 className="font-heading font-semibold text-sm text-muted-foreground">Sin categoría</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {uncategorized.map((service) => (
               <ServiceCard
@@ -306,7 +306,7 @@ export function ServicesManager() {
                 {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Descripcion</label>
+                <label className="text-sm font-medium mb-1.5 block">Descripción</label>
                 <textarea {...register("description")} rows={2} className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -324,7 +324,7 @@ export function ServicesManager() {
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Categoria</label>
                 <select {...register("categoryId")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary">
-                  <option value="">Sin categoria</option>
+                  <option value="">Sin categoría</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
@@ -375,7 +375,7 @@ export function ServicesManager() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteId(null)}>
           <div className="glass rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-heading font-semibold">Eliminar servicio</h2>
-            <p className="text-sm text-muted-foreground">Esta accion no se puede deshacer. Se eliminara el servicio permanentemente.</p>
+            <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer. Se eliminara el servicio permanentemente.</p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteId(null)} className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">
                 Cancelar

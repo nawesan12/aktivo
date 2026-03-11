@@ -52,7 +52,7 @@ export default async function AdminSystemPage() {
           ) : (
             <>
               <XCircle className="w-5 h-5 text-red-500" />
-              <span className="text-sm text-red-500">Sin conexion</span>
+              <span className="text-sm text-red-500">Sin conexión</span>
             </>
           )}
         </div>

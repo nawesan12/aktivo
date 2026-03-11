@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     if (!user?.hashedPassword) {
       return NextResponse.json(
-        { error: "Tu cuenta usa Google. Gestiona tu contrasena desde Google." },
+        { error: "Tu cuenta usa Google. Gestiona tu contraseña desde Google." },
         { status: 400 }
       );
     }
@@ -31,16 +31,16 @@ export async function POST(request: Request) {
     }
 
     if (newPassword.length < 6) {
-      return NextResponse.json({ error: "La contrasena debe tener al menos 6 caracteres" }, { status: 400 });
+      return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
     }
 
     if (newPassword !== confirmPassword) {
-      return NextResponse.json({ error: "Las contrasenas no coinciden" }, { status: 400 });
+      return NextResponse.json({ error: "Las contraseñas no coinciden" }, { status: 400 });
     }
 
     const isValid = await bcrypt.compare(currentPassword, user.hashedPassword);
     if (!isValid) {
-      return NextResponse.json({ error: "Contrasena actual incorrecta" }, { status: 400 });
+      return NextResponse.json({ error: "Contraseña actual incorrecta" }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 12);

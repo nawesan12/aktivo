@@ -11,7 +11,7 @@ export default function NotificacionesPage() {
       <div>
         <h1 className="text-2xl font-heading font-bold">Notificaciones</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Historial y configuracion de notificaciones
+          Historial y configuración de notificaciones
         </p>
       </div>
       <NotificationsLog />

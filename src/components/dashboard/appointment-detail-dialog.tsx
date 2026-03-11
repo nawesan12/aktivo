@@ -51,7 +51,7 @@ export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }
     ],
     CONFIRMED: [
       { label: "Completar", status: "COMPLETED", className: "bg-emerald-500 hover:bg-emerald-600 text-white" },
-      { label: "No asistio", status: "NO_SHOW", className: "bg-zinc-500/10 hover:bg-zinc-500/20 text-zinc-400" },
+      { label: "No asistió", status: "NO_SHOW", className: "bg-zinc-500/10 hover:bg-zinc-500/20 text-zinc-400" },
       { label: "Cancelar", status: "CANCELLED", className: "bg-red-500/10 hover:bg-red-500/20 text-red-500" },
     ],
   };

@@ -35,7 +35,7 @@ function getInviteEmailHtml(inviteUrl: string, businessName: string): string {
       </p>
     </div>
     <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">
-      Jiku &middot; Plataforma de gestion para negocios de servicios
+      Jiku &middot; Plataforma de gestión para negocios de servicios
     </p>
   </div>
 </body>

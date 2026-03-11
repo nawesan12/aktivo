@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InstallPWAButton } from "@/components/dashboard/install-pwa-button";
 
 const navigation = [
   { name: "Dashboard", href: "/panel", icon: LayoutDashboard },
@@ -125,6 +126,11 @@ export function Sidebar() {
           })}
         </nav>
       </ScrollArea>
+
+      {/* Install PWA */}
+      <div className="px-2 pb-2">
+        <InstallPWAButton collapsed={sidebarCollapsed} />
+      </div>
 
       {/* Expand button */}
       {sidebarCollapsed && (

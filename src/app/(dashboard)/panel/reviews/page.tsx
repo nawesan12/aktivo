@@ -1,7 +1,7 @@
 import { ReviewsDashboard } from "@/components/dashboard/reviews-dashboard";
 
 export const metadata = {
-  title: "Reseñas | Jiku",
+  title: "Reseñas",
 };
 
 export default function ReviewsPage() {

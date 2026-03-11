@@ -15,7 +15,7 @@ export async function sendVerificationCode(
   code: string,
   businessName: string
 ): Promise<void> {
-  const text = `Tu codigo de verificacion para ${businessName} es: ${code}\n\nExpira en 10 minutos.`;
+  const text = `Tu código de verificación para ${businessName} es: ${code}\n\nExpira en 10 minutos.`;
   await sendWhatsAppText(phone, text);
 }
 

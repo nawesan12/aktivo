@@ -11,7 +11,7 @@ export default function PagosPage() {
       <div>
         <h1 className="text-2xl font-heading font-bold">Pagos</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Configuracion de pagos y MercadoPago
+          Configuración de pagos y MercadoPago
         </p>
       </div>
       <PaymentConfig />

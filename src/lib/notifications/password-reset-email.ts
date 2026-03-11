@@ -20,14 +20,14 @@ function getResetEmailHtml(resetUrl: string): string {
     </div>
     <div style="background-color:#18181b;border-radius:12px;padding:32px;border:1px solid rgba(255,255,255,0.1);">
       <h2 style="color:#fafafa;font-size:20px;margin:0 0 16px 0;">
-        Recupera tu contrasena
+        Recuperá tu contraseña
       </h2>
       <p style="color:#a1a1aa;font-size:16px;line-height:1.6;margin:0 0 24px 0;">
         Recibimos una solicitud para restablecer la contraseña de tu cuenta. Hace click en el boton de abajo para crear una nueva contraseña.
       </p>
       <div style="text-align:center;margin-bottom:24px;">
         <a href="${resetUrl}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#4ADE80,#22c55e);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">
-          Restablecer contrasena
+          Restablecer contraseña
         </a>
       </div>
       <p style="color:#71717a;font-size:13px;line-height:1.5;margin:0;">
@@ -35,7 +35,7 @@ function getResetEmailHtml(resetUrl: string): string {
       </p>
     </div>
     <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">
-      Jiku &middot; Plataforma de gestion para negocios de servicios
+      Jiku &middot; Plataforma de gestión para negocios de servicios
     </p>
   </div>
 </body>
@@ -53,7 +53,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const result = await resend.emails.send({
     from: process.env.RESEND_FROM || "Jiku <onboarding@resend.dev>",
     to: email,
-    subject: "Recupera tu contrasena — Jiku",
+    subject: "Recuperá tu contraseña — Jiku",
     html: getResetEmailHtml(resetUrl),
   });
 

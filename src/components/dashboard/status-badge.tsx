@@ -24,7 +24,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     className: "bg-red-500/10 text-red-500 border-red-500/20",
   },
   NO_SHOW: {
-    label: "No asistio",
+    label: "No asistió",
     className: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
   },
 };

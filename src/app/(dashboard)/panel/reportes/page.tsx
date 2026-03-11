@@ -11,7 +11,7 @@ export default function ReportesPage() {
       <div>
         <h1 className="text-2xl font-heading font-bold">Reportes</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Analisis y metricas de tu negocio
+          Analisis y métricas de tu negocio
         </p>
       </div>
       <ReportsDashboard />

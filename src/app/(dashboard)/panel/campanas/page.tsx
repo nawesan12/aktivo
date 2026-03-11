@@ -2,7 +2,7 @@ import { CampaignsManager } from "@/components/dashboard/campaigns-manager";
 import { NoShowTracker } from "@/components/dashboard/no-show-tracker";
 
 export const metadata = {
-  title: "Campañas | Jiku",
+  title: "Campañas",
 };
 
 export default function CampanasPage() {

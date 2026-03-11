@@ -1,7 +1,7 @@
 import { LocationsManager } from "@/components/dashboard/locations-manager";
 
 export const metadata = {
-  title: "Sucursales | Jiku",
+  title: "Sucursales",
 };
 
 export default function SucursalesPage() {

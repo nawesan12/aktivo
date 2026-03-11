@@ -18,7 +18,7 @@ export async function POST(
     const { phone } = await request.json();
 
     if (!phone || typeof phone !== "string" || phone.length < 10) {
-      return NextResponse.json({ error: "Telefono invalido" }, { status: 400 });
+      return NextResponse.json({ error: "Teléfono inválido" }, { status: 400 });
     }
 
     const business = await db.business.findUnique({

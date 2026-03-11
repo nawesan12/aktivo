@@ -11,7 +11,7 @@ export default function HorariosPage() {
       <div>
         <h1 className="text-2xl font-heading font-bold">Horarios</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Configura los horarios de atencion de tu equipo
+          Configura los horarios de atención de tu equipo
         </p>
       </div>
       <ScheduleEditor />

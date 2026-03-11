@@ -78,11 +78,11 @@ export function Topbar() {
               <Link href="/mi-cuenta">Mi cuenta</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/panel/configuracion">Configuracion</Link>
+              <Link href="/panel/configuracion">Configuración</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
-              Cerrar sesion
+              Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
