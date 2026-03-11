@@ -50,7 +50,7 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-heading font-bold">Perfil</h1>
-        <p className="text-muted-foreground text-sm mt-1">Administra tu informacion personal</p>
+        <p className="text-muted-foreground text-sm mt-1">Administra tu información personal</p>
       </div>
 
       <div className="glass rounded-xl p-6 space-y-4">
@@ -88,7 +88,7 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Telefono</label>
+            <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}

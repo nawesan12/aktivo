@@ -46,7 +46,7 @@ export default function MisTurnosPage() {
       }
       setState("code");
     } catch {
-      setError("Error de conexion");
+      setError("Error de conexión");
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function MisTurnosPage() {
       await fetchAppointments();
       setState("appointments");
     } catch {
-      setError("Error de conexion");
+      setError("Error de conexión");
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function MisTurnosPage() {
             </div>
             <h1 className="text-xl font-heading font-bold mb-1">Mis turnos</h1>
             <p className="text-sm text-muted-foreground">
-              Ingresa tu telefono para ver tus turnos
+              Ingresa tu teléfono para ver tus turnos
             </p>
           </div>
 
@@ -139,7 +139,7 @@ export default function MisTurnosPage() {
               className="w-full brand-gradient text-white border-0 rounded-xl gap-2"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-              Enviar codigo
+              Enviar código
             </Button>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function MisTurnosPage() {
             <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <KeyRound className="w-7 h-7 text-primary" />
             </div>
-            <h1 className="text-xl font-heading font-bold mb-1">Codigo de verificacion</h1>
+            <h1 className="text-xl font-heading font-bold mb-1">Código de verificación</h1>
             <p className="text-sm text-muted-foreground">
               Te enviamos un codigo por WhatsApp al {phone}
             </p>

@@ -98,7 +98,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">o continua con</span>
+              <span className="bg-card px-2 text-muted-foreground">o continuá con</span>
             </div>
           </div>
           <button
@@ -110,7 +110,7 @@ export default function LoginPage() {
             Google
           </button>
           <p className="text-center text-sm text-muted-foreground">
-            No tenes cuenta?{" "}
+            No tenés cuenta?{" "}
             <Link href="/registrarse" className="text-primary hover:underline">
               Registrate
             </Link>

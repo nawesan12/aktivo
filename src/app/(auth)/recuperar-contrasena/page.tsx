@@ -72,13 +72,13 @@ function ForgotForm() {
         <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
         <h1 className="text-xl font-heading font-bold mb-2">Email enviado</h1>
         <p className="text-muted-foreground text-sm mb-6">
-          Si existe una cuenta con ese email, recibiras un enlace para restablecer tu contrasena.
+          Si existe una cuenta con ese email, recibiras un enlace para restablecer tu contraseña.
         </p>
         <Link
-          href="/iniciar-sesion"
+          href="/iniciar-sesión"
           className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
         >
-          <ArrowLeft className="w-4 h-4" /> Volver al inicio de sesion
+          <ArrowLeft className="w-4 h-4" /> Volver al inicio de sesión
         </Link>
       </div>
     );
@@ -87,9 +87,9 @@ function ForgotForm() {
   return (
     <div className="glass rounded-2xl p-8 space-y-6">
       <div>
-        <h1 className="text-xl font-heading font-bold">Recuperar contrasena</h1>
+        <h1 className="text-xl font-heading font-bold">Recuperar contraseña</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Ingresa tu email y te enviaremos un enlace para restablecer tu contrasena.
+          Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,8 +114,8 @@ function ForgotForm() {
         </button>
       </form>
       <p className="text-center text-sm text-muted-foreground">
-        <Link href="/iniciar-sesion" className="text-primary hover:underline">
-          Volver al inicio de sesion
+        <Link href="/iniciar-sesión" className="text-primary hover:underline">
+          Volver al inicio de sesión
         </Link>
       </p>
     </div>
@@ -132,12 +132,12 @@ function ResetForm({ token }: { token: string }) {
     e.preventDefault();
 
     if (password.length < 6) {
-      toast.error("La contrasena debe tener al menos 6 caracteres");
+      toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error("Las contrasenas no coinciden");
+      toast.error("Las contraseñas no coinciden");
       return;
     }
 
@@ -156,7 +156,7 @@ function ResetForm({ token }: { token: string }) {
       }
 
       toast.success("Contrasena actualizada correctamente");
-      router.push("/iniciar-sesion");
+      router.push("/iniciar-sesión");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al restablecer");
     } finally {
@@ -167,14 +167,14 @@ function ResetForm({ token }: { token: string }) {
   return (
     <div className="glass rounded-2xl p-8 space-y-6">
       <div>
-        <h1 className="text-xl font-heading font-bold">Nueva contrasena</h1>
+        <h1 className="text-xl font-heading font-bold">Nueva contraseña</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Ingresa tu nueva contrasena.
+          Ingresa tu nueva contraseña.
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Nueva contrasena</label>
+          <label className="text-sm font-medium mb-1.5 block">Nueva contraseña</label>
           <input
             type="password"
             value={password}
@@ -186,7 +186,7 @@ function ResetForm({ token }: { token: string }) {
           />
         </div>
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Confirmar contrasena</label>
+          <label className="text-sm font-medium mb-1.5 block">Confirmar contraseña</label>
           <input
             type="password"
             value={confirmPassword}
@@ -203,7 +203,7 @@ function ResetForm({ token }: { token: string }) {
           className="w-full h-10 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          Restablecer contrasena
+          Restablecer contraseña
         </button>
       </form>
     </div>

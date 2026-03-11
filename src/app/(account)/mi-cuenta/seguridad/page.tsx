@@ -30,12 +30,12 @@ export default function SecurityPage() {
         throw new Error(err.error);
       }
 
-      toast.success("Contrasena actualizada");
+      toast.success("Contraseña actualizada");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Error al cambiar contrasena");
+      toast.error(error instanceof Error ? error.message : "Error al cambiar contraseña");
     } finally {
       setSaving(false);
     }
@@ -48,14 +48,14 @@ export default function SecurityPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-heading font-bold">Seguridad</h1>
-          <p className="text-muted-foreground text-sm mt-1">Administra tu contrasena</p>
+          <p className="text-muted-foreground text-sm mt-1">Administra tu contraseña</p>
         </div>
         <div className="glass rounded-xl p-6 flex items-start gap-3">
           <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-sm">Cuenta de Google</p>
             <p className="text-muted-foreground text-sm mt-1">
-              Tu cuenta usa Google para iniciar sesion. Gestiona tu contrasena desde la configuracion de tu cuenta de Google.
+              Tu cuenta usa Google para iniciar sesión. Gestiona tu contraseña desde la configuración de tu cuenta de Google.
             </p>
           </div>
         </div>
@@ -67,16 +67,16 @@ export default function SecurityPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-heading font-bold">Seguridad</h1>
-        <p className="text-muted-foreground text-sm mt-1">Cambia tu contrasena</p>
+        <p className="text-muted-foreground text-sm mt-1">Cambia tu contraseña</p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="glass rounded-xl p-6 space-y-4">
           <h3 className="font-heading font-semibold flex items-center gap-2">
-            <Shield className="w-4 h-4" /> Cambiar contrasena
+            <Shield className="w-4 h-4" /> Cambiar contraseña
           </h3>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Contrasena actual</label>
+            <label className="text-sm font-medium mb-1.5 block">Contraseña actual</label>
             <input
               type="password"
               value={currentPassword}
@@ -86,7 +86,7 @@ export default function SecurityPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Nueva contrasena</label>
+            <label className="text-sm font-medium mb-1.5 block">Nueva contraseña</label>
             <input
               type="password"
               value={newPassword}
@@ -97,7 +97,7 @@ export default function SecurityPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Confirmar nueva contrasena</label>
+            <label className="text-sm font-medium mb-1.5 block">Confirmar nueva contraseña</label>
             <input
               type="password"
               value={confirmPassword}
@@ -113,7 +113,7 @@ export default function SecurityPage() {
             className="h-10 px-6 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center gap-2"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Cambiar contrasena
+            Cambiar contraseña
           </button>
         </div>
       </form>

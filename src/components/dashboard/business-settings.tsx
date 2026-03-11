@@ -140,7 +140,7 @@ export function BusinessSettings() {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm font-medium mb-1.5 block">Descripcion</label>
+            <label className="text-sm font-medium mb-1.5 block">Descripción</label>
             <textarea
               value={business.description}
               onChange={(e) => setBusiness((p) => ({ ...p, description: e.target.value }))}
@@ -149,7 +149,7 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Telefono</label>
+            <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
             <input
               value={business.phone}
               onChange={(e) => setBusiness((p) => ({ ...p, phone: e.target.value }))}
@@ -182,7 +182,7 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Direccion</label>
+            <label className="text-sm font-medium mb-1.5 block">Dirección</label>
             <input
               value={business.address}
               onChange={(e) => setBusiness((p) => ({ ...p, address: e.target.value }))}
@@ -262,7 +262,7 @@ export function BusinessSettings() {
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Anticipacion minima (hs)</label>
+            <label className="text-sm font-medium mb-1.5 block">Anticipación mínima (hs)</label>
             <input
               type="number"
               min={0}
@@ -273,7 +273,7 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Dias de anticipacion max</label>
+            <label className="text-sm font-medium mb-1.5 block">Días de anticipación max</label>
             <input
               type="number"
               min={1}
