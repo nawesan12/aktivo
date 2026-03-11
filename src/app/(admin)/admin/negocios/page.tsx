@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 
-const plans = ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"];
+const plans = ["STARTER", "PROFESSIONAL", "ENTERPRISE"];
 
 export default function AdminBusinessesPage() {
   const [search, setSearch] = useState("");

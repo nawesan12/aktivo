@@ -330,7 +330,7 @@ async function main() {
       province: "Buenos Aires",
       primaryColor: "#EC4899",
       accentColor: "#F59E0B",
-      plan: "FREE",
+      plan: "STARTER",
     },
   });
   console.log("Second business created:", business2.name);

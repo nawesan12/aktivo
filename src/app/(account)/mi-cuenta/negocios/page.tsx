@@ -7,7 +7,6 @@ import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 
 const planLabels: Record<string, string> = {
-  FREE: "Free",
   STARTER: "Starter",
   PROFESSIONAL: "Professional",
   ENTERPRISE: "Enterprise",

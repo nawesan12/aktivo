@@ -2,8 +2,8 @@ import { MercadoPagoConfig, Preference, Payment, PaymentRefund } from "mercadopa
 
 /**
  * Get a MercadoPago client for a specific business.
- * In FREE plan, uses platform-wide token.
- * In PROFESSIONAL+, uses business-specific token.
+ * Uses platform-wide token by default.
+ * In PROFESSIONAL+, can use business-specific token.
  */
 export function getMPClient(accessToken?: string) {
   const token = accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN!;

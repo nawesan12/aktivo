@@ -13,17 +13,6 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
-  FREE: {
-    maxStaff: 1,
-    maxAppointmentsPerMonth: 50,
-    mpPayments: false,
-    crm: false,
-    campaigns: false,
-    widget: false,
-    advancedReports: false,
-    multiLocation: false,
-    whiteLabel: false,
-  },
   STARTER: {
     maxStaff: 1,
     maxAppointmentsPerMonth: 50,
@@ -65,9 +54,8 @@ export const PLAN_PRICES: Record<string, { amount: number; currency: string }> =
 };
 
 export const GRACE_PERIOD_DAYS = 7;
-export const FREE_TRIAL_DAYS = 14;
 
-const PLAN_ORDER: BusinessPlan[] = ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"];
+const PLAN_ORDER: BusinessPlan[] = ["STARTER", "PROFESSIONAL", "ENTERPRISE"];
 
 export function planRank(plan: BusinessPlan): number {
   return PLAN_ORDER.indexOf(plan);

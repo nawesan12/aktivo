@@ -21,7 +21,6 @@ enum UserRole {
 }
 
 enum BusinessPlan {
-  FREE
   STARTER
   PROFESSIONAL
   ENTERPRISE
@@ -190,7 +189,7 @@ model Business {
   website      String?
   primaryColor String       @default("#6366F1")
   accentColor  String       @default("#22D3EE")
-  plan         BusinessPlan @default(FREE)
+  plan         BusinessPlan @default(STARTER)
   isActive     Boolean      @default(true)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

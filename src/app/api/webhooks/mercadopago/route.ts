@@ -320,7 +320,7 @@ async function handleSubscriptionWebhook(preapprovalId: string) {
           }),
           db.business.update({
             where: { id: subscription.businessId },
-            data: { plan: "FREE" },
+            data: { plan: "STARTER" },
           }),
         ]);
       }

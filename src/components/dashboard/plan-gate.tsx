@@ -14,7 +14,6 @@ export function PlanGate({ feature, requiredPlan, currentPlan, children }: PlanG
   const planLabel = requiredPlan === "PROFESSIONAL" ? "Pro" : "Business";
 
   const isLocked =
-    currentPlan === "FREE" ||
     currentPlan === "STARTER" ||
     (requiredPlan === "ENTERPRISE" && currentPlan === "PROFESSIONAL");
 

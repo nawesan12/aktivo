@@ -1,31 +1,25 @@
 import { db } from "@/lib/db";
 import type { BusinessPlan } from "@/generated/prisma/client";
 import { PlanLimitError } from "@/lib/api-errors";
-import { PLAN_LIMITS, FREE_TRIAL_DAYS, isAtLeast } from "./config";
-import { startOfMonth, endOfMonth, addDays } from "date-fns";
+import { PLAN_LIMITS, isAtLeast } from "./config";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 /**
  * Returns the effective plan for a business.
- * - New businesses get PROFESSIONAL features during their 14-day free trial.
- * - If subscription is PAUSED and grace period passed, downgrades to FREE.
+ * Checks subscription status — if no active subscription, falls back to STARTER.
  */
 export async function getPlanForBusiness(businessId: string): Promise<BusinessPlan> {
   const business = await db.business.findUniqueOrThrow({
     where: { id: businessId },
-    select: { plan: true, createdAt: true },
+    select: { plan: true },
   });
 
-  // If FREE/STARTER, check if still within free trial period
-  if (business.plan === "FREE" || business.plan === "STARTER") {
-    const trialEnd = addDays(business.createdAt, FREE_TRIAL_DAYS);
-    if (new Date() < trialEnd) {
-      // Still in free trial — grant PROFESSIONAL features
-      return "PROFESSIONAL";
-    }
-    return business.plan;
+  // STARTER doesn't require a subscription
+  if (business.plan === "STARTER") {
+    return "STARTER";
   }
 
-  // Check active subscription
+  // Check active subscription for paid plans
   const subscription = await db.subscription.findFirst({
     where: {
       businessId,
@@ -36,12 +30,12 @@ export async function getPlanForBusiness(businessId: string): Promise<BusinessPl
   });
 
   if (!subscription) {
-    // No active subscription for a paid plan — downgrade
+    // No active subscription for a paid plan — downgrade to STARTER
     await db.business.update({
       where: { id: businessId },
-      data: { plan: "FREE" },
+      data: { plan: "STARTER" },
     });
-    return "FREE";
+    return "STARTER";
   }
 
   // If PAUSED, check grace period
@@ -55,33 +49,14 @@ export async function getPlanForBusiness(businessId: string): Promise<BusinessPl
         }),
         db.business.update({
           where: { id: businessId },
-          data: { plan: "FREE" },
+          data: { plan: "STARTER" },
         }),
       ]);
-      return "FREE";
+      return "STARTER";
     }
   }
 
   return business.plan;
-}
-
-/**
- * Returns the number of trial days remaining, or 0 if trial expired.
- */
-export async function getTrialDaysRemaining(businessId: string): Promise<number> {
-  const business = await db.business.findUniqueOrThrow({
-    where: { id: businessId },
-    select: { createdAt: true, plan: true },
-  });
-
-  // Only applies to FREE/STARTER businesses
-  if (business.plan !== "FREE" && business.plan !== "STARTER") {
-    return 0;
-  }
-
-  const trialEnd = addDays(business.createdAt, FREE_TRIAL_DAYS);
-  const remaining = Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  return Math.max(0, remaining);
 }
 
 /**
@@ -116,7 +91,7 @@ export async function checkStaffLimit(businessId: string): Promise<void> {
   if (currentCount >= limits.maxStaff) {
     throw new PlanLimitError(
       `Tu plan permite hasta ${limits.maxStaff} profesional(es). Mejorá tu plan para agregar más.`,
-      plan === "STARTER" || plan === "FREE" ? "PROFESSIONAL" : "ENTERPRISE"
+      plan === "STARTER" ? "PROFESSIONAL" : "ENTERPRISE"
     );
   }
 }

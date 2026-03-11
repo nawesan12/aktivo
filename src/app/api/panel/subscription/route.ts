@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { handleApiError, ValidationError } from "@/lib/api-errors";
-import { getPlanForBusiness, getTrialDaysRemaining } from "@/lib/subscription/enforcement";
+import { getPlanForBusiness } from "@/lib/subscription/enforcement";
 import { PLAN_LIMITS, PLAN_PRICES } from "@/lib/subscription/config";
 import { getPlatformPreApproval, getMPPlanId } from "@/lib/subscription/mp-platform";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -16,7 +16,6 @@ export async function GET() {
 
     const effectivePlan = await getPlanForBusiness(session.businessId);
     const limits = PLAN_LIMITS[effectivePlan];
-    const trialDaysRemaining = await getTrialDaysRemaining(session.businessId);
 
     // Get usage stats
     const now = new Date();
@@ -43,7 +42,6 @@ export async function GET() {
     return NextResponse.json({
       plan: effectivePlan,
       limits,
-      trialDaysRemaining,
       usage: {
         staff: staffCount,
         staffLimit: limits.maxStaff,

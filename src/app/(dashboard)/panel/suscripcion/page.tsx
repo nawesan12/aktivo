@@ -15,7 +15,6 @@ import {
   Megaphone,
   Shield,
   Loader2,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -134,12 +133,10 @@ export default function SubscriptionPage() {
     );
   }
 
-  const currentPlan = data?.plan || "FREE";
+  const currentPlan = data?.plan || "STARTER";
   const usage = data?.usage;
   const subscription = data?.subscription;
   const statusInfo = subscription ? STATUS_LABELS[subscription.status] : null;
-  const trialDaysRemaining = data?.trialDaysRemaining || 0;
-  const isOnTrial = trialDaysRemaining > 0 && !subscription;
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -147,24 +144,6 @@ export default function SubscriptionPage() {
         <h1 className="text-2xl font-heading font-bold">Suscripción</h1>
         <p className="text-muted-foreground text-sm mt-1">Administrá tu plan y facturación</p>
       </div>
-
-      {/* Trial banner */}
-      {isOnTrial && (
-        <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Clock className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="font-heading font-semibold">Prueba gratuita de 14 días</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Estás disfrutando de todas las funcionalidades Pro sin costo.
-              Te {trialDaysRemaining === 1 ? "queda" : "quedan"}{" "}
-              <span className="font-semibold text-primary">{trialDaysRemaining} {trialDaysRemaining === 1 ? "día" : "días"}</span>.
-              Elegí un plan para no perder el acceso.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Current plan + status */}
       <div className="glass rounded-xl p-6 space-y-4">
@@ -175,8 +154,7 @@ export default function SubscriptionPage() {
             </div>
             <div>
               <h2 className="font-heading font-semibold">
-                Plan {currentPlan === "PROFESSIONAL" ? "Pro" : currentPlan === "ENTERPRISE" ? "Business" : "Pro"}
-                {isOnTrial && <span className="text-sm font-normal text-muted-foreground ml-2">(Prueba gratuita)</span>}
+                Plan {currentPlan === "PROFESSIONAL" ? "Pro" : currentPlan === "ENTERPRISE" ? "Business" : "Starter"}
               </h2>
               {statusInfo && (
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${statusInfo.color}`}>
@@ -229,11 +207,11 @@ export default function SubscriptionPage() {
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
         {PLANS.map((plan) => {
-          const isCurrent = currentPlan === plan.key && !isOnTrial && subscription?.status === "AUTHORIZED";
+          const isCurrent = currentPlan === plan.key && subscription?.status === "AUTHORIZED";
           const showSubscribe = !isCurrent && (
             plan.key === "ENTERPRISE"
-              ? currentPlan !== "ENTERPRISE" || isOnTrial
-              : isOnTrial || currentPlan === "FREE" || currentPlan === "STARTER"
+              ? currentPlan !== "ENTERPRISE"
+              : currentPlan === "STARTER"
           );
           const PlanIcon = plan.icon;
 
@@ -255,7 +233,7 @@ export default function SubscriptionPage() {
                 <span className="text-3xl font-heading font-bold">{formatPrice(plan.price)}</span>
                 <span className="text-sm text-muted-foreground ml-1">/{plan.period}</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-4">14 días de prueba gratis</p>
+              <p className="text-xs text-muted-foreground mb-4">Prueba gratis por 14 días vía MercadoPago</p>
 
               <ul className="space-y-2 flex-1 mb-6">
                 {plan.features.map((f) => (

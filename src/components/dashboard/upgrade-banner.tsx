@@ -12,7 +12,7 @@ interface UpgradeBannerProps {
 export function UpgradeBanner({ plan, context }: UpgradeBannerProps) {
   const [dismissed, setDismissed] = useState(false);
 
-  if (dismissed || (plan !== "FREE" && plan !== "STARTER")) {
+  if (dismissed || plan !== "STARTER") {
     return null;
   }
 
