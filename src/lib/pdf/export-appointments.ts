@@ -38,7 +38,7 @@ export async function exportAppointmentsPdf(appointments: Appointment[], busines
       `$${(a.paymentAmount ?? a.servicePrice).toLocaleString("es-AR")}`,
     ]),
     styles: { fontSize: 8, font: "helvetica" },
-    headStyles: { fillColor: [99, 102, 241] },
+    headStyles: { fillColor: [34, 197, 94] },
     margin: { left: 20, right: 20 },
     columnStyles: {
       0: { cellWidth: 18 },

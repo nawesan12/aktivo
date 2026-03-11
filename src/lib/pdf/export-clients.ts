@@ -34,7 +34,7 @@ export async function exportClientsPdf(clients: Client[], businessName: string) 
       c.type === "registered" ? "Registrado" : "Invitado",
     ]),
     styles: { fontSize: 9, font: "helvetica" },
-    headStyles: { fillColor: [99, 102, 241] },
+    headStyles: { fillColor: [34, 197, 94] },
     margin: { left: 20, right: 20 },
   });
 

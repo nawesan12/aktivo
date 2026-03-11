@@ -70,7 +70,7 @@ export async function exportClientProfilePdf(detail: ClientDetail, businessName:
       `$${(a.paymentAmount ?? a.price).toLocaleString("es-AR")}`,
     ]),
     styles: { fontSize: 9, font: "helvetica" },
-    headStyles: { fillColor: [99, 102, 241] },
+    headStyles: { fillColor: [34, 197, 94] },
     margin: { left: 20, right: 20 },
   });
 
