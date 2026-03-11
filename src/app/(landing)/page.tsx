@@ -127,7 +127,7 @@ export default function LandingPage() {
               </h1>
               <p className="hero-desc">
                 Reservas 24/7. WhatsApp automático. Cobros integrados. CRM
-                inteligente. Todo girando alrededor de un solo eje: Jiku.
+                inteligente. Todo girando alrededor de un solo <span className="jade">eje</span>: Jiku.
               </p>
               <div className="hero-ctas">
                 <Link href="/registrarse" className="btn btn-jade">
@@ -246,12 +246,12 @@ export default function LandingPage() {
           <div className="philosophy-content jiku-reveal">
             <div className="section-eyebrow">Filosofía</div>
             <h2 className="serif">
-              &ldquo;En japonés, 軸 significa eje — el centro alrededor del cual
+              &ldquo;En japonés, <span className="jade">軸</span> significa <span className="jade">eje</span> — el centro alrededor del cual
               todo gira.&rdquo;
             </h2>
             <p>
-              Tu negocio tiene un eje: tu agenda, tus clientes, tu tiempo. Jiku
-              se convierte en ese centro. Sin eje, todo colapsa. Con Jiku, todo
+              Tu negocio tiene un <span className="jade">eje</span>: tu agenda, tus clientes, tu tiempo. Jiku
+              se convierte en ese centro. Sin <span className="jade">eje</span>, todo colapsa. Con Jiku, todo
               fluye.
             </p>
           </div>
@@ -648,7 +648,7 @@ export default function LandingPage() {
             <h2>
               Todo gira alrededor
               <br />
-              de un <em className="serif">eje</em>
+              de un <em className="serif jade">eje</em>
             </h2>
             <p>
               Unite a los 12,400+ negocios que encontraron el suyo. Empezá
@@ -673,7 +673,7 @@ export default function LandingPage() {
                 <JikuLogo size="md" />
               </Link>
               <p className="footer-brand-desc">
-                El eje de tu negocio. Más que turnos, crecimiento.
+                El <span className="jade">eje</span> de tu negocio. Más que turnos, crecimiento.
               </p>
             </div>
             <div className="footer-col">
@@ -705,7 +705,7 @@ export default function LandingPage() {
           <div className="footer-bottom">
             <span>© 2026 Jiku. Todos los derechos reservados.</span>
             <span className="serif" style={{ fontStyle: "italic", fontSize: "0.85rem" }}>
-              軸 — El eje de tu negocio
+              <span className="jade">軸</span> — El <span className="jade">eje</span> de tu negocio
             </span>
           </div>
         </div>
