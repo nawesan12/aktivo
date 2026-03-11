@@ -107,7 +107,7 @@ export default function MisTurnosPage() {
     CONFIRMED: { label: "Confirmado", className: "bg-green-500/10 text-green-500" },
     COMPLETED: { label: "Completado", className: "bg-blue-500/10 text-blue-500" },
     CANCELLED: { label: "Cancelado", className: "bg-red-500/10 text-red-500" },
-    NO_SHOW: { label: "No asistio", className: "bg-orange-500/10 text-orange-500" },
+    NO_SHOW: { label: "No asistió", className: "bg-orange-500/10 text-orange-500" },
   };
 
   return (
@@ -153,7 +153,7 @@ export default function MisTurnosPage() {
             </div>
             <h1 className="text-xl font-heading font-bold mb-1">Código de verificación</h1>
             <p className="text-sm text-muted-foreground">
-              Te enviamos un codigo por WhatsApp al {phone}
+              Te enviamos un código por WhatsApp al {phone}
             </p>
           </div>
 
@@ -180,7 +180,7 @@ export default function MisTurnosPage() {
               onClick={() => { setState("phone"); setCode(""); setError(""); }}
               className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Cambiar numero
+              Cambiar número
             </button>
           </div>
         </div>
@@ -196,12 +196,12 @@ export default function MisTurnosPage() {
           {/* Upcoming */}
           <div>
             <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              Proximos
+              Próximos
             </h2>
             {upcoming.length === 0 ? (
               <div className="glass rounded-xl p-6 text-center">
                 <Calendar className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No tenes turnos proximos</p>
+                <p className="text-sm text-muted-foreground">No tenes turnos próximos</p>
               </div>
             ) : (
               <div className="space-y-2">
