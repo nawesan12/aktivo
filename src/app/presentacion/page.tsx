@@ -2285,44 +2285,166 @@ const deckStyles = `
 }
 
 /* ═══ RESPONSIVE ═══ */
+/* ═══ TABLET (1024px and below) ═══ */
+@media (max-width: 1024px) {
+  .deck-slide { padding: 60px 48px; }
+  .deck-arrow-right { right: 60px; }
+
+  .feature-split { gap: 40px; }
+  .phone-mock { width: 260px; }
+  .wa-mock { width: 280px; }
+
+  .cover-axis { width: 500px; height: 500px; }
+  .cover-axis-2 { width: 650px; height: 650px; }
+  .cover-kanji { font-size: 18rem; }
+
+  .pricing-cards { gap: 12px; }
+  .pricing-card { padding: 24px 20px; }
+  .pc-amount { font-size: 2.4rem; }
+
+  .close-steps { gap: 16px; }
+  .close-step { padding: 12px 16px; }
+}
+
+/* ═══ MOBILE (768px and below) ═══ */
 @media (max-width: 768px) {
-  .deck-slide { padding: 80px 24px 60px; }
-  .deck-dots { right: 12px; gap: 8px; }
+  .deck-slide { padding: 70px 20px 50px; }
+  .deck-dots { right: 10px; gap: 8px; }
   .deck-dot { width: 6px; height: 6px; }
   .deck-arrow { display: none; }
-  .deck-counter { right: 12px; bottom: 12px; }
+  .deck-counter { right: 10px; bottom: 10px; font-size: 0.65rem; }
   .deck-logo { left: 12px; top: 12px; }
 
-  .cover-content h1 { font-size: 2.6rem; }
-  .cover-kanji { font-size: 14rem; }
+  /* Cover */
+  .cover-content h1 { font-size: 2.4rem; margin-top: 24px; }
+  .cover-kanji { font-size: 12rem; }
+  .cover-axis { width: 350px; height: 350px; }
+  .cover-axis-2 { width: 450px; height: 450px; }
+  .cover-sub { font-size: 0.95rem; margin-bottom: 28px; }
   .cover-tags { gap: 6px; }
-  .cover-tags span { font-size: 0.6rem; padding: 4px 10px; }
+  .cover-tags span { font-size: 0.6rem; padding: 5px 12px; }
+  .cover-glow { width: 350px; height: 280px; }
+  .cover-glow-2 { width: 200px; height: 200px; }
+  .cover-hint { font-size: 0.62rem; }
 
+  /* Problem */
+  .slide-problem h2 { font-size: 1.8rem; margin-bottom: 28px; }
   .problem-grid { grid-template-columns: 1fr; gap: 10px; }
   .problem-card { padding: 20px; }
   .problem-stat { font-size: 1.3rem; }
+  .problem-icon { font-size: 1.4rem; margin-bottom: 10px; }
+  .problem-desc { font-size: 0.75rem; }
+  .problem-glow { width: 300px; height: 300px; top: -60px; right: -60px; }
+  .problem-glow-2 { width: 250px; height: 250px; }
 
-  .feature-split { grid-template-columns: 1fr; gap: 28px; }
-  .feature-split.reverse { direction: ltr; }
-  .feature-visual { order: -1; }
-
-  .phone-mock { width: 240px; }
-  .wa-mock { width: 260px; }
-
+  /* Solution */
+  .slide-solution h2 { font-size: 1.8rem; }
+  .solution-desc { font-size: 0.88rem; margin-bottom: 32px; }
   .solution-orbit { width: 260px; height: 260px; }
   .orbit-center { width: 60px; height: 60px; }
   .orbit-center-inner span:first-child { font-size: 1.4rem; }
+  .orbit-center-inner span:last-child { font-size: 0.55rem; }
   .orbit-node { width: 32px; height: 32px; font-size: 0.9rem; }
+  .orbit-item span { font-size: 0.5rem; }
+  .orbit-ring.ring-1 { inset: 40px; }
 
+  /* Feature splits */
+  .slide-eyebrow { font-size: 0.62rem; letter-spacing: 0.18em; }
+  .feature-split { grid-template-columns: 1fr; gap: 24px; }
+  .feature-split.reverse { direction: ltr; }
+  .feature-visual { order: -1; }
+  .feature-text h2 { font-size: 1.7rem; margin-bottom: 20px; }
+  .feature-list { gap: 10px; }
+  .feature-list li { font-size: 0.8rem; }
+  .feature-stat-row { gap: 32px; margin-top: 24px; }
+  .feature-stat-num { font-size: 2rem; }
+  .feature-stat-label { font-size: 0.65rem; }
+
+  .phone-mock { width: 220px; border-radius: 32px; }
+  .phone-mock-notch { width: 80px; height: 20px; }
+  .phone-mock-screen { border-radius: 24px; padding: 14px 10px; min-height: 340px; }
+  .mock-bk-service { padding: 8px 10px; font-size: 0.68rem; }
+  .mock-bk-price { font-size: 0.65rem; }
+  .mock-slot { padding: 5px 10px; font-size: 0.62rem; }
+  .mock-bk-btn { padding: 9px; font-size: 0.72rem; }
+
+  .wa-mock { width: 250px; border-radius: 20px; }
+  .wa-mock-msg { font-size: 0.65rem; padding: 8px 10px; }
+  .wa-mock-body { min-height: 260px; padding: 10px; }
+
+  .dashboard-mock { border-radius: 16px; }
+  .dash-kpi { padding: 12px 10px; }
+  .dash-kpi-val { font-size: 1.3rem; }
+  .dash-chart { padding: 14px; }
+  .dash-bars { height: 60px; }
+  .dash-cl-info { font-size: 0.68rem; }
+
+  /* Stats */
+  .slide-stats h2 { font-size: 1.8rem; margin-bottom: 32px; }
   .stats-mega-grid { grid-template-columns: 1fr; gap: 10px; }
-  .stat-mega-card { padding: 24px; }
+  .stat-mega-card { padding: 24px 20px; }
   .stat-mega-num { font-size: 2.4rem; }
+  .stat-mega-label { font-size: 0.88rem; }
+  .stat-mega-desc { font-size: 0.75rem; }
 
-  .pricing-cards { grid-template-columns: 1fr; gap: 12px; max-width: 360px; margin: 0 auto; }
+  /* Pricing */
+  .slide-pricing h2 { font-size: 1.8rem; margin-bottom: 32px; }
+  .pricing-cards { grid-template-columns: 1fr; gap: 12px; max-width: 340px; margin: 0 auto; }
+  .pricing-card { padding: 24px 20px; border-radius: 20px; }
   .pc-amount { font-size: 2.2rem; }
+  .pc-tier { font-size: 0.78rem; margin-bottom: 10px; }
+  .pc-features li { font-size: 0.75rem; }
 
-  .close-steps { flex-direction: column; gap: 12px; align-items: center; }
-  .close-content h2 { font-size: 2.2rem; }
-  .close-kanji { font-size: 12rem; }
+  /* Close */
+  .close-content h2 { font-size: 2rem; }
+  .close-desc { font-size: 0.92rem; margin-bottom: 32px; }
+  .close-kanji { font-size: 10rem; }
+  .close-axis { width: 350px; height: 350px; }
+  .close-axis-2 { width: 450px; height: 450px; }
+  .close-glow { width: 350px; height: 280px; }
+  .close-glow-2 { width: 250px; height: 200px; }
+  .close-steps { flex-direction: column; gap: 10px; align-items: center; width: 100%; }
+  .close-step { width: 100%; max-width: 300px; padding: 12px 16px; }
+  .close-step-num { width: 32px; height: 32px; font-size: 0.72rem; }
+  .close-step strong { font-size: 0.82rem; }
+  .close-url { padding: 10px 24px; }
+  .close-url span { font-size: 0.78rem !important; }
+}
+
+/* ═══ SMALL MOBILE (480px and below) ═══ */
+@media (max-width: 480px) {
+  .deck-slide { padding: 60px 14px 40px; }
+
+  .cover-content h1 { font-size: 2rem; }
+  .cover-kanji { font-size: 8rem; }
+  .cover-axis { width: 280px; height: 280px; }
+  .cover-axis-2 { width: 360px; height: 360px; }
+  .cover-sub { font-size: 0.85rem; }
+  .cover-tags span { font-size: 0.55rem; padding: 4px 9px; }
+
+  .slide-problem h2 { font-size: 1.5rem; }
+  .slide-solution h2 { font-size: 1.5rem; }
+  .feature-text h2 { font-size: 1.4rem; }
+
+  .solution-orbit { width: 220px; height: 220px; }
+  .orbit-center { width: 50px; height: 50px; }
+  .orbit-center-inner span:first-child { font-size: 1.1rem; }
+  .orbit-center-inner span:last-child { font-size: 0.45rem; }
+  .orbit-node { width: 28px; height: 28px; font-size: 0.75rem; }
+  .orbit-ring.ring-1 { inset: 30px; }
+
+  .phone-mock { width: 200px; }
+  .wa-mock { width: 220px; }
+
+  .stat-mega-num { font-size: 2rem; }
+  .stat-mega-card { padding: 20px 16px; }
+
+  .slide-pricing h2 { font-size: 1.5rem; }
+  .pricing-cards { max-width: 300px; }
+  .pc-amount { font-size: 1.9rem; }
+
+  .close-content h2 { font-size: 1.7rem; }
+  .close-kanji { font-size: 7rem; }
+  .close-steps { gap: 8px; }
 }
 `;
