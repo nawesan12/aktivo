@@ -2,20 +2,25 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Activity, Users, TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
+import { Activity, Users, TrendingUp, AlertTriangle, Loader2, DollarSign, UserCheck } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { AnalyticsRetentionChart } from "./analytics-retention-chart";
 import { AnalyticsLTVChart } from "./analytics-ltv-chart";
 import { AnalyticsPeakHeatmap } from "./analytics-peak-heatmap";
 import { AnalyticsChurnList } from "./analytics-churn-list";
+import { AnalyticsDatePicker } from "./analytics-date-picker";
+import { AnalyticsRevenueChart } from "./analytics-revenue-chart";
+import { AnalyticsStaffPerformance } from "./analytics-staff-performance";
 
-type Tab = "retention" | "ltv" | "peak" | "churn";
+type Tab = "retention" | "ltv" | "peak" | "churn" | "revenue" | "staff";
 
 const tabs: { id: Tab; label: string; icon: typeof Activity }[] = [
   { id: "retention", label: "Retención", icon: TrendingUp },
   { id: "ltv", label: "LTV", icon: Users },
   { id: "peak", label: "Peak Hours", icon: Activity },
   { id: "churn", label: "Churn", icon: AlertTriangle },
+  { id: "revenue", label: "Ingresos", icon: DollarSign },
+  { id: "staff", label: "Equipo", icon: UserCheck },
 ];
 
 function TabSkeleton() {
@@ -28,22 +33,37 @@ function TabSkeleton() {
 
 export function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("retention");
+  const [dateRange, setDateRange] = useState(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    return {
+      startDate: start.toISOString().slice(0, 10),
+      endDate: end.toISOString().slice(0, 10),
+    };
+  });
 
   // KPI summary — always loaded
   const { data: summaryData, isLoading: summaryLoading } = useSWR("/api/panel/analytics");
 
   // Per-tab conditional fetching — only loads when tab is active
   const { data: retentionData, isLoading: retentionLoading } = useSWR(
-    activeTab === "retention" ? "/api/panel/analytics/retention" : null
+    activeTab === "retention" ? `/api/panel/analytics/retention?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}` : null
   );
   const { data: ltvData, isLoading: ltvLoading } = useSWR(
-    activeTab === "ltv" ? "/api/panel/analytics/ltv" : null
+    activeTab === "ltv" ? `/api/panel/analytics/ltv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}` : null
   );
   const { data: peakData, isLoading: peakLoading } = useSWR(
-    activeTab === "peak" ? "/api/panel/analytics/peak-hours" : null
+    activeTab === "peak" ? `/api/panel/analytics/peak-hours?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}` : null
   );
   const { data: churnData, isLoading: churnLoading } = useSWR(
-    activeTab === "churn" ? "/api/panel/analytics/churn" : null
+    activeTab === "churn" ? `/api/panel/analytics/churn?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}` : null
+  );
+  const { data: revenueData, isLoading: revenueLoading } = useSWR(
+    activeTab === "revenue" ? `/api/panel/analytics/revenue?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}` : null
+  );
+  const { data: staffData, isLoading: staffLoading } = useSWR(
+    activeTab === "staff" ? `/api/panel/analytics/staff-performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}` : null
   );
 
   if (summaryLoading) return <TableSkeleton rows={8} />;
@@ -76,6 +96,13 @@ export function AnalyticsDashboard() {
         </div>
       </div>
 
+      {/* Date Range */}
+      <AnalyticsDatePicker
+        startDate={dateRange.startDate}
+        endDate={dateRange.endDate}
+        onChange={setDateRange}
+      />
+
       {/* Tabs */}
       <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
         {tabs.map((tab) => (
@@ -107,6 +134,12 @@ export function AnalyticsDashboard() {
         )}
         {activeTab === "churn" && (
           churnLoading ? <TabSkeleton /> : <AnalyticsChurnList data={churnData?.data || churnData || { atRiskClients: [], totalAtRisk: 0 }} />
+        )}
+        {activeTab === "revenue" && (
+          revenueLoading ? <TabSkeleton /> : <AnalyticsRevenueChart data={revenueData?.data || { timeline: [], byService: [], byStaff: [], totalRevenue: 0, totalAppointments: 0 }} />
+        )}
+        {activeTab === "staff" && (
+          staffLoading ? <TabSkeleton /> : <AnalyticsStaffPerformance data={staffData?.data || []} />
         )}
       </div>
     </div>

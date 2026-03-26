@@ -109,6 +109,30 @@ export function AppointmentsTable() {
     [mutate]
   );
 
+  const handleNoShow = useCallback(
+    async (id: string) => {
+      setMutatingId(id);
+      try {
+        const res = await fetch(`/api/panel/appointments/${id}/no-show`, {
+          method: "PATCH",
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        mutate();
+        if (data.penalized) {
+          toast.success(`Ausencia registrada. Cliente penalizado hasta ${new Date(data.blockedUntil).toLocaleDateString("es-AR")}`);
+        } else {
+          toast.success(`Ausencia registrada (${data.noShowCount} ausencia${data.noShowCount !== 1 ? "s" : ""} recientes)`);
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al registrar ausencia");
+      } finally {
+        setMutatingId(null);
+      }
+    },
+    [mutate]
+  );
+
   if (isLoading) return <TableSkeleton rows={8} />;
 
   const appointments: Appointment[] = data?.data || [];
@@ -245,7 +269,7 @@ export function AppointmentsTable() {
                                     <CheckCheck className="w-3.5 h-3.5" /> Completar
                                   </button>
                                   <button
-                                    onClick={() => handleStatusChange(apt.id, "NO_SHOW")}
+                                    onClick={() => handleNoShow(apt.id)}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-zinc-400"
                                   >
                                     <UserX className="w-3.5 h-3.5" /> No asistió

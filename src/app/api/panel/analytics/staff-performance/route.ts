@@ -3,7 +3,7 @@ import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { handleApiError } from "@/lib/api-errors";
 import { requirePlan } from "@/lib/subscription/enforcement";
-import { getRetentionData } from "@/lib/analytics/retention";
+import { getStaffPerformanceData } from "@/lib/analytics/staff-performance";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,13 +11,19 @@ export async function GET(request: NextRequest) {
     requirePermission(session.role, "analytics:read");
     await requirePlan(session.businessId, "PROFESSIONAL");
 
-    const months = parseInt(request.nextUrl.searchParams.get("months") || "6");
-    const startDate = request.nextUrl.searchParams.get("startDate");
-    const endDate = request.nextUrl.searchParams.get("endDate");
-    const data = await getRetentionData(session.businessId, {
-      months,
-      ...(startDate && { startDate: new Date(startDate) }),
-      ...(endDate && { endDate: new Date(endDate) }),
+    const searchParams = request.nextUrl.searchParams;
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
+
+    const now = new Date();
+    const startDate = startDateParam
+      ? new Date(startDateParam)
+      : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+    const endDate = endDateParam ? new Date(endDateParam) : now;
+
+    const data = await getStaffPerformanceData(session.businessId, {
+      startDate,
+      endDate,
     });
 
     return NextResponse.json({ data });

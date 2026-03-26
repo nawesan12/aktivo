@@ -275,6 +275,11 @@ model BusinessSettings {
   noShowThreshold    Int         @default(3)
   noShowPenaltyDays  Int         @default(30)
   noShowAutoMark     Boolean     @default(false)
+  // Referral program
+  referralEnabled        Boolean    @default(false)
+  referralRewardType     CouponType?
+  referralRewardValue    Float?
+  referralMaxRedemptions Int?
   // Sprint 10 — Widget
   widgetEnabled      Boolean     @default(false)
   widgetTheme        String      @default("dark")

@@ -17,16 +17,18 @@ interface MonthlyRetention {
  */
 export async function getRetentionData(
   businessId: string,
-  months: number = 6
+  options: { months?: number; startDate?: Date; endDate?: Date } = {}
 ): Promise<MonthlyRetention[]> {
-  // Calculate the full date range (one extra month for "previous" comparison)
-  const rangeStart = new Date();
-  rangeStart.setMonth(rangeStart.getMonth() - months, 1);
-  rangeStart.setHours(0, 0, 0, 0);
+  const { months = 6, startDate, endDate } = options;
 
-  const rangeEnd = new Date();
-  rangeEnd.setMonth(rangeEnd.getMonth() + 1, 1);
-  rangeEnd.setHours(0, 0, 0, 0);
+  // Calculate the full date range (one extra month for "previous" comparison)
+  const rangeStart = startDate
+    ? new Date(startDate)
+    : (() => { const d = new Date(); d.setMonth(d.getMonth() - months, 1); d.setHours(0, 0, 0, 0); return d; })();
+
+  const rangeEnd = endDate
+    ? new Date(endDate)
+    : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 1); d.setHours(0, 0, 0, 0); return d; })();
 
   // Single query for all appointments in range
   const appointments = await db.appointment.findMany({

@@ -12,7 +12,13 @@ export async function GET(request: NextRequest) {
     await requirePlan(session.businessId, "PROFESSIONAL");
 
     const limit = parseInt(request.nextUrl.searchParams.get("limit") || "20");
-    const data = await getLTVData(session.businessId, limit);
+    const startDate = request.nextUrl.searchParams.get("startDate");
+    const endDate = request.nextUrl.searchParams.get("endDate");
+    const data = await getLTVData(session.businessId, {
+      limit,
+      ...(startDate && { startDate: new Date(startDate) }),
+      ...(endDate && { endDate: new Date(endDate) }),
+    });
 
     return NextResponse.json(data);
   } catch (error) {

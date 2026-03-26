@@ -18,17 +18,21 @@ interface ClientLTV {
  */
 export async function getLTVData(
   businessId: string,
-  limit: number = 20
+  options: { limit?: number; startDate?: Date; endDate?: Date } = {}
 ): Promise<{ clients: ClientLTV[]; averageLTV: number }> {
-  // Get completed appointments with payment info (bounded to last 2 years)
-  const twoYearsAgo = new Date();
-  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+  const { limit = 20, startDate, endDate } = options;
+
+  // Get completed appointments with payment info (bounded to last 2 years or custom range)
+  const rangeStart = startDate || (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 2); return d; })();
+
+  const dateTimeFilter: { gte: Date; lte?: Date } = { gte: rangeStart };
+  if (endDate) dateTimeFilter.lte = endDate;
 
   const appointments = await db.appointment.findMany({
     where: {
       businessId,
       status: "COMPLETED",
-      dateTime: { gte: twoYearsAgo },
+      dateTime: dateTimeFilter,
     },
     select: {
       userId: true,

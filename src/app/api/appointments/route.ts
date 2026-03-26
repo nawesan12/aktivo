@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     // Verify staff exists and belongs to this business
     const staff = await db.staffMember.findFirst({
       where: { id: staffId, businessId: business.id, isActive: true },
-      select: { id: true, name: true, userId: true },
+      select: { id: true, name: true, userId: true, googleCalendarEnabled: true },
     });
 
     if (!staff) {
@@ -238,14 +238,48 @@ export async function POST(request: Request) {
           },
         });
         if (referral) {
-          await db.referralRedemption.create({
-            data: {
-              referralId: referral.id,
-              appointmentId: appointment.id,
-              referredUserId: userId,
-              referredGuestId: guestClientId,
-            },
-          });
+          // Don't let users refer themselves
+          const isSelfReferral = referral.userId && referral.userId === userId;
+          if (!isSelfReferral) {
+            // Check max redemptions
+            const settings = business.settings;
+            const maxRedemptions = settings?.referralMaxRedemptions;
+
+            let canRedeem = true;
+            if (maxRedemptions) {
+              const existingCount = await db.referralRedemption.count({
+                where: { referralId: referral.id },
+              });
+              canRedeem = existingCount < maxRedemptions;
+            }
+
+            if (canRedeem) {
+              // Create redemption record
+              await db.referralRedemption.create({
+                data: {
+                  referralId: referral.id,
+                  appointmentId: appointment.id,
+                  referredUserId: userId,
+                  referredGuestId: guestClientId,
+                },
+              });
+
+              // Generate reward coupon for the referrer if program is configured
+              if (settings?.referralEnabled && settings.referralRewardType && settings.referralRewardValue) {
+                const rewardCode = `REF-${referral.code}-${Date.now().toString(36).toUpperCase()}`;
+                await db.coupon.create({
+                  data: {
+                    businessId: business.id,
+                    code: rewardCode,
+                    type: settings.referralRewardType,
+                    value: settings.referralRewardValue,
+                    maxUses: 1,
+                    validUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+                  },
+                });
+              }
+            }
+          }
         }
       } catch (e) {
         console.error("Referral tracking error:", e);
@@ -340,9 +374,24 @@ export async function POST(request: Request) {
       type: "confirmation",
     }).catch((err) => console.error("Notification error:", err));
 
-    // Google Calendar sync (Feature 6) — temporarily disabled
-    // TODO: re-enable once googleCalendarEnabled field is migrated
-    // if (staff.googleCalendarEnabled && staff.userId) { ... }
+    // Google Calendar sync
+    if (staff.googleCalendarEnabled && staff.userId) {
+      import("@/lib/google-calendar").then(({ createCalendarEvent }) => {
+        createCalendarEvent(staff.userId!, {
+          title: `${clientName} - ${service.name}`,
+          startTime: slot.time,
+          endTime: addMinutes(slot.time, service.duration),
+          description: notes || undefined,
+        }).then(async (eventId) => {
+          if (eventId) {
+            await db.appointment.update({
+              where: { id: appointment.id },
+              data: { googleCalendarEventId: eventId },
+            });
+          }
+        }).catch(console.error);
+      }).catch(console.error);
+    }
 
     // Audit log
     await logAction({

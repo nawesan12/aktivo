@@ -18,11 +18,13 @@ interface AtRiskClient {
  */
 export async function getChurnData(
   businessId: string,
-  thresholdDays: number = 30,
-  limit: number = 50
+  options: { thresholdDays?: number; limit?: number; startDate?: Date } = {}
 ): Promise<{ atRiskClients: AtRiskClient[]; totalAtRisk: number }> {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - thresholdDays);
+  const { thresholdDays = 30, limit = 50, startDate } = options;
+
+  const cutoff = startDate
+    ? new Date(startDate)
+    : (() => { const d = new Date(); d.setDate(d.getDate() - thresholdDays); return d; })();
 
   // Users who had appointments before cutoff but none after
   const atRiskUsers = await db.user.findMany({

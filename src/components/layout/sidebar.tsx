@@ -22,6 +22,7 @@ import {
   Activity,
   Sparkles,
   Code2,
+  Hourglass,
 } from "lucide-react";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ import { InstallPWAButton } from "@/components/dashboard/install-pwa-button";
 const navigation = [
   { name: "Dashboard", href: "/panel", icon: LayoutDashboard },
   { name: "Turnos", href: "/panel/turnos", icon: Calendar },
+  { name: "Lista de espera", href: "/panel/lista-espera", icon: Hourglass },
   { name: "Calendario", href: "/panel/calendario", icon: CalendarDays },
   { name: "Servicios", href: "/panel/servicios", icon: Scissors },
   { name: "Equipo", href: "/panel/equipo", icon: Users },

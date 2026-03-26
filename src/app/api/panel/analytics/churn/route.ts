@@ -13,7 +13,12 @@ export async function GET(request: NextRequest) {
 
     const days = parseInt(request.nextUrl.searchParams.get("days") || "30");
     const limit = parseInt(request.nextUrl.searchParams.get("limit") || "50");
-    const data = await getChurnData(session.businessId, days, limit);
+    const startDate = request.nextUrl.searchParams.get("startDate");
+    const data = await getChurnData(session.businessId, {
+      thresholdDays: days,
+      limit,
+      ...(startDate && { startDate: new Date(startDate) }),
+    });
 
     return NextResponse.json(data);
   } catch (error) {

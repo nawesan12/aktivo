@@ -15,10 +15,10 @@ export async function GET() {
     await requirePlan(session.businessId, "PROFESSIONAL");
 
     const [retention, ltv, peakHours, churn] = await Promise.all([
-      getRetentionData(session.businessId, 6),
-      getLTVData(session.businessId, 10),
-      getPeakHoursData(session.businessId, 90),
-      getChurnData(session.businessId, 30, 10),
+      getRetentionData(session.businessId, { months: 6 }),
+      getLTVData(session.businessId, { limit: 10 }),
+      getPeakHoursData(session.businessId, { days: 90 }),
+      getChurnData(session.businessId, { thresholdDays: 30, limit: 10 }),
     ]);
 
     return NextResponse.json({

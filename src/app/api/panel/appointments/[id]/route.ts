@@ -6,7 +6,6 @@ import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
 import { sendReviewRequestEmail } from "@/lib/notifications/review-request-email";
 import { sendWhatsApp } from "@/lib/notifications/whatsapp";
-import { sendWhatsAppText } from "@/lib/notifications/whatsapp";
 import { handleApiError } from "@/lib/api-errors";
 import { addDays } from "date-fns";
 
@@ -31,7 +30,7 @@ export async function PATCH(
       where: { id, businessId: session.businessId },
       include: {
         service: { select: { name: true } },
-        staff: { select: { name: true, userId: true } },
+        staff: { select: { name: true, userId: true, googleCalendarEnabled: true } },
         user: { select: { name: true, phone: true, email: true } },
         guestClient: { select: { name: true, phone: true, email: true } },
         business: { select: { name: true, slug: true } },
@@ -75,50 +74,25 @@ export async function PATCH(
         type: "cancellation",
       }).catch(console.error);
 
-      // Notify waitlist entries for the same service/date (Feature 4 + F8)
-      const bookingUrl = `${process.env.NEXTAUTH_URL}/${appointment.business.slug}/reservar`;
-      db.waitlistEntry.findMany({
-        where: {
+      // Notify matching waitlist entries (event-driven)
+      import("@/lib/waitlist").then(({ notifyWaitlistOnCancellation }) => {
+        notifyWaitlistOnCancellation({
           businessId: session.businessId,
           serviceId: appointment.serviceId,
-          notified: false,
-          expiresAt: { gt: new Date() },
-          preferredDate: {
-            gte: addDays(appointment.dateTime, -1),
-            lte: addDays(appointment.dateTime, 1),
-          },
-        },
-        take: 5,
-      }).then(async (entries) => {
-        for (const entry of entries) {
-          const message = `Se liberó un turno para ${appointment.service.name} el ${appointment.dateTime.toLocaleDateString("es-AR")}. Reservá ahora en ${bookingUrl}`;
-
-          // Send WhatsApp
-          sendWhatsAppText(entry.phone, message).catch(console.error);
-
-          // Send Email if available
-          if (entry.email) {
-            const { sendEmail } = await import("@/lib/notifications/email");
-            sendEmail({
-              to: entry.email,
-              type: "cancellation",
-              businessName: appointment.business.name,
-              clientName: entry.name,
-              serviceName: appointment.service.name,
-              staffName: appointment.staff.name,
-              dateTime: appointment.dateTime,
-            }).catch(console.error);
-          }
-
-          await db.waitlistEntry.update({
-            where: { id: entry.id },
-            data: { notified: true, notifiedAt: new Date() },
-          });
-        }
+          dateTime: appointment.dateTime,
+          businessName: appointment.business.name,
+          businessSlug: appointment.business.slug,
+          serviceName: appointment.service.name,
+          staffName: appointment.staff.name,
+        }).catch(console.error);
       }).catch(console.error);
 
-      // Google Calendar: delete event if exists (Feature 6) — temporarily disabled
-      // TODO: re-enable once googleCalendarEnabled field is migrated
+      // Google Calendar: delete event if synced
+      if (appointment.googleCalendarEventId && appointment.staff.userId) {
+        import("@/lib/google-calendar").then(({ deleteCalendarEvent }) => {
+          deleteCalendarEvent(appointment.staff.userId!, appointment.googleCalendarEventId!).catch(console.error);
+        }).catch(console.error);
+      }
     }
 
     // Trigger review request on COMPLETED (Feature 1)
@@ -184,10 +158,18 @@ export async function DELETE(
 
     const appointment = await db.appointment.findFirst({
       where: { id, businessId: session.businessId },
+      include: { staff: { select: { userId: true } } },
     });
 
     if (!appointment) {
       return NextResponse.json({ error: "Turno no encontrado" }, { status: 404 });
+    }
+
+    // Google Calendar cleanup
+    if (appointment.googleCalendarEventId && appointment.staff?.userId) {
+      import("@/lib/google-calendar").then(({ deleteCalendarEvent }) => {
+        deleteCalendarEvent(appointment.staff!.userId!, appointment.googleCalendarEventId!).catch(console.error);
+      }).catch(console.error);
     }
 
     await db.appointment.delete({ where: { id } });

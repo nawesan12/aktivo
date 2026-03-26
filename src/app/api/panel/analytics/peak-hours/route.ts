@@ -12,7 +12,13 @@ export async function GET(request: NextRequest) {
     await requirePlan(session.businessId, "PROFESSIONAL");
 
     const days = parseInt(request.nextUrl.searchParams.get("days") || "90");
-    const data = await getPeakHoursData(session.businessId, days);
+    const startDate = request.nextUrl.searchParams.get("startDate");
+    const endDate = request.nextUrl.searchParams.get("endDate");
+    const data = await getPeakHoursData(session.businessId, {
+      days,
+      ...(startDate && { startDate: new Date(startDate) }),
+      ...(endDate && { endDate: new Date(endDate) }),
+    });
 
     return NextResponse.json(data);
   } catch (error) {

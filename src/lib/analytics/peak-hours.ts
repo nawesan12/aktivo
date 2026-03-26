@@ -13,15 +13,21 @@ interface PeakHoursData {
  */
 export async function getPeakHoursData(
   businessId: string,
-  days: number = 90
+  options: { days?: number; startDate?: Date; endDate?: Date } = {}
 ): Promise<PeakHoursData> {
-  const since = new Date();
-  since.setDate(since.getDate() - days);
+  const { days = 90, startDate, endDate } = options;
+
+  const since = startDate
+    ? new Date(startDate)
+    : (() => { const d = new Date(); d.setDate(d.getDate() - days); return d; })();
+
+  const dateTimeFilter: { gte: Date; lte?: Date } = { gte: since };
+  if (endDate) dateTimeFilter.lte = endDate;
 
   const appointments = await db.appointment.findMany({
     where: {
       businessId,
-      dateTime: { gte: since },
+      dateTime: dateTimeFilter,
       status: { in: ["COMPLETED", "CONFIRMED", "PENDING"] },
     },
     select: { dateTime: true },
