@@ -1,3 +1,5 @@
+import { appUrl } from "@/lib/env";
+import { Providers } from "@/components/providers";
 export default function LandingLayout({
   children,
 }: {
@@ -7,8 +9,8 @@ export default function LandingLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Jiku",
-    url: "https://jikuapp.com",
-    logo: "https://jikuapp.com/jiku-logo.svg",
+    url: appUrl(),
+    logo: appUrl("/jiku-logo.svg"),
     description:
       "Plataforma de gestión de turnos, CRM, pagos y fidelización para negocios de servicios en Argentina.",
   };
@@ -17,7 +19,7 @@ export default function LandingLayout({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Jiku",
-    url: "https://jikuapp.com",
+    url: appUrl(),
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: [
@@ -127,16 +129,16 @@ export default function LandingLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Jiku",
-    url: "https://jikuapp.com",
+    url: appUrl(),
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://jikuapp.com/explorar?q={search_term_string}",
+      target: appUrl("/explorar?q={search_term_string}"),
       "query-input": "required name=search_term_string",
     },
   };
 
   return (
-    <>
+    <Providers>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -162,6 +164,6 @@ export default function LandingLayout({
         }}
       />
       {children}
-    </>
+    </Providers>
   );
 }

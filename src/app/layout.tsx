@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Cormorant_Garamond, IBM_Plex_Mono, Inter } from "next/font/google";
-import { Providers } from "@/components/providers";
 import "./globals.css";
+import { appUrl } from "@/lib/env";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -42,7 +42,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://jikuapp.com"),
+  metadataBase: new URL(appUrl()),
   title: {
     default: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
     template: "%s | Jiku",
@@ -95,7 +95,7 @@ export const metadata: Metadata = {
     title: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
     description:
       "Turnos, CRM, pagos y fidelización para barberías, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
-    url: "https://jikuapp.com",
+    url: appUrl(),
   },
   twitter: {
     card: "summary_large_image",
@@ -115,7 +115,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://jikuapp.com",
+    canonical: appUrl(),
   },
   verification: {
     google: "YOUR_CODE",
@@ -133,8 +133,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning className={`${sora.variable} ${cormorantGaramond.variable} ${ibmPlexMono.variable} ${inter.variable} scroll-smooth`}>
+      {/*
+        No providers here on purpose. The embeddable widget renders inside this
+        same root layout, on our customers' own websites — the app-wide
+        providers (and the service worker registration that came with them) have
+        no business running there. Each route group brings its own, and
+        `(widget)` deliberately brings almost none.
+      */}
       <body className="min-h-screen">
-        <Providers>{children}</Providers>
+        {/*
+          Keyboard users would otherwise tab through the whole navigation on
+          every page before reaching the content. Visible only when focused.
+        */}
+        <a
+          href="#contenido"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
+        >
+          Saltar al contenido
+        </a>
+        {children}
       </body>
     </html>
   );

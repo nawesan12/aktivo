@@ -16,8 +16,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
+    // Intentional: localStorage doesn't exist on the server, so reading it in
+    // the initializer would make the server and client markup disagree. The
+    // stored theme can only be applied after hydration.
     const stored = localStorage.getItem("jiku-theme") as Theme | null;
     if (stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTheme(stored);
     }
   }, []);

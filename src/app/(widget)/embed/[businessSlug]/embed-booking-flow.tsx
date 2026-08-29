@@ -4,7 +4,9 @@ import { useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, User, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import { Clock, User, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
+import Image from "next/image";
 
 
 interface EmbedProps {
@@ -17,6 +19,37 @@ interface EmbedProps {
 
 type Step = "services" | "staff" | "datetime" | "info" | "confirmation";
 
+interface WidgetService {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
+}
+
+interface WidgetSlot {
+  /** Absolute instant, sent back when booking. */
+  time: string;
+  /** Local label shown to the visitor, e.g. "09:00". */
+  display: string;
+  available?: boolean;
+}
+
+interface ServiceOrCategory extends Partial<WidgetService> {
+  id: string;
+  name: string;
+  services?: WidgetService[];
+}
+
+function flattenServices(entries: ServiceOrCategory[]): WidgetService[] {
+  return entries.flatMap((entry) =>
+    entry.services?.length
+      ? entry.services
+      : typeof entry.duration === "number" && typeof entry.price === "number"
+        ? [{ id: entry.id, name: entry.name, duration: entry.duration, price: entry.price }]
+        : []
+  );
+}
+
 export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: EmbedProps) {
   const [step, setStep] = useState<Step>("services");
   const [selectedService, setSelectedService] = useState<string | null>(null);
@@ -27,6 +60,7 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [booking, setBooking] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
   const [booked, setBooked] = useState(false);
 
   const { data: servicesData } = useSWR(
@@ -35,38 +69,64 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
   const { data: staffData } = useSWR(
     selectedService ? `/api/businesses/${businessSlug}/staff?serviceId=${selectedService}` : null);
 
+  // `/services` returns categories with their services nested, plus any
+  // uncategorised service at the top level. The widget was rendering that list
+  // straight through, so it offered "Cortes", "Barba" and "Combos" as if they
+  // were bookable — each showing "min" with no number and "$ 0".
+  const services: WidgetService[] = flattenServices(servicesData?.data || servicesData || []);
+  const selectedServiceDuration =
+    services.find((s) => s.id === selectedService)?.duration ?? 30;
+
+  // `duration` is required by the endpoint; without it the request 400s and the
+  // widget shows an empty list of times with no explanation.
   const { data: slotsData } = useSWR(
     selectedStaff && selectedDate && selectedService
-      ? `/api/businesses/${businessSlug}/availability/slots?staffId=${selectedStaff}&date=${selectedDate}&serviceId=${selectedService}`
+      ? `/api/businesses/${businessSlug}/availability/slots?staffId=${selectedStaff}` +
+          `&date=${selectedDate}&serviceId=${selectedService}&duration=${selectedServiceDuration}`
       : null);
 
-  const services = servicesData?.data || servicesData || [];
   const staffList = staffData?.data || staffData || [];
-  const slots = slotsData?.data || slotsData || [];
+
+  const slots: WidgetSlot[] = slotsData?.data || slotsData || [];
+  const availableSlots = slots.filter((slot) => slot.available !== false);
 
   async function handleBook() {
     if (!selectedService || !selectedStaff || !selectedDate || !selectedTime) return;
     setBooking(true);
+    setBookingError(null);
 
     try {
-      const res = await fetch(`/api/businesses/${businessSlug}/appointments`, {
+      // `/api/appointments` is the endpoint that creates bookings. This used to
+      // post to `/api/businesses/[slug]/appointments`, which does not exist:
+      // every attempt got a 404 that the empty catch below swallowed, so the
+      // visitor pressed "confirm" and nothing happened, with no message. The
+      // embeddable widget could never book anything.
+      const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId: selectedService,
           staffId: selectedStaff,
-          date: selectedDate,
-          time: selectedTime,
-          clientName,
-          clientPhone,
-          clientEmail: clientEmail || undefined,
+          // The absolute instant of the chosen slot, not its local label.
+          dateTime: selectedTime,
+          guest: {
+            name: clientName,
+            phone: clientPhone,
+            email: clientEmail || "",
+          },
         }),
       });
 
-      if (!res.ok) throw new Error((await res.json()).error);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "No pudimos confirmar el turno. Probá de nuevo.");
+      }
+
       setBooked(true);
-    } catch {
-      // Keep on info step
+    } catch (error) {
+      setBookingError(
+        error instanceof Error ? error.message : "No pudimos confirmar el turno."
+      );
     } finally {
       setBooking(false);
     }
@@ -116,7 +176,7 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
       <div className="flex-1 p-4 overflow-y-auto">
         {step === "services" && (
           <div className="space-y-2">
-            {services.map((s: { id: string; name: string; duration: number; price: number }) => (
+            {services.map((s) => (
               <button
                 key={s.id}
                 onClick={() => { setSelectedService(s.id); setStep("staff"); }}
@@ -125,7 +185,7 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
                 <p className="font-medium text-sm">{s.name}</p>
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{s.duration} min</span>
-                  <span>${s.price.toLocaleString("es-AR")}</span>
+                  <span>{formatCurrency(s.price)}</span>
                 </div>
               </button>
             ))}
@@ -142,7 +202,13 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
               >
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
                   {s.image ? (
-                    <img src={s.image} alt={s.name} className="w-10 h-10 rounded-full object-cover" />
+                    <Image
+                      src={s.image}
+                      alt={s.name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
                   ) : (
                     <User className="w-5 h-5 text-muted-foreground" />
                   )}
@@ -171,21 +237,26 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
             {selectedDate && (
               <div>
                 <p className="text-sm font-medium mb-2">Hora</p>
+                {/* `time` is the absolute instant, `display` the local label.
+                    The button used to print `time`, so visitors were offered
+                    "2026-08-31T12:00:00.000Z" instead of "09:00", and slots
+                    already taken looked identical to free ones. */}
                 <div className="grid grid-cols-3 gap-2">
-                  {(Array.isArray(slots) ? slots : []).map((slot: string | { time: string }) => {
-                    const time = typeof slot === "string" ? slot : slot.time;
-                    return (
-                      <button
-                        key={time}
-                        onClick={() => { setSelectedTime(time); setStep("info"); }}
-                        className="px-3 py-2 text-sm rounded-lg border border-border hover:border-primary/50 transition-colors text-center"
-                        style={selectedTime === time ? { backgroundColor: `${primaryColor}20`, borderColor: primaryColor } : {}}
-                      >
-                        {time}
-                      </button>
-                    );
-                  })}
-                  {slots.length === 0 && (
+                  {availableSlots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      onClick={() => { setSelectedTime(slot.time); setStep("info"); }}
+                      className="px-3 py-2 text-sm rounded-lg border border-border hover:border-primary/50 transition-colors text-center"
+                      style={
+                        selectedTime === slot.time
+                          ? { backgroundColor: `${primaryColor}20`, borderColor: primaryColor }
+                          : {}
+                      }
+                    >
+                      {slot.display}
+                    </button>
+                  ))}
+                  {availableSlots.length === 0 && (
                     <p className="col-span-3 text-center text-sm text-muted-foreground py-4">
                       No hay horarios disponibles para esta fecha
                     </p>
@@ -199,16 +270,18 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
         {step === "info" && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground">Nombre *</label>
+              <label htmlFor="nombre" className="text-sm text-muted-foreground">Nombre *</label>
               <input
+                id="nombre"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Teléfono *</label>
+              <label htmlFor="telefono" className="text-sm text-muted-foreground">Teléfono *</label>
               <input
+                id="telefono"
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 type="tel"
@@ -216,14 +289,24 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Email (opcional)</label>
+              <label htmlFor="email-opcional" className="text-sm text-muted-foreground">Email (opcional)</label>
               <input
+                id="email-opcional"
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 type="email"
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               />
             </div>
+
+            {bookingError && (
+              <p
+                role="alert"
+                className="text-sm text-danger-foreground bg-danger-muted border border-danger/20 rounded-lg px-3 py-2"
+              >
+                {bookingError}
+              </p>
+            )}
 
             <button
               onClick={handleBook}
