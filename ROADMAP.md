@@ -12,7 +12,7 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Configurar Tailwind v4, shadcn/ui, GSAP
 - [x] Schema Prisma completo (18 modelos, multi-tenant)
 - [x] Auth (NextAuth v5: Google + Credentials)
-- [x] Middleware (slug routing + auth protection)
+- [x] Proxy (slug routing + auth protection) — `src/proxy.ts`
 - [x] Layout base (sidebar, topbar, mobile-nav)
 - [x] Zustand stores (ui-store, booking-store)
 - [x] Cloudinary config
@@ -21,7 +21,7 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Seed script con datos demo de barberia
 - [x] RBAC con 6 roles y permisos granulares
 - [x] Lib utilities: availability engine, rate limiting, audit logging
-- [x] Notifications: WhatsApp (Twilio) + Email (Resend) multi-tenant
+- [x] Notifications: WhatsApp (Meta Cloud API) + Email (Resend) multi-tenant
 - [x] MercadoPago integration multi-business
 - [x] Zod validations
 
@@ -52,7 +52,7 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 ### Sprint 4 — Payments & Notifications (Semana 9-10) ✅
 - [x] MercadoPago: config per-business, 3 modos, webhook handler, preference creation
 - [x] UI de configuracion de pagos en el dashboard
-- [x] WhatsApp (Twilio): mensajes templated por tipo, sandbox testing
+- [x] WhatsApp (Meta Cloud API): mensajes templated por tipo, verificación de firma
 - [x] Email (Resend): templates HTML con branding del negocio
 - [x] Preferencias de notificacion per-business
 - [x] Pagina de confirmacion post-booking con resumen
@@ -72,61 +72,61 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] PWA basics (manifest.json, offline indicator)
 - [x] Performance: lazy loading, code splitting, image optimization
 - [x] Accesibilidad (WCAG 2.1 AA): keyboard nav, screen readers, contrast
-- [ ] Tests: unit tests de availability engine, integration tests de booking flow ⚠️ *Pendiente*
+- [x] Tests: unitarios del motor de disponibilidad y e2e del flujo de reserva
 - [x] Deploy a Vercel con variables de entorno
 
-> **Nota:** Sprint 6 ~95% completo — tests aún pendientes.
+> **Nota:** Sprint 6 completo.
 
 ---
 
-## Fase 2 — Growth (Sprints 7-10)
+## Fase 2 — Growth (Sprints 7-10) ✅
 
-### Sprint 7 — CRM Enhancements + Reviews System
-- [ ] Tags de clientes: CRUD per-business con nombre + color
-- [ ] Asignacion polimorfica de tags (usuarios registrados y guest clients)
-- [ ] Notas de staff sobre clientes
-- [ ] Sistema de reviews (1-5 estrellas + comentario, vinculado a turno)
-- [ ] Review tokens con links tokenizados y expiración de 7 días
-- [ ] Flujo automático: turno COMPLETED → crear ReviewToken → enviar email/WhatsApp
-- [ ] Delay configurable para solicitud de reviews (reviewRequestDelayHours)
-- [ ] Filtro de clientes por tags en la lista de clientes
-- [ ] Dashboard de gestión de reseñas (aprobar/ocultar/responder)
-- [ ] Página pública de review (`/review/[token]`)
-- [ ] Nuevos permisos RBAC: `clients:tags`, `reviews:read`, `reviews:manage`
+### Sprint 7 — CRM Enhancements + Reviews System ✅
+- [x] Tags de clientes: CRUD per-business con nombre + color
+- [x] Asignacion polimorfica de tags (usuarios registrados y guest clients)
+- [x] Notas de staff sobre clientes
+- [x] Sistema de reviews (1-5 estrellas + comentario, vinculado a turno)
+- [x] Review tokens con links tokenizados y expiración de 7 días
+- [x] Flujo automático: turno COMPLETED → crear ReviewToken → enviar email/WhatsApp
+- [x] Delay configurable para solicitud de reviews (reviewRequestDelayHours)
+- [x] Filtro de clientes por tags en la lista de clientes
+- [x] Dashboard de gestión de reseñas (aprobar/ocultar/responder)
+- [x] Página pública de review (`/review/[token]`)
+- [x] Nuevos permisos RBAC: `clients:tags`, `reviews:read`, `reviews:manage`
 
-### Sprint 8 — Smart Scheduling + No-Show Tracking + Campaigns
-- [ ] Sugerencias inteligentes de slots basadas en historial del cliente
-- [ ] Tracking de no-shows con penalizaciones automáticas (bloqueo temporal)
-- [ ] Configuración de umbral de no-shows y días de penalización
-- [ ] Auto-marcado de no-shows (cron cada 15 min)
-- [ ] Campañas automáticas: BIRTHDAY, REBOOKING, INACTIVITY, CUSTOM
-- [ ] Segmentación de campañas por tags de clientes
-- [ ] Templates de mensajes con interpolación de variables
-- [ ] Log de ejecución de campañas por destinatario
-- [ ] Perfil de cliente con fecha de cumpleaños
-- [ ] Cron jobs: ejecución de campañas (diario), auto no-show (15 min), review requests (horario)
-- [ ] Nuevos permisos RBAC: `campaigns:read`, `campaigns:manage`, `noshow:read`, `noshow:manage`
+### Sprint 8 — Smart Scheduling + No-Show Tracking + Campaigns ✅
+- [x] Sugerencias inteligentes de slots basadas en historial del cliente
+- [x] Tracking de no-shows con penalizaciones automáticas (bloqueo temporal)
+- [x] Configuración de umbral de no-shows y días de penalización
+- [x] Auto-marcado de no-shows (cron cada 15 min)
+- [x] Campañas automáticas: BIRTHDAY, REBOOKING, INACTIVITY, CUSTOM
+- [x] Segmentación de campañas por tags de clientes
+- [x] Templates de mensajes con interpolación de variables
+- [x] Log de ejecución de campañas por destinatario
+- [x] Perfil de cliente con fecha de cumpleaños
+- [x] Cron jobs: ejecución de campañas (diario), auto no-show (15 min), review requests (horario)
+- [x] Nuevos permisos RBAC: `campaigns:read`, `campaigns:manage`, `noshow:read`, `noshow:manage`
 
-### Sprint 9 — Multi-Sucursal (Multi-Location)
-- [ ] Modelo BusinessGroup: entidad paraguas con owner, nombre, logo
-- [ ] Campo groupId (nullable) en Business — backward compatible
-- [ ] Staff compartido entre sucursales (mismo User, diferente StaffMember por Business)
-- [ ] Location switcher en la topbar (solo visible con grupo)
-- [ ] Gestión de sucursales: CRUD de locations dentro del grupo
-- [ ] Reportes cross-location: métricas agregadas de todas las sucursales
-- [ ] Sesión con getSessionGroup() y availableBusinesses en JWT
-- [ ] Nuevos permisos RBAC: `group:read`, `group:manage`, `group:reports`
+### Sprint 9 — Multi-Sucursal (Multi-Location) ✅
+- [x] Modelo BusinessGroup: entidad paraguas con owner, nombre, logo
+- [x] Campo groupId (nullable) en Business — backward compatible
+- [x] Staff compartido entre sucursales (mismo User, diferente StaffMember por Business)
+- [x] Location switcher en la topbar (solo visible con grupo)
+- [x] Gestión de sucursales: CRUD de locations dentro del grupo
+- [x] Reportes cross-location: métricas agregadas de todas las sucursales
+- [x] Sesión con getSessionGroup() y availableBusinesses en JWT
+- [x] Nuevos permisos RBAC: `group:read`, `group:manage`, `group:reports`
 
-### Sprint 10 — Embeddable Widget + Advanced Analytics
-- [ ] Widget embebible: `<script>` tag que crea botón flotante → abre iframe de booking
-- [ ] Configuración de widget: habilitado, tema, posición
-- [ ] Endpoint público CORS-enabled para config del widget
-- [ ] Booking flow simplificado para iframe (`/embed/[businessSlug]`)
-- [ ] Analytics avanzados: retention mensual, LTV, peak hours heatmap, churn
-- [ ] Snapshots diarios de métricas (materialización en tabla AnalyticsSnapshot)
-- [ ] Cron de snapshot de analytics (diario)
-- [ ] Dashboard de analytics con tabs y gráficos interactivos
-- [ ] Nuevos permisos RBAC: `analytics:read`, `widget:manage`
+### Sprint 10 — Embeddable Widget + Advanced Analytics ✅
+- [x] Widget embebible: `<script>` tag que crea botón flotante → abre iframe de booking
+- [x] Configuración de widget: habilitado, tema, posición
+- [x] Endpoint público CORS-enabled para config del widget
+- [x] Booking flow simplificado para iframe (`/embed/[businessSlug]`)
+- [x] Analytics avanzados: retention mensual, LTV, peak hours heatmap, churn
+- [x] Snapshots diarios de métricas (materialización en tabla AnalyticsSnapshot)
+- [x] Cron de snapshot de analytics (diario)
+- [x] Dashboard de analytics con tabs y gráficos interactivos
+- [x] Nuevos permisos RBAC: `analytics:read`, `widget:manage`
 
 ### Dependencias entre Sprints
 ```
@@ -139,6 +139,34 @@ Sprint 9 (Multi-Location)
 Sprint 10 (Widget + Analytics)
        ← Widget reutiliza componentes de booking, Analytics lee datos acumulados
 ```
+
+---
+
+## Estado técnico
+
+Lo que hay hoy, más allá de las funcionalidades:
+
+- **Integridad de reservas** garantizada en la base con una constraint de
+  exclusión; el perdedor de una carrera recibe 409 `SLOT_TAKEN`. Las reservas
+  impagas expiran y un cron las libera.
+- **Configuración validada al arrancar** (`src/lib/env.ts`): el deploy falla si
+  falta algo, en vez de degradar en silencio.
+- **Logging estructurado** en JSON (`src/lib/logger.ts`) y `/api/health`.
+- **Los seis crons corren solos** (`vercel.json`), autenticados por header.
+- **Envíos que no se pierden**: `after()` para el trabajo en segundo plano,
+  reintentos con backoff, y un job que reprocesa lo que quedó fallido.
+- **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
+- **Tests**: ~100 unitarios y ~80 end-to-end, incluidos doble reserva
+  concurrente, flujo completo de reserva, widget y accesibilidad.
+
+### Pendiente
+
+- Migrar `mercadopago` de 2.x a 3.x (cierra las últimas vulnerabilidades de
+  `npm audit`; conviene hacerlo probando contra la API real).
+- Panel en Server Components: hoy casi todo el panel es cliente + SWR.
+- Sentry u otro agregador de errores.
+- Tokens semánticos de color para que el white-label por negocio alcance a toda
+  la interfaz.
 
 ---
 
@@ -165,7 +193,7 @@ Sprint 10 (Widget + Analytics)
 | State | Zustand + SWR |
 | Imagenes | Cloudinary + next-cloudinary |
 | Pagos | MercadoPago |
-| WhatsApp | Twilio |
+| WhatsApp | Meta Cloud API |
 | Email | Resend |
 | Validacion | Zod |
 | Charts | Recharts |
