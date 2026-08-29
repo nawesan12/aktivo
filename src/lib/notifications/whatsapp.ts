@@ -1,6 +1,13 @@
+import { createHmac, timingSafeEqual } from "crypto";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toArgentinaDate } from "@/lib/timezone";
+import { env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+import { withRetry } from "@/lib/retry";
+import { toWhatsAppFormat } from "@/lib/phone";
+
+const log = createLogger("whatsapp");
 
 // ─── Meta WhatsApp Cloud API ──────────────────────────────────────────────────
 // Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
@@ -23,54 +30,61 @@ interface WhatsAppConfig {
 }
 
 function getDefaultConfig(): WhatsAppConfig | null {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = env.WHATSAPP_ACCESS_TOKEN;
   if (!phoneNumberId || !accessToken) return null;
   return { phoneNumberId, accessToken };
 }
 
 // ─── Core send function ───────────────────────────────────────────────────────
 
+/**
+ * A send is retried up to three times with backoff. Meta's API throttles and
+ * returns 5xx often enough that a single attempt loses real messages, and a
+ * booking confirmation that never arrives is a customer at the wrong time.
+ *
+ * The status code travels on the error so `withRetry` can tell a throttle from
+ * a malformed request — repeating a 400 only burns the remaining attempts.
+ */
 async function sendRequest(
   config: WhatsAppConfig,
   body: Record<string, unknown>
 ): Promise<{ messageId: string }> {
   const url = `${BASE_URL}/${config.phoneNumberId}/messages`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.accessToken}`,
-      "Content-Type": "application/json",
+  return withRetry(
+    async () => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          ...body,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        const msg = error?.error?.message || `HTTP ${res.status}`;
+        throw Object.assign(new Error(`WhatsApp API error: ${msg}`), {
+          status: res.status,
+        });
+      }
+
+      const data = await res.json();
+      return { messageId: data.messages?.[0]?.id || "" };
     },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      ...body,
-    }),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    const msg = error?.error?.message || `HTTP ${res.status}`;
-    throw new Error(`WhatsApp API error: ${msg}`);
-  }
-
-  const data = await res.json();
-  return { messageId: data.messages?.[0]?.id || "" };
+    { scope: "whatsapp:send", attempts: 3 }
+  );
 }
 
 // ─── Phone number formatting ──────────────────────────────────────────────────
 
-function formatPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, "");
-  // Meta WhatsApp API expects: 54 + area code + number (WITHOUT the mobile "9")
-  // e.g. +54 223 6327551 → 542236327551
-  if (cleaned.startsWith("549")) return `54${cleaned.slice(3)}`; // strip the 9
-  if (cleaned.startsWith("54")) return cleaned;
-  if (cleaned.startsWith("0")) return `54${cleaned.slice(1)}`;
-  if (cleaned.length === 10) return `54${cleaned}`;
-  return cleaned;
-}
+// Kept as a local name; the rules live in @/lib/phone, shared with validation.
+const formatPhone = toWhatsAppFormat;
 
 // ─── Message types ────────────────────────────────────────────────────────────
 
@@ -259,9 +273,13 @@ export async function sendWhatsApp(data: WhatsAppMessage): Promise<string | unde
     const dt = toArgentinaDate(data.dateTime);
     const dateStr = format(dt, "EEEE d 'de' MMMM", { locale: es });
     const timeStr = format(dt, "HH:mm");
-    console.log(`[WhatsApp] Meta Cloud API not configured. Would send ${data.type} to ${data.to}`);
-    console.log(`  Business: ${data.businessName}, Service: ${data.serviceName}`);
-    console.log(`  Date: ${dateStr} ${timeStr}`);
+    log.warn("not configured — message not sent", {
+      type: data.type,
+      to: data.to,
+      business: data.businessName,
+      service: data.serviceName,
+      when: `${dateStr} ${timeStr}`,
+    });
     return undefined;
   }
 
@@ -304,7 +322,7 @@ export async function sendWhatsAppText(
 ): Promise<string | undefined> {
   const resolvedConfig = config || getDefaultConfig();
   if (!resolvedConfig) {
-    console.log(`[WhatsApp] Not configured. Would send text to ${to}: ${text.slice(0, 50)}...`);
+    log.warn("not configured — text not sent", { to, preview: text.slice(0, 50) });
     return undefined;
   }
 
@@ -339,12 +357,14 @@ export function verifyWebhookSignature(
   appSecret: string
 ): boolean {
   // Meta sends X-Hub-Signature-256 header as "sha256=<hex>"
-  const crypto = require("crypto") as typeof import("crypto");
-  const expected = crypto
-    .createHmac("sha256", appSecret)
-    .update(payload)
-    .digest("hex");
-  return `sha256=${expected}` === signature;
+  const expected = `sha256=${createHmac("sha256", appSecret).update(payload).digest("hex")}`;
+
+  // Constant-time comparison: a plain === leaks how much of the signature
+  // matched through timing.
+  const expectedBuf = Buffer.from(expected, "utf8");
+  const signatureBuf = Buffer.from(signature, "utf8");
+  if (expectedBuf.length !== signatureBuf.length) return false;
+  return timingSafeEqual(expectedBuf, signatureBuf);
 }
 
 // ─── Types for webhook payloads ──────────────────────────────────────────────

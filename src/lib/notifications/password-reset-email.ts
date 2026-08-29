@@ -1,10 +1,23 @@
 import { Resend } from "resend";
+import { appUrl, emailFrom, env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const log = createLogger("email:password-reset");
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+let cachedResend: Resend | null | undefined;
+
+/**
+ * Lazy client. Built at import time it would force every module that merely
+ * imports this file to have the mail configuration present.
+ */
+function getResend(): Resend | null {
+  if (cachedResend === undefined) {
+    cachedResend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+  }
+  return cachedResend;
+}
+
+
 
 function getResetEmailHtml(resetUrl: string): string {
   return `
@@ -43,15 +56,16 @@ function getResetEmailHtml(resetUrl: string): string {
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  const resetUrl = `${APP_URL}/recuperar-contrasena?token=${token}`;
+  const resetUrl = appUrl(`/recuperar-contrasena?token=${token}`);
 
+  const resend = getResend();
   if (!resend) {
-    console.log("[Email] Resend not configured. Reset URL:", resetUrl);
+    log.warn("Resend not configured — reset link not sent", { resetUrl });
     return;
   }
 
   const result = await resend.emails.send({
-    from: process.env.RESEND_FROM || "Jiku <onboarding@resend.dev>",
+    from: emailFrom(),
     to: email,
     subject: "Recuperá tu contraseña — Jiku",
     html: getResetEmailHtml(resetUrl),

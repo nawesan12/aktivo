@@ -1,11 +1,24 @@
 import { Resend } from "resend";
+import { emailFrom, env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("email:appointment");
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toArgentinaDate } from "@/lib/timezone";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+let cachedResend: Resend | null | undefined;
+
+/**
+ * Lazy client. Built at import time it would force every module that merely
+ * imports this file to have the mail configuration present.
+ */
+function getResend(): Resend | null {
+  if (cachedResend === undefined) {
+    cachedResend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+  }
+  return cachedResend;
+}
 
 interface EmailData {
   to: string;
@@ -91,13 +104,14 @@ function getEmailHtml(data: EmailData): string {
 }
 
 export async function sendEmail(data: EmailData) {
+  const resend = getResend();
   if (!resend) {
-    console.log("[Email] Resend not configured. Subject:", getSubject(data.type, data.businessName));
+    log.warn("Resend not configured — email not sent", { subject: getSubject(data.type, data.businessName) });
     return;
   }
 
   const result = await resend.emails.send({
-    from: process.env.RESEND_FROM || `${data.businessName} <onboarding@resend.dev>`,
+    from: emailFrom(data.businessName),
     to: data.to,
     subject: getSubject(data.type, data.businessName),
     html: getEmailHtml(data),

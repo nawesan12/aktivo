@@ -1,8 +1,21 @@
 import { Resend } from "resend";
+import { emailFrom, env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const log = createLogger("email:review-request");
+
+let cachedResend: Resend | null | undefined;
+
+/**
+ * Lazy client. Built at import time it would force every module that merely
+ * imports this file to have the mail configuration present.
+ */
+function getResend(): Resend | null {
+  if (cachedResend === undefined) {
+    cachedResend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+  }
+  return cachedResend;
+}
 
 interface ReviewRequestData {
   to: string;
@@ -43,14 +56,15 @@ function getReviewEmailHtml(data: ReviewRequestData): string {
 }
 
 export async function sendReviewRequestEmail(data: ReviewRequestData): Promise<{ success: boolean; error?: string }> {
+  const resend = getResend();
   if (!resend) {
-    console.log("[Review Email] Resend not configured, skipping:", data.to);
+    log.warn("Resend not configured — review request skipped", { to: data.to });
     return { success: false, error: "Resend not configured" };
   }
 
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM || "Jiku <noreply@jiku.app>",
+      from: emailFrom(),
       to: data.to,
       subject: `¿Cómo fue tu visita? - ${data.businessName}`,
       html: getReviewEmailHtml(data),
@@ -58,7 +72,7 @@ export async function sendReviewRequestEmail(data: ReviewRequestData): Promise<{
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error sending review email";
-    console.error("[Review Email] Error:", message);
+    log.error("send failed", undefined, { reason: message });
     return { success: false, error: message };
   }
 }
