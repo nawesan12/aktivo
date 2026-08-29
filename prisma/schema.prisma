@@ -290,7 +290,8 @@ model BusinessSettings {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
-// Key-value config (MP tokens, Twilio keys, etc.)
+// Key-value config per business (MercadoPago token, WhatsApp overrides).
+// Secrets are stored encrypted — see src/lib/crypto.ts.
 model BusinessConfig {
   id         String   @id @default(cuid())
   businessId String
@@ -365,6 +366,9 @@ model ServiceCategory {
   business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   services Service[]
 
+  // Two categories called "Barba" in the same business is always a mistake —
+  // and re-running the seed produced exactly that.
+  @@unique([businessId, name])
   @@index([businessId])
 }
 
@@ -467,6 +471,9 @@ model Appointment {
   notes         String?           @db.Text
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
+  /// When a PENDING_PAYMENT booking stops holding its slot. Null for bookings
+  /// that never expire (already confirmed, or payments disabled).
+  expiresAt     DateTime?
 
   // Recurrence (Feature 5)
   recurrenceGroupId    String?
@@ -497,6 +504,7 @@ model Appointment {
   @@index([businessId, dateTime])
   @@index([staffId, dateTime])
   @@index([userId])
+  @@index([guestClientId])
   @@index([status])
   @@index([recurrenceGroupId])
 }
@@ -572,6 +580,9 @@ model Notification {
   recipient     String
   error         String?
   sentAt        DateTime?
+  /// Delivery attempts made so far. The retry cron gives up after MAX_ATTEMPTS.
+  attempts      Int                 @default(0)
+  lastAttemptAt DateTime?
   createdAt     DateTime            @default(now())
 
   business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -580,6 +591,8 @@ model Notification {
 
   @@index([businessId, createdAt])
   @@index([appointmentId])
+  // The retry job scans exactly this: what failed and is still worth retrying.
+  @@index([status, attempts])
 }
 
 // ──────────────────────────────────────────
@@ -988,10 +1001,13 @@ model GuestVerification {
   id        String   @id @default(cuid())
   phone     String
   code      String
+  /// Failed verification attempts; the code is burned past a threshold.
+  attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
   @@index([phone, code])
+  @@index([phone, expiresAt])
 }
 
 // ──────────────────────────────────────────

@@ -8,17 +8,49 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const db = new PrismaClient({ adapter });
 
+/**
+ * Demo data for the two example businesses.
+ *
+ * Re-runnable: everything belonging to a demo business is removed first.
+ * Without this, each run appended another copy of every service and member of
+ * staff — after three runs the booking wizard offered "Corte Clásico" six
+ * times. Only the demo slugs are touched; any other business is left alone.
+ */
+const DEMO_SLUGS = ["el-corte", "bella-vita"];
+
+async function resetDemoBusinesses() {
+  const businesses = await db.business.findMany({
+    where: { slug: { in: DEMO_SLUGS } },
+    select: { id: true },
+  });
+
+  if (businesses.length === 0) return;
+
+  const businessIds = businesses.map((b) => b.id);
+
+  // Appointments first: services and staff cannot go while they are referenced.
+  await db.appointment.deleteMany({ where: { businessId: { in: businessIds } } });
+  await db.service.deleteMany({ where: { businessId: { in: businessIds } } });
+  await db.serviceCategory.deleteMany({ where: { businessId: { in: businessIds } } });
+  await db.staffMember.deleteMany({ where: { businessId: { in: businessIds } } });
+  await db.guestClient.deleteMany({ where: { businessId: { in: businessIds } } });
+
+  console.log(`Reset ${businessIds.length} demo business(es)`);
+}
+
 async function main() {
-  console.log("Seeding Aktivo database...");
+  console.log("Seeding Jiku database...");
+
+  await resetDemoBusinesses();
 
   // ── 1. Platform Admin ──────────────────
   const adminPassword = await bcrypt.hash("admin123", 12);
   const admin = await db.user.upsert({
-    where: { email: "admin@aktivo.app" },
+    where: { email: "admin@jiku.app" },
     update: {},
     create: {
-      name: "Admin Aktivo",
-      email: "admin@aktivo.app",
+      name: "Admin Jiku",
+      email: "admin@jiku.app",
       hashedPassword: adminPassword,
       role: "PLATFORM_ADMIN",
     },
@@ -67,7 +99,9 @@ async function main() {
       paymentMode: "PERCENTAGE",
       depositPercentage: 30,
       cancellationPolicy:
-        "Cancelaciones con menos de 2 horas de anticipacion pueden tener cargo.",
+        "Las cancelaciones con menos de 2 horas de anticipación pueden tener cargo.",
+      // The demo business shows every feature, the embeddable widget included.
+      widgetEnabled: true,
     },
   });
 
@@ -96,15 +130,18 @@ async function main() {
   console.log("Owner created:", owner.email);
 
   // ── 5. Service Categories ──────────────
-  const catCortes = await db.serviceCategory.create({
-    data: { businessId: business.id, name: "Cortes", sortOrder: 0 },
-  });
-  const catBarba = await db.serviceCategory.create({
-    data: { businessId: business.id, name: "Barba", sortOrder: 1 },
-  });
-  const catCombos = await db.serviceCategory.create({
-    data: { businessId: business.id, name: "Combos", sortOrder: 2 },
-  });
+  // upsert, not create: the seed is run more than once and `create` left a
+  // second "Barba" and a second "Combos" behind every time.
+  const upsertCategory = (name: string, sortOrder: number) =>
+    db.serviceCategory.upsert({
+      where: { businessId_name: { businessId: business.id, name } },
+      update: { sortOrder },
+      create: { businessId: business.id, name, sortOrder },
+    });
+
+  const catCortes = await upsertCategory("Cortes", 0);
+  const catBarba = await upsertCategory("Barba", 1);
+  const catCombos = await upsertCategory("Combos", 2);
 
   // ── 6. Services ────────────────────────
   const services = await Promise.all([
@@ -337,7 +374,7 @@ async function main() {
 
   console.log("\nSeed completed successfully!");
   console.log("─────────────────────────────────");
-  console.log("Admin login:  admin@aktivo.app / admin123");
+  console.log("Admin login:  admin@jiku.app / admin123");
   console.log("Owner login:  owner@elcorte.com / owner123");
   console.log("Business URL: /el-corte");
   console.log("─────────────────────────────────");
