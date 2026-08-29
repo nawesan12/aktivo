@@ -43,7 +43,8 @@ test.describe("F12 — Business Directory", () => {
         expect(biz).toHaveProperty("averageRating");
         expect(biz).toHaveProperty("reviewCount");
         expect(biz).toHaveProperty("topServices");
-        expect(typeof biz.averageRating).toBe("number");
+        // null hasta que el negocio recibe su primera reseña visible.
+        expect(biz.averageRating === null || typeof biz.averageRating === "number").toBe(true);
         expect(Array.isArray(biz.topServices)).toBe(true);
       }
     });
@@ -110,7 +111,7 @@ test.describe("F12 — Business Directory", () => {
       if (await businessLink.isVisible().catch(() => false)) {
         await businessLink.click();
         await page.waitForURL(`**/${SEED.business.slug}`);
-        await expect(page.getByText(SEED.business.name)).toBeVisible();
+        await expect(page.getByRole("heading", { name: SEED.business.name })).toBeVisible();
       }
     });
   });

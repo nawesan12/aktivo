@@ -24,7 +24,7 @@ test.describe("F7 — Review Responses", () => {
     await page.waitForLoadState("networkidle");
 
     // Business name should be visible on the profile
-    await expect(page.getByText(SEED.business.name)).toBeVisible({
+    await expect(page.getByRole("heading", { name: SEED.business.name })).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -33,7 +33,7 @@ test.describe("F7 — Review Responses", () => {
     await page.goto(`/${SEED.business.slug}`);
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText(SEED.business.name)).toBeVisible({
+    await expect(page.getByRole("heading", { name: SEED.business.name })).toBeVisible({
       timeout: 10_000,
     });
 
@@ -110,7 +110,7 @@ test.describe("F7 — Review Responses", () => {
     await page.goto(`/${SEED.business.slug}`);
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText(SEED.business.name)).toBeVisible({
+    await expect(page.getByRole("heading", { name: SEED.business.name })).toBeVisible({
       timeout: 10_000,
     });
 

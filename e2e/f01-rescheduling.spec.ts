@@ -27,7 +27,7 @@ test.describe("F1 — Appointment Rescheduling", () => {
     await page.goto(`/${SEED.business.slug}/mis-turnos`);
     await page.waitForLoadState("networkidle");
     // Should see the phone verification state
-    await expect(page.getByText("Mis turnos")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mis turnos" })).toBeVisible();
     await expect(page.getByPlaceholder(/1155667788/)).toBeVisible();
   });
 
@@ -35,6 +35,6 @@ test.describe("F1 — Appointment Rescheduling", () => {
     await loginAsOwner(page);
     await page.goto("/mi-cuenta/turnos");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Mis Turnos")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mis Turnos" })).toBeVisible();
   });
 });

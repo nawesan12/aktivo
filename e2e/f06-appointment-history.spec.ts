@@ -26,7 +26,7 @@ test.describe("F6 — Appointment History Improvements", () => {
     await page.waitForLoadState("networkidle");
 
     // Should see the page heading
-    await expect(page.getByText("Mis Turnos")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "Mis Turnos" })).toBeVisible({ timeout: 10_000 });
 
     // Filter section should be present
     const filtersVisible = await page
@@ -47,7 +47,7 @@ test.describe("F6 — Appointment History Improvements", () => {
     await page.goto("/mi-cuenta/turnos");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Mis Turnos")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "Mis Turnos" })).toBeVisible({ timeout: 10_000 });
 
     // Look for a status filter — could be a select, radio group, or tabs
     const statusFilter =
@@ -88,7 +88,7 @@ test.describe("F6 — Appointment History Improvements", () => {
     await page.goto("/mi-cuenta/turnos");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Mis Turnos")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "Mis Turnos" })).toBeVisible({ timeout: 10_000 });
 
     // Look for pagination controls
     const nextPageBtn = page.getByRole("button", { name: /siguiente|next|>/i });

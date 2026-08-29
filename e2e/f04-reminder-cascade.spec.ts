@@ -1,27 +1,65 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("F4 — Reminder Cascade", () => {
-  test("reminders process endpoint returns 401 without secret", async ({ request }) => {
-    const res = await request.get("/api/reminders/process");
-    expect(res.status()).toBe(401);
-  });
+/**
+ * Scheduled jobs authenticate with `Authorization: Bearer <CRON_SECRET>`,
+ * not a query string (which would leak the secret into access logs and Referer
+ * headers). They are wired to real schedules in vercel.json.
+ */
+const CRON_JOBS = [
+  "/api/cron/reminders",
+  "/api/cron/expire-bookings",
+  "/api/cron/no-shows",
+];
 
-  test("reminders process endpoint returns 401 with wrong secret", async ({ request }) => {
-    const res = await request.get("/api/reminders/process?secret=wrong-secret");
-    expect(res.status()).toBe(401);
-  });
+test.describe("F4 — Cron endpoints", () => {
+  for (const path of CRON_JOBS) {
+    test(`${path} rejects requests without a secret`, async ({ request }) => {
+      const res = await request.get(path);
+      expect(res.status()).toBe(401);
+    });
 
-  test("reminders process endpoint works with valid secret", async ({ request }) => {
-    // Use the REMINDERS_SECRET from env, or test with a known value
-    const secret = process.env.REMINDERS_SECRET;
-    if (!secret) {
-      test.skip();
-      return;
-    }
-    const res = await request.get(`/api/reminders/process?secret=${secret}`);
+    test(`${path} rejects a wrong secret`, async ({ request }) => {
+      const res = await request.get(path, {
+        headers: { Authorization: "Bearer wrong-secret" },
+      });
+      expect(res.status()).toBe(401);
+    });
+
+    test(`${path} ignores the secret in the query string`, async ({ request }) => {
+      // The old endpoint accepted ?secret=... — make sure that door stays shut.
+      const secret = process.env.CRON_SECRET ?? process.env.REMINDERS_SECRET;
+      test.skip(!secret, "CRON_SECRET not set");
+
+      const res = await request.get(`${path}?secret=${secret}`);
+      expect(res.status()).toBe(401);
+    });
+  }
+
+  test("reminders reports how many were sent", async ({ request }) => {
+    const secret = process.env.CRON_SECRET ?? process.env.REMINDERS_SECRET;
+    test.skip(!secret, "CRON_SECRET not set");
+
+    const res = await request.get("/api/cron/reminders", {
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+
     expect(res.ok()).toBeTruthy();
     const data = await res.json();
-    expect(data).toHaveProperty("processed");
-    expect(typeof data.processed).toBe("number");
+    expect(data).toHaveProperty("sent");
+    expect(typeof data.sent).toBe("number");
+    expect(data).toHaveProperty("due");
+  });
+
+  test("expire-bookings reports how many were released", async ({ request }) => {
+    const secret = process.env.CRON_SECRET ?? process.env.REMINDERS_SECRET;
+    test.skip(!secret, "CRON_SECRET not set");
+
+    const res = await request.get("/api/cron/expire-bookings", {
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+
+    expect(res.ok()).toBeTruthy();
+    const data = await res.json();
+    expect(typeof data.expired).toBe("number");
   });
 });

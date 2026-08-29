@@ -29,7 +29,7 @@ test.describe("F10 — Referral Program", () => {
       await page.goto("/mi-cuenta/referidos");
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByText("Programa de Referidos")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Programa de Referidos" })).toBeVisible();
     });
 
     test("mi-cuenta layout shows Referidos tab", async ({ page }) => {

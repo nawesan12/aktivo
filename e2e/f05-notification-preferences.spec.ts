@@ -18,7 +18,7 @@ test.describe("F5 — Notification Preferences", () => {
     await page.goto("/mi-cuenta/notificaciones");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Notificaciones")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Notificaciones" })).toBeVisible();
     await expect(page.getByText(/Configurá cómo querés recibir/i)).toBeVisible();
   });
 

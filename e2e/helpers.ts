@@ -11,7 +11,7 @@ export const SEED = {
     password: "owner123",
   },
   admin: {
-    email: "admin@aktivo.app",
+    email: "admin@jiku.app",
     password: "admin123",
   },
   guest: {
@@ -32,8 +32,9 @@ export const SEED = {
 /** Log in as a user via the login page */
 export async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/iniciar-sesion");
-  await page.getByPlaceholder(/email/i).fill(email);
-  await page.getByPlaceholder(/contraseña|password/i).fill(password);
+  // By label, not by placeholder: the password field's placeholder is "********".
+  await page.getByLabel(/email/i).fill(email);
+  await page.getByLabel(/contraseña/i).fill(password);
   await page.getByRole("button", { name: /iniciar sesión|ingresar/i }).click();
   // Wait for redirect
   await page.waitForURL((url) => !url.pathname.includes("iniciar-sesion"), {

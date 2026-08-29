@@ -1,7 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { SEED } from "./helpers";
+import { loadBookingFixture, type BookingFixture } from "./fixtures";
 
 test.describe("F3 — Better Calendar UX", () => {
+  // Nombres leídos de la app, no copiados del seed: una recarga de datos con
+  // otros nombres rompía estos tests por un motivo ajeno al producto.
+  let fixture: BookingFixture;
+
+  test.beforeAll(async ({ request }) => {
+    fixture = await loadBookingFixture(request);
+  });
+
   test("availability API returns slotCount when serviceId and duration provided", async ({
     request,
   }) => {
@@ -33,7 +42,7 @@ test.describe("F3 — Better Calendar UX", () => {
       const dates = await availRes.json();
       expect(Array.isArray(dates)).toBe(true);
       // Check that available dates include slotCount
-      const availableDate = dates.find((d: any) => d.hasSlots);
+      const availableDate = dates.find((d: { hasSlots: boolean }) => d.hasSlots);
       if (availableDate) {
         expect(availableDate).toHaveProperty("slotCount");
         expect(typeof availableDate.slotCount).toBe("number");
@@ -64,12 +73,12 @@ test.describe("F3 — Better Calendar UX", () => {
     if (serviceItemVisible) {
       // Verify known seeded service name appears
       await expect(
-        page.getByText(SEED.services.corteClasico)
+        page.getByText(fixture.service.name)
       ).toBeVisible();
     } else {
       // Fallback: look for service text directly
       await expect(
-        page.getByText(SEED.services.corteClasico)
+        page.getByText(fixture.service.name)
       ).toBeVisible({ timeout: 10_000 });
     }
   });
@@ -78,8 +87,9 @@ test.describe("F3 — Better Calendar UX", () => {
     await page.goto(`/${SEED.business.slug}/reservar`);
     await page.waitForLoadState("networkidle");
 
-    // Click the first service
-    const serviceText = page.getByText(SEED.services.corteClasico);
+    // Click the first service. `.first()`: the name also appears in the
+    // category tabs above the cards.
+    const serviceText = page.getByText(fixture.service.name).first();
     await expect(serviceText).toBeVisible({ timeout: 10_000 });
     await serviceText.click();
 
@@ -88,13 +98,10 @@ test.describe("F3 — Better Calendar UX", () => {
     await page.waitForLoadState("networkidle");
 
     // After selecting a service we expect to see either staff or calendar
-    const nextStepVisible = await page
-      .getByText(/Elegir profesional|Elegir fecha|Seleccionar/i)
-      .first()
-      .isVisible({ timeout: 10_000 })
-      .catch(() => false);
-
-    expect(nextStepVisible).toBeTruthy();
+    await expect(
+      page.getByRole("heading", { name: /Elegir (profesional|fecha)/i }),
+      "elegir un servicio no avanzó al paso siguiente"
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("time slot buttons meet min touch target size", async ({ page }) => {
@@ -102,7 +109,7 @@ test.describe("F3 — Better Calendar UX", () => {
     await page.waitForLoadState("networkidle");
 
     // Navigate through booking flow to reach time slots
-    const serviceText = page.getByText(SEED.services.corteClasico);
+    const serviceText = page.getByText(fixture.service.name);
     await expect(serviceText).toBeVisible({ timeout: 10_000 });
     await serviceText.click();
     await page.waitForLoadState("networkidle");
