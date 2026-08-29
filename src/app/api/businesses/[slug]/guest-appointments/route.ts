@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyGuestToken } from "@/lib/guest-auth";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   request: NextRequest,
@@ -16,7 +17,7 @@ export async function GET(
 
     const guest = await verifyGuestToken(token);
     if (!guest) {
-      return NextResponse.json({ error: "Token invalido" }, { status: 401 });
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
     // Verify business matches
@@ -66,8 +67,7 @@ export async function GET(
 
     return NextResponse.json({ upcoming, past });
   } catch (error) {
-    console.error("Guest appointments error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:guest-appointments");
   }
 }
 
@@ -85,7 +85,7 @@ export async function PATCH(
 
     const guest = await verifyGuestToken(token);
     if (!guest) {
-      return NextResponse.json({ error: "Token invalido" }, { status: 401 });
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
     const business = await db.business.findUnique({
@@ -120,7 +120,6 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Guest cancel error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:guest-appointments");
   }
 }

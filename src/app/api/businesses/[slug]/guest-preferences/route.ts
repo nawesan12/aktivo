@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyGuestToken } from "@/lib/guest-auth";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   request: NextRequest,
@@ -16,7 +17,7 @@ export async function GET(
 
     const guest = await verifyGuestToken(token);
     if (!guest) {
-      return NextResponse.json({ error: "Token invalido" }, { status: 401 });
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
     // Verify business matches
@@ -40,8 +41,7 @@ export async function GET(
 
     return NextResponse.json(preference);
   } catch (error) {
-    console.error("Guest preferences GET error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:guest-preferences");
   }
 }
 
@@ -59,7 +59,7 @@ export async function PUT(
 
     const guest = await verifyGuestToken(token);
     if (!guest) {
-      return NextResponse.json({ error: "Token invalido" }, { status: 401 });
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
     // Verify business matches
@@ -98,7 +98,6 @@ export async function PUT(
 
     return NextResponse.json(preference);
   } catch (error) {
-    console.error("Guest preferences PUT error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:guest-preferences");
   }
 }

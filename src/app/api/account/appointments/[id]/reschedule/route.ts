@@ -5,6 +5,8 @@ import { getAvailableSlots } from "@/lib/availability";
 import { parseDateInArgentina } from "@/lib/timezone";
 import { sendNotification } from "@/lib/notifications";
 import { addMinutes } from "date-fns";
+import { handleApiError } from "@/lib/api-errors";
+import { runInBackground } from "@/lib/background";
 
 export async function POST(
   request: Request,
@@ -108,25 +110,25 @@ export async function POST(
     });
 
     // Send reschedule notification
-    sendNotification({
-      businessId: appointment.businessId,
-      businessName: appointment.business.name,
-      appointmentId: result.id,
-      clientName: session.user.name ?? "Cliente",
-      clientEmail: session.user.email ?? undefined,
-      serviceName: appointment.service.name,
-      staffName: appointment.staff.name,
-      dateTime: slot.time,
-      type: "reschedule",
-      userId: session.user.id,
-    }).catch((err) => console.error("Reschedule notification error:", err));
+    runInBackground("reschedule-notice", () =>
+      sendNotification({
+        businessId: appointment.businessId,
+        businessName: appointment.business.name,
+        appointmentId: result.id,
+        clientName: session.user.name ?? "Cliente",
+        clientEmail: session.user.email ?? undefined,
+        serviceName: appointment.service.name,
+        staffName: appointment.staff.name,
+        dateTime: slot.time,
+        type: "reschedule",
+        userId: session.user.id,
+      }));
 
     return NextResponse.json({
       id: result.id,
       dateTime: result.dateTime,
     });
   } catch (error) {
-    console.error("Account reschedule error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "account:appointments:id:reschedule");
   }
 }

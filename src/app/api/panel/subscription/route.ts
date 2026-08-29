@@ -8,6 +8,7 @@ import { PLAN_LIMITS, PLAN_PRICES } from "@/lib/subscription/config";
 import { getPlatformPreApproval, getMPPlanId } from "@/lib/subscription/mp-platform";
 import { startOfMonth, endOfMonth } from "date-fns";
 import type { BusinessPlan } from "@/generated/prisma/client";
+import { appUrl } from "@/lib/env";
 
 export async function GET() {
   try {
@@ -115,14 +116,14 @@ export async function POST(request: NextRequest) {
 
     // Create MP preapproval (subscription)
     const preApproval = getPlatformPreApproval();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://jiku.app";
+    const baseUrl = appUrl();
 
     const mpResult = await preApproval.create({
       body: {
         preapproval_plan_id: getMPPlanId(plan),
         external_reference: externalReference,
         payer_email: body.email || undefined,
-        back_url: `${appUrl}/panel/suscripcion?result=callback`,
+        back_url: `${baseUrl}/panel/suscripcion?result=callback`,
         reason: `Jiku ${plan === "PROFESSIONAL" ? "Pro" : "Business"} - Suscripción mensual`,
       },
     });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
@@ -54,8 +55,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("Account profile GET error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "account:profile");
   }
 }
 
@@ -89,7 +89,6 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Account profile PATCH error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "account:profile");
   }
 }

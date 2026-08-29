@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function POST(
   request: NextRequest,
@@ -70,7 +71,6 @@ export async function POST(
       code: coupon.code,
     });
   } catch (error) {
-    console.error("Error validating coupon:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:coupons:validate");
   }
 }

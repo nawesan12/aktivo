@@ -3,6 +3,14 @@ import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
+import { handleApiError, NotFoundError, ValidationError } from "@/lib/api-errors";
+
+/**
+ * Roles that can be assigned to a member from the panel. Mirrors the whitelist
+ * used when inviting (../route.ts): BUSINESS_OWNER and PLATFORM_ADMIN are not
+ * assignable here, so this endpoint can't be used to escalate privileges.
+ */
+const ASSIGNABLE_ROLES = ["BUSINESS_MANAGER", "STAFF_MEMBER", "RECEPTIONIST"];
 
 export async function PATCH(
   request: Request,
@@ -16,14 +24,24 @@ export async function PATCH(
     const body = await request.json();
     const { role, isActive } = body;
 
+    if (role !== undefined && !ASSIGNABLE_ROLES.includes(role)) {
+      throw new ValidationError("Rol inválido");
+    }
+
     const updateData: Record<string, unknown> = {};
     if (role !== undefined) updateData.role = role;
     if (isActive !== undefined) updateData.isActive = isActive;
 
-    await db.userBusiness.update({
-      where: { id: memberId },
+    // Scoped by businessId in the WHERE itself: memberId comes from the client
+    // and must never reach a member of another business.
+    const updated = await db.userBusiness.updateMany({
+      where: { id: memberId, businessId: session.businessId },
       data: updateData,
     });
+
+    if (updated.count === 0) {
+      throw new NotFoundError("Miembro no encontrado");
+    }
 
     await logAction({
       businessId: session.businessId,
@@ -36,9 +54,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error interno";
-    const status = msg.includes("No autenticado") ? 401 : msg.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -51,17 +67,21 @@ export async function DELETE(
     requirePermission(session.role, "team:manage");
     const { memberId } = await params;
 
-    const member = await db.userBusiness.findUnique({
-      where: { id: memberId },
+    const member = await db.userBusiness.findFirst({
+      where: { id: memberId, businessId: session.businessId },
       select: { userId: true },
     });
 
-    if (member?.userId === session.userId) {
+    if (!member) {
+      throw new NotFoundError("Miembro no encontrado");
+    }
+
+    if (member.userId === session.userId) {
       return NextResponse.json({ error: "No podes eliminarte a vos mismo" }, { status: 400 });
     }
 
-    await db.userBusiness.update({
-      where: { id: memberId },
+    await db.userBusiness.updateMany({
+      where: { id: memberId, businessId: session.businessId },
       data: { isActive: false },
     });
 
@@ -75,8 +95,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error interno";
-    const status = msg.includes("No autenticado") ? 401 : msg.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return handleApiError(error);
   }
 }

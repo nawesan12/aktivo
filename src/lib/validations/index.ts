@@ -1,18 +1,19 @@
 import { z } from "zod";
+import { isValidArgentinePhone } from "@/lib/phone";
 
 // ── Auth ──────────────────────────────────
 
 export const loginSchema = z.object({
-  email: z.string().email("Email invalido"),
-  password: z.string().min(6, "Minimo 6 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
 });
 
 export const registerSchema = z
   .object({
-    name: z.string().min(2, "Minimo 2 caracteres"),
-    businessName: z.string().min(2, "Minimo 2 caracteres"),
-    email: z.string().email("Email invalido"),
-    password: z.string().min(6, "Minimo 6 caracteres"),
+    name: z.string().min(2, "Mínimo 2 caracteres"),
+    businessName: z.string().min(2, "Mínimo 2 caracteres"),
+    email: z.string().email("Email inválido"),
+    password: z.string().min(6, "Mínimo 6 caracteres"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -22,16 +23,37 @@ export const registerSchema = z
 
 // ── Business ─────────────────────────────
 
+/**
+ * A phone number we can actually reach.
+ *
+ * `z.string().min(10)` accepted "0000000000" and rejected "+54 9 223 632-7551",
+ * which is how half the people type it.
+ *
+ * Validation only — the value keeps the shape the user typed so react-hook-form
+ * still sees one type in and the same type out. Normalisation happens where the
+ * number is written to the database (see `normalisePhone`), which is what stops
+ * one person becoming two clients depending on how they typed it.
+ */
+const argentinePhone = z
+  .string()
+  .refine(isValidArgentinePhone, "Teléfono argentino inválido");
+
+/** Same rule, but the field may be left empty. */
+const optionalArgentinePhone = z
+  .string()
+  .optional()
+  .refine((value) => !value || isValidArgentinePhone(value), "Teléfono argentino inválido");
+
 export const businessSchema = z.object({
-  name: z.string().min(2, "Minimo 2 caracteres"),
+  name: z.string().min(2, "Mínimo 2 caracteres"),
   slug: z
     .string()
-    .min(3, "Minimo 3 caracteres")
+    .min(3, "Mínimo 3 caracteres")
     .max(50)
-    .regex(/^[a-z0-9-]+$/, "Solo letras minusculas, numeros y guiones"),
+    .regex(/^[a-z0-9-]+$/, "Solo letras minúsculas, números y guiones"),
   description: z.string().optional(),
-  phone: z.string().optional(),
-  whatsapp: z.string().optional(),
+  phone: optionalArgentinePhone,
+  whatsapp: optionalArgentinePhone,
   email: z.string().email().optional().or(z.literal("")),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -41,9 +63,9 @@ export const businessSchema = z.object({
 // ── Services ─────────────────────────────
 
 export const serviceSchema = z.object({
-  name: z.string().min(2, "Minimo 2 caracteres"),
+  name: z.string().min(2, "Mínimo 2 caracteres"),
   description: z.string().optional(),
-  duration: z.number().min(5, "Minimo 5 minutos").max(480, "Maximo 8 horas"),
+  duration: z.number().min(5, "Mínimo 5 minutos").max(480, "Máximo 8 horas"),
   price: z.number().min(0, "El precio no puede ser negativo"),
   categoryId: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -52,9 +74,9 @@ export const serviceSchema = z.object({
 // ── Staff ────────────────────────────────
 
 export const staffSchema = z.object({
-  name: z.string().min(2, "Minimo 2 caracteres"),
+  name: z.string().min(2, "Mínimo 2 caracteres"),
   email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
+  phone: optionalArgentinePhone,
   bio: z.string().max(500).optional(),
   specialty: z.string().optional(),
 });
@@ -71,9 +93,9 @@ export const appointmentSchema = z.object({
 });
 
 export const guestInfoSchema = z.object({
-  name: z.string().min(2, "Minimo 2 caracteres"),
-  phone: z.string().min(10, "Minimo 10 digitos"),
-  email: z.string().email("Email invalido").optional().or(z.literal("")),
+  name: z.string().min(2, "Mínimo 2 caracteres"),
+  phone: argentinePhone,
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
 });
 
 // ── Schedule ─────────────────────────────
@@ -133,8 +155,8 @@ export const settingsSchema = z.object({
   business: z.object({
     name: z.string().min(2).optional(),
     description: z.string().optional(),
-    phone: z.string().optional(),
-    whatsapp: z.string().optional(),
+    phone: optionalArgentinePhone,
+    whatsapp: optionalArgentinePhone,
     email: z.string().email().optional().or(z.literal("")),
     address: z.string().optional(),
     city: z.string().optional(),

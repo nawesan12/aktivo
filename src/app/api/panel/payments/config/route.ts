@@ -6,6 +6,7 @@ import { logAction } from "@/lib/audit";
 import { paymentConfigSchema } from "@/lib/validations";
 import { getMPClient } from "@/lib/mercadopago";
 import { handleApiError } from "@/lib/api-errors";
+import { encryptSecret } from "@/lib/crypto";
 import { requirePlan } from "@/lib/subscription/enforcement";
 
 export async function GET() {
@@ -67,7 +68,7 @@ export async function PUT(request: NextRequest) {
         // Verify token by making a test API call
         await client.payment.search({ options: { limit: 1 } });
       } catch {
-        return NextResponse.json({ error: "Token de MercadoPago invalido" }, { status: 400 });
+        return NextResponse.json({ error: "Token de MercadoPago inválido" }, { status: 400 });
       }
     }
 
@@ -91,11 +92,13 @@ export async function PUT(request: NextRequest) {
               key: "mp_access_token",
             },
           },
-          update: { value: mpAccessToken },
+          // Encrypted at rest: a database dump must not hand over every
+          // tenant's payment credentials.
+          update: { value: encryptSecret(mpAccessToken) },
           create: {
             businessId: session.businessId,
             key: "mp_access_token",
-            value: mpAccessToken,
+            value: encryptSecret(mpAccessToken),
           },
         });
       } else {

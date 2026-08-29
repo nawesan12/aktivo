@@ -4,6 +4,7 @@ import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { handleApiError } from "@/lib/api-errors";
 import { requirePlan } from "@/lib/subscription/enforcement";
+import { appUrl } from "@/lib/env";
 
 export async function GET() {
   try {
@@ -24,7 +25,7 @@ export async function GET() {
       select: { slug: true },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://jiku.app";
+    const baseUrl = appUrl();
     const embedCode = `<script src="${baseUrl}/widget/jiku-widget.js" data-business="${business?.slug}" data-theme="${settings?.widgetTheme || "dark"}" data-position="${settings?.widgetPosition || "bottom-right"}"></script>`;
 
     return NextResponse.json({

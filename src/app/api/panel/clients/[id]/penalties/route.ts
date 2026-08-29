@@ -37,13 +37,36 @@ export async function PATCH(
   try {
     const session = await getSessionBusiness();
     requirePermission(session.role, "noshow:manage");
-    const { id: _clientId } = await params;
+    const { id: clientId } = await params;
 
     const body = await request.json();
     const { penaltyId } = body;
 
     if (!penaltyId) {
       return NextResponse.json({ error: "penaltyId requerido" }, { status: 400 });
+    }
+
+    // penaltyId comes from the request body: it must be confirmed to belong to
+    // this business *and* this client before lifting it. Same check as
+    // /api/panel/penalties/[id].
+    // The client id may be either a User or a GuestClient, as in the GET above.
+    const existing = await db.clientPenalty.findFirst({
+      where: {
+        id: penaltyId,
+        businessId: session.businessId,
+        OR: [{ userId: clientId }, { guestClientId: clientId }],
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Penalización no encontrada" }, { status: 404 });
+    }
+
+    if (existing.liftedAt !== null) {
+      return NextResponse.json(
+        { error: "Esta penalización ya fue levantada" },
+        { status: 400 }
+      );
     }
 
     const penalty = await liftPenalty(penaltyId, session.userId);

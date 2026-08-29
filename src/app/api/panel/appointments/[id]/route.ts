@@ -8,6 +8,8 @@ import { sendReviewRequestEmail } from "@/lib/notifications/review-request-email
 import { sendWhatsApp } from "@/lib/notifications/whatsapp";
 import { handleApiError } from "@/lib/api-errors";
 import { addDays } from "date-fns";
+import { appUrl } from "@/lib/env";
+import { runInBackground } from "@/lib/background";
 
 export async function PATCH(
   request: NextRequest,
@@ -23,7 +25,7 @@ export async function PATCH(
 
     const validStatuses = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"];
     if (!validStatuses.includes(status)) {
-      return NextResponse.json({ error: "Estado invalido" }, { status: 400 });
+      return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
     }
 
     const appointment = await db.appointment.findFirst({
@@ -61,22 +63,24 @@ export async function PATCH(
       const clientPhone = appointment.user?.phone || appointment.guestClient?.phone;
       const clientEmail = appointment.user?.email || appointment.guestClient?.email;
 
-      sendNotification({
-        businessId: session.businessId,
-        businessName: appointment.business.name,
-        appointmentId: id,
-        clientName,
-        clientPhone: clientPhone || undefined,
-        clientEmail: clientEmail || undefined,
-        serviceName: appointment.service.name,
-        staffName: appointment.staff.name,
-        dateTime: appointment.dateTime,
-        type: "cancellation",
-      }).catch(console.error);
+      runInBackground("cancellation-notice", () =>
+        sendNotification({
+          businessId: session.businessId,
+          businessName: appointment.business.name,
+          appointmentId: id,
+          clientName,
+          clientPhone: clientPhone || undefined,
+          clientEmail: clientEmail || undefined,
+          serviceName: appointment.service.name,
+          staffName: appointment.staff.name,
+          dateTime: appointment.dateTime,
+          type: "cancellation",
+        }), { appointmentId: id });
 
-      // Notify matching waitlist entries (event-driven)
-      import("@/lib/waitlist").then(({ notifyWaitlistOnCancellation }) => {
-        notifyWaitlistOnCancellation({
+      // The freed slot is the whole point of the waitlist: offer it right away.
+      runInBackground("waitlist-notice", async () => {
+        const { notifyWaitlistOnCancellation } = await import("@/lib/waitlist");
+        await notifyWaitlistOnCancellation({
           businessId: session.businessId,
           serviceId: appointment.serviceId,
           dateTime: appointment.dateTime,
@@ -84,14 +88,18 @@ export async function PATCH(
           businessSlug: appointment.business.slug,
           serviceName: appointment.service.name,
           staffName: appointment.staff.name,
-        }).catch(console.error);
-      }).catch(console.error);
+        });
+      }, { appointmentId: id });
 
       // Google Calendar: delete event if synced
       if (appointment.googleCalendarEventId && appointment.staff.userId) {
-        import("@/lib/google-calendar").then(({ deleteCalendarEvent }) => {
-          deleteCalendarEvent(appointment.staff.userId!, appointment.googleCalendarEventId!).catch(console.error);
-        }).catch(console.error);
+        runInBackground("calendar-delete", async () => {
+          const { deleteCalendarEvent } = await import("@/lib/google-calendar");
+          await deleteCalendarEvent(
+            appointment.staff.userId!,
+            appointment.googleCalendarEventId!
+          );
+        }, { appointmentId: id });
       }
     }
 
@@ -111,33 +119,33 @@ export async function PATCH(
           expiresAt: addDays(new Date(), 7),
         },
       }).then((token) => {
-        const reviewUrl = `${process.env.NEXTAUTH_URL}/review/${token.token}`;
+        const reviewUrl = appUrl(`/review/${token.token}`);
 
-        // Send email if client has email
         if (clientEmail) {
-          sendReviewRequestEmail({
-            to: clientEmail,
-            clientName,
-            businessName: appointment.business.name,
-            serviceName: appointment.service.name,
-            reviewUrl,
-          }).catch(console.error);
+          runInBackground("review-request-email", () =>
+            sendReviewRequestEmail({
+              to: clientEmail,
+              clientName,
+              businessName: appointment.business.name,
+              serviceName: appointment.service.name,
+              reviewUrl,
+            }), { appointmentId: id });
         }
 
-        // Send WhatsApp if client has phone
         if (clientPhone) {
-          sendWhatsApp({
-            to: clientPhone,
-            type: "review_request",
-            businessName: appointment.business.name,
-            clientName,
-            serviceName: appointment.service.name,
-            staffName: appointment.staff.name,
-            dateTime: appointment.dateTime,
-            bookingUrl: reviewUrl,
-          }).catch(console.error);
+          runInBackground("review-request-whatsapp", () =>
+            sendWhatsApp({
+              to: clientPhone,
+              type: "review_request",
+              businessName: appointment.business.name,
+              clientName,
+              serviceName: appointment.service.name,
+              staffName: appointment.staff.name,
+              dateTime: appointment.dateTime,
+              bookingUrl: reviewUrl,
+            }), { appointmentId: id });
         }
-      }).catch(console.error);
+      });
     }
 
     return NextResponse.json(updated);
@@ -167,9 +175,13 @@ export async function DELETE(
 
     // Google Calendar cleanup
     if (appointment.googleCalendarEventId && appointment.staff?.userId) {
-      import("@/lib/google-calendar").then(({ deleteCalendarEvent }) => {
-        deleteCalendarEvent(appointment.staff!.userId!, appointment.googleCalendarEventId!).catch(console.error);
-      }).catch(console.error);
+      runInBackground("calendar-delete", async () => {
+        const { deleteCalendarEvent } = await import("@/lib/google-calendar");
+        await deleteCalendarEvent(
+          appointment.staff!.userId!,
+          appointment.googleCalendarEventId!
+        );
+      }, { appointmentId: id });
     }
 
     await db.appointment.delete({ where: { id } });

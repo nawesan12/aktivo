@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   _request: Request,
@@ -37,7 +38,6 @@ export async function GET(
 
     return NextResponse.json(business);
   } catch (error) {
-    console.error("Error fetching business:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug");
   }
 }

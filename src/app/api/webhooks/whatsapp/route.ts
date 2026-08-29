@@ -7,6 +7,11 @@ import {
   type WhatsAppWebhookMessage,
   type WhatsAppWebhookStatus,
 } from "@/lib/notifications/whatsapp";
+import { env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+import { phoneLookupVariants } from "@/lib/phone";
+
+const log = createLogger("webhook:whatsapp");
 
 // ─── GET: Webhook verification (Meta challenge) ──────────────────────────────
 
@@ -16,14 +21,14 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+  const verifyToken = env.WHATSAPP_VERIFY_TOKEN;
 
   if (mode === "subscribe" && token === verifyToken) {
-    console.log("[WhatsApp Webhook] Verification successful");
+    log.info("verification succeeded");
     return new NextResponse(challenge, { status: 200 });
   }
 
-  console.warn("[WhatsApp Webhook] Verification failed", { mode, token: token?.slice(0, 8) });
+  log.warn("verification failed", { mode, tokenPrefix: token?.slice(0, 8) });
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
@@ -32,14 +37,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
 
-  // Verify signature if app secret is configured
-  const appSecret = process.env.WHATSAPP_APP_SECRET;
-  if (appSecret) {
-    const signature = req.headers.get("x-hub-signature-256") || "";
-    if (!verifyWebhookSignature(rawBody, signature, appSecret)) {
-      console.warn("[WhatsApp Webhook] Invalid signature");
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-    }
+  // Fail closed: without a configured secret every request would be trusted, and
+  // this endpoint can cancel bookings and post reviews. No secret, no service.
+  const appSecret = env.WHATSAPP_APP_SECRET;
+  if (!appSecret) {
+    log.error("WHATSAPP_APP_SECRET is not set — rejecting request");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
+  }
+
+  const signature = req.headers.get("x-hub-signature-256") || "";
+  if (!verifyWebhookSignature(rawBody, signature, appSecret)) {
+    log.warn("invalid signature");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
   let payload: { object: string; entry: WhatsAppWebhookEntry[] };
@@ -84,7 +93,7 @@ async function handleIncomingMessage(
   message: WhatsAppWebhookMessage,
   phoneNumberId: string
 ) {
-  console.log(`[WhatsApp] Incoming ${message.type} from ${message.from}: ${JSON.stringify(message)}`);
+  log.debug("incoming message", { type: message.type, from: message.from });
 
   // Auto-mark as read
   try {
@@ -115,7 +124,7 @@ async function handleIncomingMessage(
 
     // Simple keyword triggers
     if (text === "hola" || text === "reservar" || text === "turno") {
-      console.log(`[WhatsApp] Booking intent from ${message.from} — bot not yet implemented`);
+      log.info("booking intent received, bot not implemented", { from: message.from });
       // Future: trigger conversational booking flow
     }
   }
@@ -140,31 +149,30 @@ async function handleStatusUpdate(status: WhatsAppWebhookStatus) {
   // For now, just log.
   if (status.status === "failed") {
     const errorMsg = status.errors?.map((e) => `${e.code}: ${e.title}`).join(", ") || "Unknown";
-    console.error(`[WhatsApp] Message ${status.id} failed: ${errorMsg}`);
+    log.error("message delivery failed", undefined, { messageId: status.id, reason: errorMsg });
   }
 }
 
 // ─── Cancellation request handler ────────────────────────────────────────────
 
 async function handleCancellationRequest(phone: string) {
-  // Find the most recent upcoming appointment for this phone number
-  const normalizedPhone = phone.replace(/\D/g, "");
-
-  const guestClient = await db.guestClient.findFirst({
-    where: {
-      phone: { contains: normalizedPhone.slice(-10) },
-    },
-    orderBy: { createdAt: "desc" },
+  // Exact match against the forms the number may be stored in. The same phone
+  // can exist as a guest of several businesses, so all of them are considered
+  // and the soonest upcoming booking wins — deterministic, unlike picking one
+  // at random.
+  const guestClients = await db.guestClient.findMany({
+    where: { phone: { in: phoneLookupVariants(phone) } },
+    select: { id: true },
   });
 
-  if (!guestClient) {
-    console.log(`[WhatsApp] Cancel request from unknown phone: ${phone}`);
+  if (guestClients.length === 0) {
+    log.info("cancellation request from unknown phone", { phone });
     return;
   }
 
   const appointment = await db.appointment.findFirst({
     where: {
-      guestClientId: guestClient.id,
+      guestClientId: { in: guestClients.map((g) => g.id) },
       status: { in: ["CONFIRMED", "PENDING"] },
       dateTime: { gte: new Date() },
     },
@@ -173,7 +181,7 @@ async function handleCancellationRequest(phone: string) {
   });
 
   if (!appointment) {
-    console.log(`[WhatsApp] No upcoming appointment found for phone: ${phone}`);
+    log.info("cancellation request with no upcoming appointment", { phone });
     return;
   }
 
@@ -183,7 +191,7 @@ async function handleCancellationRequest(phone: string) {
     data: { status: "CANCELLED" },
   });
 
-  console.log(`[WhatsApp] Appointment ${appointment.id} cancelled via WhatsApp by ${phone}`);
+  log.info("appointment cancelled via WhatsApp", { appointmentId: appointment.id, phone });
 
   // Log the action
   await db.auditLog.create({
@@ -200,13 +208,11 @@ async function handleCancellationRequest(phone: string) {
 // ─── Review rating handler ───────────────────────────────────────────────────
 
 async function handleReviewRating(phone: string, rating: number) {
-  const normalizedPhone = phone.replace(/\D/g, "");
-
-  // Find guest client
+  // Exact match against the known stored forms. `contains` could land on a
+  // different customer whose number merely includes these digits — and then
+  // post a review in their name.
   const guestClient = await db.guestClient.findFirst({
-    where: {
-      phone: { contains: normalizedPhone.slice(-10) },
-    },
+    where: { phone: { in: phoneLookupVariants(phone) } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -248,5 +254,5 @@ async function handleReviewRating(phone: string, rating: number) {
     },
   });
 
-  console.log(`[WhatsApp] Review created: ${rating} stars from ${phone}`);
+  log.info("review created via WhatsApp", { rating, phone });
 }

@@ -14,9 +14,15 @@ export async function GET(
 
     const { id } = await params;
 
-    // Try registered user first
-    const user = await db.user.findUnique({
-      where: { id },
+    // Try registered user first.
+    // The `appointments: { some: ... }` condition is what makes this multi-tenant
+    // safe: without it, any id would return that person's name, email and phone,
+    // even for someone who never was a client of this business.
+    const user = await db.user.findFirst({
+      where: {
+        id,
+        appointments: { some: { businessId: session.businessId } },
+      },
       select: {
         id: true,
         name: true,

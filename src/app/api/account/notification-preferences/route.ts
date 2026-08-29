@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
@@ -15,8 +16,7 @@ export async function GET() {
 
     return NextResponse.json(preferences);
   } catch (error) {
-    console.error("Notification preferences GET error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "account:notification-preferences");
   }
 }
 
@@ -60,7 +60,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(preference);
   } catch (error) {
-    console.error("Notification preferences PUT error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "account:notification-preferences");
   }
 }

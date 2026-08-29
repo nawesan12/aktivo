@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     });
 
     if (!invitation) {
-      return NextResponse.json({ error: "Invitacion invalida o expirada" }, { status: 400 });
+      return NextResponse.json({ error: "Invitación inválida o expirada" }, { status: 400 });
     }
 
     // Parse: "invite_{businessId}_{email}"
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     const email = parts.slice(2).join("_");
 
     if (!businessId || !email) {
-      return NextResponse.json({ error: "Token invalido" }, { status: 400 });
+      return NextResponse.json({ error: "Token inválido" }, { status: 400 });
     }
 
     // Check if user exists
@@ -72,7 +73,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Accept invite error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "team:accept-invite");
   }
 }

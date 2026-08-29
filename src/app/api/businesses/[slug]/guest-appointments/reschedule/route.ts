@@ -5,6 +5,8 @@ import { getAvailableSlots } from "@/lib/availability";
 import { parseDateInArgentina } from "@/lib/timezone";
 import { sendNotification } from "@/lib/notifications";
 import { addMinutes } from "date-fns";
+import { handleApiError } from "@/lib/api-errors";
+import { runInBackground } from "@/lib/background";
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +22,7 @@ export async function POST(
 
     const guest = await verifyGuestToken(token);
     if (!guest) {
-      return NextResponse.json({ error: "Token invalido" }, { status: 401 });
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
     // Verify business slug matches
@@ -116,26 +118,26 @@ export async function POST(
     });
 
     // Send reschedule notification
-    sendNotification({
-      businessId: business.id,
-      businessName: business.name,
-      appointmentId: result.id,
-      clientName: appointment.guestClient?.name ?? "Cliente",
-      clientPhone: appointment.guestClient?.phone,
-      clientEmail: appointment.guestClient?.email ?? undefined,
-      serviceName: appointment.service.name,
-      staffName: appointment.staff.name,
-      dateTime: slot.time,
-      type: "reschedule",
-      guestClientId: guest.guestClientId,
-    }).catch((err) => console.error("Reschedule notification error:", err));
+    runInBackground("reschedule-notice", () =>
+      sendNotification({
+        businessId: business.id,
+        businessName: business.name,
+        appointmentId: result.id,
+        clientName: appointment.guestClient?.name ?? "Cliente",
+        clientPhone: appointment.guestClient?.phone,
+        clientEmail: appointment.guestClient?.email ?? undefined,
+        serviceName: appointment.service.name,
+        staffName: appointment.staff.name,
+        dateTime: slot.time,
+        type: "reschedule",
+        guestClientId: guest.guestClientId,
+      }));
 
     return NextResponse.json({
       id: result.id,
       dateTime: result.dateTime,
     });
   } catch (error) {
-    console.error("Guest reschedule error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:guest-appointments:reschedule");
   }
 }

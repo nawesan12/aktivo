@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const { name } = body;
 
     if (!name || typeof name !== "string" || name.trim().length < 2) {
-      return NextResponse.json({ error: "Nombre invalido (minimo 2 caracteres)" }, { status: 400 });
+      return NextResponse.json({ error: "Nombre inválido (mínimo 2 caracteres)" }, { status: 400 });
     }
 
     const maxOrder = await db.serviceCategory.findFirst({

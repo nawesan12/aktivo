@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
@@ -41,7 +42,6 @@ export async function GET() {
       recentBusinesses,
     });
   } catch (error) {
-    console.error("Admin stats error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "admin:stats");
   }
 }

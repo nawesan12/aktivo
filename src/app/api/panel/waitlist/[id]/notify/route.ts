@@ -5,6 +5,8 @@ import { requirePermission } from "@/lib/auth/rbac";
 import { sendWhatsAppText } from "@/lib/notifications/whatsapp";
 import { sendEmail } from "@/lib/notifications/email";
 import { handleApiError } from "@/lib/api-errors";
+import { appUrl } from "@/lib/env";
+import { runInBackground } from "@/lib/background";
 
 export async function POST(
   _request: NextRequest,
@@ -49,24 +51,23 @@ export async function POST(
       select: { name: true, slug: true },
     });
 
-    const bookingUrl = `${process.env.NEXTAUTH_URL}/${business!.slug}/reservar`;
+    const bookingUrl = appUrl(`/${business!.slug}/reservar`);
     const message = `¡Buenas noticias! Se liberó un turno para ${entry.service.name}. Reservá ahora: ${bookingUrl}`;
 
-    // Send WhatsApp
-    sendWhatsAppText(entry.phone, message).catch(console.error);
-
-    // Send Email if available
-    if (entry.email) {
-      sendEmail({
-        to: entry.email,
-        type: "cancellation",
-        businessName: business!.name,
-        clientName: entry.name,
-        serviceName: entry.service.name,
-        staffName: "",
-        dateTime: entry.preferredDate,
-      }).catch(console.error);
-    }
+    runInBackground("waitlist-notify", async () => {
+      await sendWhatsAppText(entry.phone, message);
+      if (entry.email) {
+        await sendEmail({
+          to: entry.email,
+          type: "cancellation",
+          businessName: business!.name,
+          clientName: entry.name,
+          serviceName: entry.service.name,
+          staffName: "",
+          dateTime: entry.preferredDate,
+        });
+      }
+    }, { entryId: entry.id });
 
     await db.waitlistEntry.update({
       where: { id: entry.id },

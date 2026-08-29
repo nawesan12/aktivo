@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import { sendPasswordResetEmail } from "@/lib/notifications/password-reset-email";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function POST(request: Request) {
   try {
     const ip = getClientIP(request);
-    const { success } = rateLimit({ key: `forgot:${ip}`, limit: 3, windowMs: 15 * 60 * 1000 });
+    const { success } = await rateLimit({ key: `forgot:${ip}`, limit: 3, windowMs: 15 * 60 * 1000 });
     if (!success) {
       return NextResponse.json({ error: "Demasiadas solicitudes. Intenta en 15 minutos." }, { status: 429 });
     }
@@ -52,7 +53,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Forgot password error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "auth:forgot-password");
   }
 }

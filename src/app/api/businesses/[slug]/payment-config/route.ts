@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveBusinessBySlug } from "@/lib/business-resolver";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   _request: Request,
@@ -22,7 +23,6 @@ export async function GET(
       currency: settings?.currency ?? "ARS",
     });
   } catch (error) {
-    console.error("Error fetching payment config:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:payment-config");
   }
 }

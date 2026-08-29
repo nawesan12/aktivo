@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/rbac";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
 import { sendInviteEmail } from "@/lib/notifications/invite-email";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
@@ -36,9 +37,7 @@ export async function GET() {
 
     return NextResponse.json({ members, pendingInvites });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error interno";
-    const status = msg.includes("No autenticado") ? 401 : msg.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return handleApiError(error);
   }
 }
 
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
 
     const validRoles = ["BUSINESS_MANAGER", "STAFF_MEMBER", "RECEPTIONIST"];
     if (role && !validRoles.includes(role)) {
-      return NextResponse.json({ error: "Rol invalido" }, { status: 400 });
+      return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
     }
 
     // Check if already a member
@@ -103,8 +102,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error interno";
-    const status = msg.includes("No autenticado") ? 401 : msg.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return handleApiError(error);
   }
 }

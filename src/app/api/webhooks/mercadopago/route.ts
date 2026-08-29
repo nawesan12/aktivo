@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getMPClient } from "@/lib/mercadopago";
+import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
 import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
 import { getPlatformPreApproval } from "@/lib/subscription/mp-platform";
 import { GRACE_PERIOD_DAYS } from "@/lib/subscription/config";
 import { addDays } from "date-fns";
 import { createHmac } from "crypto";
+import { env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+import { runInBackground } from "@/lib/background";
+
+const log = createLogger("webhook:mercadopago");
 
 // ── Webhook signature verification ───────────────────────
 
 function verifyWebhookSignature(request: NextRequest, body: string): boolean {
-  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  const secret = env.MERCADOPAGO_WEBHOOK_SECRET;
   if (!secret) {
-    // In development, skip verification if no secret configured
-    console.warn("MERCADOPAGO_WEBHOOK_SECRET not configured — skipping signature verification");
-    return true;
+    // Fail closed. Trusting unsigned callbacks here would let anyone mark a
+    // booking as paid; a missing secret is a misconfiguration, not a dev mode.
+    log.error("MERCADOPAGO_WEBHOOK_SECRET is not set — rejecting webhook");
+    return false;
   }
 
   const xSignature = request.headers.get("x-signature");
@@ -58,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Verify webhook signature
     if (!verifyWebhookSignature(request, bodyText)) {
-      console.warn("MercadoPago webhook: invalid signature");
+      log.warn("invalid signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
@@ -74,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("MercadoPago webhook error:", error);
+    log.error("webhook processing failed", error);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }
@@ -109,15 +115,7 @@ async function handlePaymentWebhook(paymentId: string) {
   let businessMpToken: string | undefined;
 
   if (businessId) {
-    const mpConfig = await db.businessConfig.findUnique({
-      where: {
-        businessId_key: {
-          businessId,
-          key: "mp_access_token",
-        },
-      },
-    });
-    businessMpToken = mpConfig?.value || undefined;
+    businessMpToken = await getBusinessMPToken(businessId);
   }
 
   // Use the business-specific token to query MP
@@ -199,18 +197,19 @@ async function handlePaymentWebhook(paymentId: string) {
     const clientPhone = apt.user?.phone || apt.guestClient?.phone;
     const clientEmail = apt.user?.email || apt.guestClient?.email;
 
-    sendNotification({
-      businessId: apt.business.id,
-      businessName: apt.business.name,
-      appointmentId,
-      clientName,
-      clientPhone: clientPhone || undefined,
-      clientEmail: clientEmail || undefined,
-      serviceName: apt.service.name,
-      staffName: apt.staff.name,
-      dateTime: apt.dateTime,
-      type: "confirmation",
-    }).catch(console.error);
+    runInBackground("payment-confirmation", () =>
+      sendNotification({
+        businessId: apt.business.id,
+        businessName: apt.business.name,
+        appointmentId,
+        clientName,
+        clientPhone: clientPhone || undefined,
+        clientEmail: clientEmail || undefined,
+        serviceName: apt.service.name,
+        staffName: apt.staff.name,
+        dateTime: apt.dateTime,
+        type: "confirmation",
+      }), { appointmentId });
   }
 
   await logAction({
@@ -247,7 +246,7 @@ async function handleSubscriptionWebhook(preapprovalId: string) {
   });
 
   if (!subscription) {
-    console.warn("Subscription webhook: no matching record for", preapprovalId);
+    log.warn("no subscription matches the preapproval", { preapprovalId });
     return NextResponse.json({ received: true });
   }
 

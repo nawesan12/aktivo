@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
 
 // GET — Validate token and return appointment info
 export async function GET(
@@ -46,8 +47,7 @@ export async function GET(
       date: reviewToken.appointment.dateTime,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -106,10 +106,11 @@ export async function POST(
 
     return NextResponse.json(review, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error interno";
-    if (message.includes("Unique constraint")) {
+    // Keep the specific message for the duplicate-review case; everything else
+    // goes through handleApiError so no Prisma internals reach a public endpoint.
+    if (error instanceof Error && error.message.includes("Unique constraint")) {
       return NextResponse.json({ error: "Ya existe una reseña para este turno" }, { status: 409 });
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleApiError(error);
   }
 }

@@ -4,20 +4,32 @@ import { auth } from "@/lib/auth";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
-import { getMPClient, calculatePaymentAmount } from "@/lib/mercadopago";
+import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
+import { calculatePaymentAmount } from "@/lib/pricing";
 import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
+import { calculateCouponDiscount, applyDiscount } from "@/lib/pricing";
+import { handleApiError } from "@/lib/api-errors";
 import { getAvailableSlots } from "@/lib/availability";
-import { parseDateInArgentina } from "@/lib/timezone";
+import { formatArgentinaDate, parseDateInArgentina } from "@/lib/timezone";
 import { addMinutes, addWeeks, addMonths } from "date-fns";
 import { randomUUID } from "crypto";
 import { checkAppointmentLimit, getPlanForBusiness } from "@/lib/subscription/enforcement";
 import { PLAN_LIMITS } from "@/lib/subscription/config";
+import { appUrl } from "@/lib/env";
+import { runInBackground } from "@/lib/background";
+import { normalisePhone, phoneLookupVariants } from "@/lib/phone";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("appointments");
+
+/** How long an unpaid booking holds its slot before the cleanup job frees it. */
+const PENDING_PAYMENT_TTL_MINUTES = 15;
 
 export async function POST(request: Request) {
   try {
     // Rate limit
     const ip = getClientIP(request);
-    const { success } = rateLimit({ key: `appointment:${ip}`, limit: 10, windowMs: 60_000 });
+    const { success } = await rateLimit({ key: `appointment:${ip}`, limit: 10, windowMs: 60_000 });
     if (!success) {
       return NextResponse.json({ error: "Demasiadas solicitudes. Intenta en un minuto." }, { status: 429 });
     }
@@ -27,7 +39,7 @@ export async function POST(request: Request) {
     // Validate appointment data
     const parsed = appointmentSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Datos invalidos", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos", details: parsed.error.flatten() }, { status: 400 });
     }
 
     const { serviceId, staffId, dateTime, notes, recurrenceFrequency, recurrenceCount } = parsed.data;
@@ -51,21 +63,26 @@ export async function POST(request: Request) {
 
     // Check auth session
     const session = await auth();
-    let userId: string | null = session?.user?.id ?? null;
+    const userId: string | null = session?.user?.id ?? null;
     let guestClientId: string | null = null;
 
     // If no session, validate guest info
     if (!userId) {
       const guestParsed = guestInfoSchema.safeParse(body.guest);
       if (!guestParsed.success) {
-        return NextResponse.json({ error: "Datos del cliente invalidos", details: guestParsed.error.flatten() }, { status: 400 });
+        return NextResponse.json({ error: "Datos del cliente inválidos", details: guestParsed.error.flatten() }, { status: 400 });
       }
 
       const guest = guestParsed.data;
 
-      // Find or create guest client (scoped to business)
-      let guestClient = await db.guestClient.findUnique({
-        where: { businessId_phone: { businessId: business.id, phone: guest.phone } },
+      // Find or create guest client (scoped to business).
+      // The lookup covers every shape the number may already be stored in;
+      // new rows are written normalised so this stops growing over time.
+      let guestClient = await db.guestClient.findFirst({
+        where: {
+          businessId: business.id,
+          phone: { in: phoneLookupVariants(guest.phone) },
+        },
       });
 
       if (!guestClient) {
@@ -73,7 +90,7 @@ export async function POST(request: Request) {
           data: {
             businessId: business.id,
             name: guest.name,
-            phone: guest.phone,
+            phone: normalisePhone(guest.phone),
             email: guest.email || null,
           },
         });
@@ -92,9 +109,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Profesional no encontrado" }, { status: 404 });
     }
 
-    // Parse date and check slot availability (conflict check)
+    // `dateTime` arrives in one of two shapes, and the difference matters:
+    //
+    //   "2026-08-31T09:00"           local time at the business (the wizard)
+    //   "2026-08-31T12:00:00.000Z"   an absolute instant (what /availability/slots
+    //                                returns, and what any integration would send)
+    //
+    // Both used to be read the same way — take the characters after the "T" and
+    // match them against the slot's local label. Sending the API its own value
+    // back therefore booked the appointment three hours late, silently.
+    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(dateTime);
     const [datePart, timePart] = dateTime.split("T");
-    const date = parseDateInArgentina(datePart);
+
+    // With an explicit zone the calendar day is the one at the business, which
+    // is not necessarily the UTC day: 2026-09-01T01:00Z is still 31 August here.
+    const date = hasTimezone
+      ? parseDateInArgentina(formatArgentinaDate(new Date(dateTime)))
+      : parseDateInArgentina(datePart);
 
     const slots = await getAvailableSlots({
       businessId: business.id,
@@ -106,8 +137,13 @@ export async function POST(request: Request) {
       bufferMinutes: settings?.bufferMinutes ?? 0,
     });
 
+    const requestedInstant = hasTimezone ? new Date(dateTime).getTime() : null;
     const requestedTime = timePart?.substring(0, 5);
-    const slot = slots.find((s) => s.display === requestedTime);
+
+    const slot =
+      requestedInstant !== null
+        ? slots.find((s) => s.time.getTime() === requestedInstant)
+        : slots.find((s) => s.display === requestedTime);
 
     if (!slot || !slot.available) {
       return NextResponse.json({ error: "El horario seleccionado ya no esta disponible" }, { status: 409 });
@@ -123,93 +159,137 @@ export async function POST(request: Request) {
     const isRecurring = recurrenceFrequency && recurrenceCount && recurrenceCount > 1 && paymentMode === "DISABLED";
     const recurrenceGroupId = isRecurring ? randomUUID() : null;
 
-    // Create appointment
-    const appointment = await db.appointment.create({
-      data: {
-        businessId: business.id,
-        serviceId,
-        staffId,
-        userId,
-        guestClientId,
-        dateTime: slot.time,
-        endTime: addMinutes(slot.time, service.duration),
-        status: initialStatus,
-        notes: notes || null,
-        recurrenceGroupId,
-        recurrenceFrequency: isRecurring ? recurrenceFrequency : null,
-        recurrenceCount: isRecurring ? recurrenceCount : null,
-        recurrenceIndex: isRecurring ? 0 : null,
-      },
-    });
+    // ------------------------------------------------------------------
+    // Reads first. Everything the booking depends on is resolved before any
+    // write, so the transaction below is short and write-only.
+    // ------------------------------------------------------------------
 
-    // Create recurring sibling appointments
-    const recurringAppointments: string[] = [];
+    // Which recurring occurrences are actually free
+    const recurringTimes: Date[] = [];
     if (isRecurring && recurrenceGroupId) {
       const addDateFn = recurrenceFrequency === "MONTHLY" ? addMonths
         : recurrenceFrequency === "BIWEEKLY" ? (d: Date, n: number) => addWeeks(d, n * 2)
         : addWeeks;
 
       for (let i = 1; i < recurrenceCount; i++) {
-        const recurDate = addDateFn(slot.time, i);
-        try {
-          const recurSlots = await getAvailableSlots({
-            businessId: business.id,
-            staffId,
-            date: recurDate,
-            serviceDuration: service.duration,
-            slotInterval: settings?.slotInterval ?? 30,
-            minHoursAdvance: 0, // Don't check advance for future recurring
-            bufferMinutes: settings?.bufferMinutes ?? 0,
-          });
-          const recurSlot = recurSlots.find((s) => s.display === requestedTime);
-          if (recurSlot?.available) {
-            const recApt = await db.appointment.create({
-              data: {
-                businessId: business.id,
-                serviceId,
-                staffId,
-                userId,
-                guestClientId,
-                dateTime: recurSlot.time,
-                endTime: addMinutes(recurSlot.time, service.duration),
-                status: "CONFIRMED",
-                notes: notes || null,
-                recurrenceGroupId,
-                recurrenceFrequency,
-                recurrenceCount,
-                recurrenceIndex: i,
-              },
-            });
-            recurringAppointments.push(recApt.id);
-          }
-        } catch {
-          // Skip unavailable dates
+        const recurSlots = await getAvailableSlots({
+          businessId: business.id,
+          staffId,
+          date: addDateFn(slot.time, i),
+          serviceDuration: service.duration,
+          slotInterval: settings?.slotInterval ?? 30,
+          minHoursAdvance: 0, // Don't check advance for future recurring
+          bufferMinutes: settings?.bufferMinutes ?? 0,
+        });
+        const recurSlot = recurSlots.find((s) => s.display === requestedTime);
+        if (recurSlot?.available) {
+          recurringTimes.push(recurSlot.time);
         }
       }
     }
 
-    // Handle coupon redemption
-    let couponDiscount = 0;
-    if (couponCode && typeof couponCode === "string") {
-      try {
-        const coupon = await db.coupon.findFirst({
-          where: {
+    // Coupon, if the code matches an active one
+    const coupon =
+      couponCode && typeof couponCode === "string"
+        ? await db.coupon.findFirst({
+            where: {
+              businessId: business.id,
+              code: { equals: couponCode, mode: "insensitive" },
+              isActive: true,
+              validFrom: { lte: new Date() },
+              OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+            },
+          })
+        : null;
+
+    // Referral, if the code is valid, not self-referred and still redeemable
+    let referral = null;
+    if (referralCode && typeof referralCode === "string") {
+      const found = await db.referral.findFirst({
+        where: {
+          businessId: business.id,
+          code: { equals: referralCode, mode: "insensitive" },
+        },
+      });
+
+      const isSelfReferral = Boolean(found?.userId && found.userId === userId);
+      if (found && !isSelfReferral) {
+        const maxRedemptions = settings?.referralMaxRedemptions;
+        const redeemed = maxRedemptions
+          ? await db.referralRedemption.count({ where: { referralId: found.id } })
+          : 0;
+        if (!maxRedemptions || redeemed < maxRedemptions) {
+          referral = found;
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // One transaction for every write of the booking. If any step fails the
+    // whole thing rolls back, instead of leaving a booking with a consumed
+    // coupon or an orphan payment behind.
+    // ------------------------------------------------------------------
+    const { appointment, recurringIds, payment } = await db.$transaction(async (tx) => {
+      const appointment = await tx.appointment.create({
+        data: {
+          businessId: business.id,
+          serviceId,
+          staffId,
+          userId,
+          guestClientId,
+          dateTime: slot.time,
+          endTime: addMinutes(slot.time, service.duration),
+          status: initialStatus,
+          // An unpaid booking must not hold the slot forever.
+          expiresAt:
+            initialStatus === "PENDING_PAYMENT"
+              ? addMinutes(new Date(), PENDING_PAYMENT_TTL_MINUTES)
+              : null,
+          notes: notes || null,
+          recurrenceGroupId,
+          recurrenceFrequency: isRecurring ? recurrenceFrequency : null,
+          recurrenceCount: isRecurring ? recurrenceCount : null,
+          recurrenceIndex: isRecurring ? 0 : null,
+        },
+      });
+
+      const recurringIds: string[] = [];
+      for (const [index, time] of recurringTimes.entries()) {
+        const sibling = await tx.appointment.create({
+          data: {
             businessId: business.id,
-            code: { equals: couponCode, mode: "insensitive" },
-            isActive: true,
-            validFrom: { lte: new Date() },
-            OR: [
-              { validUntil: null },
-              { validUntil: { gte: new Date() } },
-            ],
+            serviceId,
+            staffId,
+            userId,
+            guestClientId,
+            dateTime: time,
+            endTime: addMinutes(time, service.duration),
+            status: "CONFIRMED",
+            notes: notes || null,
+            recurrenceGroupId,
+            recurrenceFrequency,
+            recurrenceCount,
+            recurrenceIndex: index + 1,
           },
         });
-        if (coupon && (!coupon.maxUses || coupon.usedCount < coupon.maxUses)) {
-          couponDiscount = coupon.type === "PERCENTAGE"
-            ? Math.round(Number(service.price) * coupon.value / 100)
-            : Math.min(coupon.value, Number(service.price));
+        recurringIds.push(sibling.id);
+      }
 
-          await db.couponRedemption.create({
+      // Claim one coupon use atomically: the condition travels with the UPDATE,
+      // so two simultaneous redemptions can't both push usedCount past maxUses.
+      let couponDiscount = 0;
+      if (coupon) {
+        const claimed = await tx.coupon.updateMany({
+          where: {
+            id: coupon.id,
+            ...(coupon.maxUses ? { usedCount: { lt: coupon.maxUses } } : {}),
+          },
+          data: { usedCount: { increment: 1 } },
+        });
+
+        if (claimed.count > 0) {
+          couponDiscount = calculateCouponDiscount(Number(service.price), coupon);
+          await tx.couponRedemption.create({
             data: {
               couponId: coupon.id,
               appointmentId: appointment.id,
@@ -218,109 +298,67 @@ export async function POST(request: Request) {
               discount: couponDiscount,
             },
           });
-          await db.coupon.update({
-            where: { id: coupon.id },
-            data: { usedCount: { increment: 1 } },
-          });
         }
-      } catch (e) {
-        console.error("Coupon redemption error:", e);
       }
-    }
 
-    // Handle referral tracking
-    if (referralCode && typeof referralCode === "string") {
-      try {
-        const referral = await db.referral.findFirst({
-          where: {
-            businessId: business.id,
-            code: { equals: referralCode, mode: "insensitive" },
+      if (referral) {
+        await tx.referralRedemption.create({
+          data: {
+            referralId: referral.id,
+            appointmentId: appointment.id,
+            referredUserId: userId,
+            referredGuestId: guestClientId,
           },
         });
-        if (referral) {
-          // Don't let users refer themselves
-          const isSelfReferral = referral.userId && referral.userId === userId;
-          if (!isSelfReferral) {
-            // Check max redemptions
-            const settings = business.settings;
-            const maxRedemptions = settings?.referralMaxRedemptions;
 
-            let canRedeem = true;
-            if (maxRedemptions) {
-              const existingCount = await db.referralRedemption.count({
-                where: { referralId: referral.id },
-              });
-              canRedeem = existingCount < maxRedemptions;
-            }
-
-            if (canRedeem) {
-              // Create redemption record
-              await db.referralRedemption.create({
-                data: {
-                  referralId: referral.id,
-                  appointmentId: appointment.id,
-                  referredUserId: userId,
-                  referredGuestId: guestClientId,
-                },
-              });
-
-              // Generate reward coupon for the referrer if program is configured
-              if (settings?.referralEnabled && settings.referralRewardType && settings.referralRewardValue) {
-                const rewardCode = `REF-${referral.code}-${Date.now().toString(36).toUpperCase()}`;
-                await db.coupon.create({
-                  data: {
-                    businessId: business.id,
-                    code: rewardCode,
-                    type: settings.referralRewardType,
-                    value: settings.referralRewardValue,
-                    maxUses: 1,
-                    validUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
-                  },
-                });
-              }
-            }
-          }
+        // Reward coupon for the referrer, if the program is configured
+        if (settings?.referralEnabled && settings.referralRewardType && settings.referralRewardValue) {
+          await tx.coupon.create({
+            data: {
+              businessId: business.id,
+              code: `REF-${referral.code}-${randomUUID().slice(0, 8).toUpperCase()}`,
+              type: settings.referralRewardType,
+              value: settings.referralRewardValue,
+              maxUses: 1,
+              validUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+            },
+          });
         }
-      } catch (e) {
-        console.error("Referral tracking error:", e);
       }
-    }
+
+      // The amount is computed here, after knowing whether the coupon was really
+      // claimed — otherwise a coupon that ran out between read and write would
+      // still discount the charge.
+      let payment = null;
+      if (paymentMode !== "DISABLED") {
+        payment = await tx.payment.create({
+          data: {
+            businessId: business.id,
+            appointmentId: appointment.id,
+            amount: calculatePaymentAmount(
+              applyDiscount(Number(service.price), couponDiscount),
+              paymentMode as "FULL" | "PERCENTAGE" | "FIXED",
+              settings?.depositPercentage,
+              settings?.depositFixedAmount ? Number(settings.depositFixedAmount) : null
+            ),
+            mode: paymentMode,
+            status: "PENDING",
+          },
+        });
+      }
+
+      return { appointment, recurringIds, payment };
+    });
 
     // Handle payment if enabled
     let paymentUrl: string | null = null;
 
-    if (paymentMode !== "DISABLED") {
-      const amount = calculatePaymentAmount(
-        Number(service.price),
-        paymentMode as "FULL" | "PERCENTAGE" | "FIXED",
-        settings?.depositPercentage,
-        settings?.depositFixedAmount ? Number(settings.depositFixedAmount) : null
-      );
-
-      // Create payment record
-      const payment = await db.payment.create({
-        data: {
-          businessId: business.id,
-          appointmentId: appointment.id,
-          amount,
-          mode: paymentMode,
-          status: "PENDING",
-        },
-      });
-
-      // Get business-specific MP token if available
-      const mpConfig = await db.businessConfig.findUnique({
-        where: {
-          businessId_key: {
-            businessId: business.id,
-            key: "mp_access_token",
-          },
-        },
-      });
+    if (payment) {
+      const amount = Number(payment.amount);
 
       // Create MercadoPago preference
       try {
-        const mp = getMPClient(mpConfig?.value ?? undefined);
+        const mp = getMPClient(await getBusinessMPToken(business.id));
         const preference = await mp.preference.create({
           body: {
             items: [
@@ -333,12 +371,12 @@ export async function POST(request: Request) {
               },
             ],
             back_urls: {
-              success: `${process.env.NEXT_PUBLIC_APP_URL}/${business.slug}/reservar/confirmacion?appointmentId=${appointment.id}`,
-              failure: `${process.env.NEXT_PUBLIC_APP_URL}/${business.slug}/reservar?error=payment`,
-              pending: `${process.env.NEXT_PUBLIC_APP_URL}/${business.slug}/reservar/confirmacion?appointmentId=${appointment.id}&pending=true`,
+              success: appUrl(`/${business.slug}/reservar/confirmacion?appointmentId=${appointment.id}`),
+              failure: appUrl(`/${business.slug}/reservar?error=payment`),
+              pending: appUrl(`/${business.slug}/reservar/confirmacion?appointmentId=${appointment.id}&pending=true`),
             },
             external_reference: appointment.id,
-            notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
+            notification_url: appUrl(`/api/webhooks/mercadopago`),
           },
         });
 
@@ -349,7 +387,7 @@ export async function POST(request: Request) {
           data: { mpPreferenceId: preference.id },
         });
       } catch (mpError) {
-        console.error("MercadoPago error:", mpError);
+        log.error("could not create the payment preference", mpError, { appointmentId: appointment.id });
         // Still create appointment, payment can be retried
       }
     }
@@ -361,36 +399,37 @@ export async function POST(request: Request) {
     const clientPhone = userId ? undefined : body.guest?.phone;
     const clientEmail = userId ? session?.user?.email ?? undefined : body.guest?.email;
 
-    sendNotification({
-      businessId: business.id,
-      businessName: business.name,
-      appointmentId: appointment.id,
-      clientName,
-      clientPhone,
-      clientEmail: clientEmail ?? undefined,
-      serviceName: service.name,
-      staffName: staff.name,
-      dateTime: slot.time,
-      type: "confirmation",
-    }).catch((err) => console.error("Notification error:", err));
+    runInBackground("confirmation-notice", () =>
+      sendNotification({
+        businessId: business.id,
+        businessName: business.name,
+        appointmentId: appointment.id,
+        clientName,
+        clientPhone,
+        clientEmail: clientEmail ?? undefined,
+        serviceName: service.name,
+        staffName: staff.name,
+        dateTime: slot.time,
+        type: "confirmation",
+      }), { appointmentId: appointment.id });
 
     // Google Calendar sync
     if (staff.googleCalendarEnabled && staff.userId) {
-      import("@/lib/google-calendar").then(({ createCalendarEvent }) => {
-        createCalendarEvent(staff.userId!, {
+      runInBackground("calendar-create", async () => {
+        const { createCalendarEvent } = await import("@/lib/google-calendar");
+        const eventId = await createCalendarEvent(staff.userId!, {
           title: `${clientName} - ${service.name}`,
           startTime: slot.time,
           endTime: addMinutes(slot.time, service.duration),
           description: notes || undefined,
-        }).then(async (eventId) => {
-          if (eventId) {
-            await db.appointment.update({
-              where: { id: appointment.id },
-              data: { googleCalendarEventId: eventId },
-            });
-          }
-        }).catch(console.error);
-      }).catch(console.error);
+        });
+        if (eventId) {
+          await db.appointment.update({
+            where: { id: appointment.id },
+            data: { googleCalendarEventId: eventId },
+          });
+        }
+      }, { appointmentId: appointment.id });
     }
 
     // Audit log
@@ -414,13 +453,14 @@ export async function POST(request: Request) {
       status: appointment.status,
       dateTime: appointment.dateTime,
       paymentUrl,
-      ...(recurringAppointments.length > 0 && {
-        recurringCount: recurringAppointments.length + 1,
-        recurringIds: [appointment.id, ...recurringAppointments],
+      ...(recurringIds.length > 0 && {
+        recurringCount: recurringIds.length + 1,
+        recurringIds: [appointment.id, ...recurringIds],
       }),
     }, { status: 201 });
   } catch (error) {
-    console.error("Error creating appointment:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    // handleApiError maps PlanLimitError to 403 + requiredPlan (the upsell moment),
+    // and still hides unexpected errors behind a generic message.
+    return handleApiError(error, "appointments:POST");
   }
 }

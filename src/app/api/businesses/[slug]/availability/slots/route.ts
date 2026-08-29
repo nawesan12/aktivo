@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { resolveBusinessBySlug } from "@/lib/business-resolver";
 import { getAvailableSlots } from "@/lib/availability";
 import { parseDateInArgentina } from "@/lib/timezone";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   request: Request,
@@ -49,7 +50,6 @@ export async function GET(
       }))
     );
   } catch (error) {
-    console.error("Error fetching slots:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:availability:slots");
   }
 }

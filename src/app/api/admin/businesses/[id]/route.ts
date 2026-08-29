@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function PATCH(
   request: Request,
@@ -36,7 +37,6 @@ export async function PATCH(
 
     return NextResponse.json(business);
   } catch (error) {
-    console.error("Admin business update error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "admin:businesses:id");
   }
 }

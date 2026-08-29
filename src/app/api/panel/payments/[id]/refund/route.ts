@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
-import { getMPClient } from "@/lib/mercadopago";
+import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
 import { sendNotification } from "@/lib/notifications";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
@@ -45,16 +45,7 @@ export async function POST(
 
     // Call MercadoPago refund API
     if (payment.mpPaymentId) {
-      const mpConfig = await db.businessConfig.findUnique({
-        where: {
-          businessId_key: {
-            businessId: session.businessId,
-            key: "mp_access_token",
-          },
-        },
-      });
-
-      const mp = getMPClient(mpConfig?.value || undefined);
+      const mp = getMPClient(await getBusinessMPToken(session.businessId));
       await mp.refund.total({ payment_id: Number(payment.mpPaymentId) });
     }
 

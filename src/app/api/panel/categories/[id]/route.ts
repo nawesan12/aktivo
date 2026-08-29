@@ -20,7 +20,7 @@ export async function PATCH(
       where: { id, businessId: session.businessId },
     });
     if (!existing) {
-      return NextResponse.json({ error: "Categoria no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 });
     }
 
     const data: Record<string, unknown> = {};
@@ -60,7 +60,7 @@ export async function DELETE(
       where: { id, businessId: session.businessId },
     });
     if (!existing) {
-      return NextResponse.json({ error: "Categoria no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 });
     }
 
     // Unlink services from category before deleting

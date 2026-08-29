@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyCode, createGuestToken } from "@/lib/guest-auth";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function POST(
   request: NextRequest,
@@ -9,7 +10,7 @@ export async function POST(
 ) {
   try {
     const ip = getClientIP(request);
-    const { success } = rateLimit({ key: `guest-verify:${ip}`, limit: 10, windowMs: 300_000 });
+    const { success } = await rateLimit({ key: `guest-verify:${ip}`, limit: 10, windowMs: 300_000 });
     if (!success) {
       return NextResponse.json({ error: "Demasiados intentos." }, { status: 429 });
     }
@@ -33,7 +34,7 @@ export async function POST(
     const result = await verifyCode(phone, code, business.id);
 
     if (!result) {
-      return NextResponse.json({ error: "Codigo invalido o expirado" }, { status: 401 });
+      return NextResponse.json({ error: "Código inválido o expirado" }, { status: 401 });
     }
 
     const token = await createGuestToken(result.guestClientId, business.id);
@@ -49,7 +50,6 @@ export async function POST(
 
     return response;
   } catch (error) {
-    console.error("Guest auth verify error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:guest-auth:verify");
   }
 }

@@ -3,6 +3,10 @@ import { db } from "@/lib/db";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 import { verifyGuestToken } from "@/lib/guest-auth";
 import { addDays } from "date-fns";
+import { handleApiError } from "@/lib/api-errors";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("businesses:waitlist");
 
 export async function GET(
   request: NextRequest,
@@ -55,7 +59,7 @@ export async function GET(
 
     return NextResponse.json({ entries });
   } catch (error) {
-    console.error("Waitlist GET error:", error);
+    log.error("could not list waitlist entries", error);
     return NextResponse.json({ entries: [] });
   }
 }
@@ -66,7 +70,7 @@ export async function POST(
 ) {
   try {
     const ip = getClientIP(request);
-    const { success } = rateLimit({ key: `waitlist:${ip}`, limit: 5, windowMs: 60_000 });
+    const { success } = await rateLimit({ key: `waitlist:${ip}`, limit: 5, windowMs: 60_000 });
     if (!success) {
       return NextResponse.json({ error: "Demasiados intentos." }, { status: 429 });
     }
@@ -115,7 +119,6 @@ export async function POST(
 
     return NextResponse.json({ id: entry.id, success: true }, { status: 201 });
   } catch (error) {
-    console.error("Waitlist error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:waitlist");
   }
 }

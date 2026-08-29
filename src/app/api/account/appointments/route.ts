@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(request: Request) {
   try {
@@ -65,7 +66,6 @@ export async function GET(request: Request) {
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    console.error("Account appointments error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "account:appointments");
   }
 }

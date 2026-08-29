@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { toArgentinaDate } from "@/lib/timezone";
 import { format } from "date-fns";
+import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
   request: Request,
@@ -94,7 +95,6 @@ export async function GET(
       confidence,
     });
   } catch (error) {
-    console.error("Suggestions error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return handleApiError(error, "businesses:slug:suggestions");
   }
 }

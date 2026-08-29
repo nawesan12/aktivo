@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-errors";
+import { formatCurrency } from "@/lib/format";
 
 export async function GET(request: Request) {
   try {
@@ -83,7 +85,7 @@ export async function GET(request: Request) {
           type: "service",
           id: s.id,
           label: s.name,
-          sublabel: `$${s.price.toLocaleString("es-AR")}`,
+          sublabel: `${formatCurrency(s.price)}`,
           href: `/panel/servicios`,
         });
       }
@@ -114,8 +116,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ results });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Error interno";
-    const status = msg.includes("No autenticado") ? 401 : msg.includes("Permisos") ? 403 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    return handleApiError(error);
   }
 }
