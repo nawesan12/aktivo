@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { MapPin, ChevronDown, Check, Loader2 } from "lucide-react";
+import { MapPin, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 

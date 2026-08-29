@@ -8,6 +8,7 @@ import {
   paymentStatusLabel,
   logPdfExport,
 } from "./generate-pdf";
+import { formatCurrency } from "@/lib/format";
 
 interface Appointment {
   id: string;
@@ -35,7 +36,7 @@ export async function exportAppointmentsPdf(appointments: Appointment[], busines
       a.staffName,
       appointmentStatusLabel[a.status] || a.status,
       paymentStatusLabel[a.paymentStatus || ""] || "—",
-      `$${(a.paymentAmount ?? a.servicePrice).toLocaleString("es-AR")}`,
+      `${formatCurrency((a.paymentAmount ?? a.servicePrice))}`,
     ]),
     styles: { fontSize: 8, font: "helvetica" },
     headStyles: { fillColor: [34, 197, 94] },

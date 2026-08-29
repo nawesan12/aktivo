@@ -1,233 +1,139 @@
-import {
-  addMinutes,
-  format,
-  isBefore,
-  isAfter,
-  startOfDay,
-  endOfDay,
-  setHours,
-  setMinutes,
-  addHours,
-  addDays,
-} from "date-fns";
+import { startOfDay, endOfDay, addDays } from "date-fns";
 import { db } from "./db";
 import { nowInArgentina, toArgentinaDate } from "./timezone";
+import {
+  computeSlotsForDay,
+  dayKey,
+  OCCUPYING_STATUSES,
+  type AvailabilityData,
+  type SlotOptions,
+  type TimeSlot,
+} from "./availability-engine";
 
-export interface TimeSlot {
-  time: Date;
-  display: string;
-  available: boolean;
-}
+// Re-exported so existing imports of "@/lib/availability" keep working.
+export * from "./availability-engine";
 
-interface AvailabilityOptions {
+interface AvailabilityOptions extends SlotOptions {
   businessId: string;
   staffId: string;
   date: Date;
-  serviceDuration: number;
-  slotInterval?: number;
-  minHoursAdvance?: number;
-  bufferMinutes?: number;
+}
+
+/**
+ * Loads every availability rule for a staff member over a date range, in one batch.
+ * Multi-tenant: appointments are scoped by businessId, the rest by staffId.
+ */
+async function fetchAvailabilityData(
+  businessId: string,
+  staffId: string,
+  from: Date,
+  to: Date
+): Promise<AvailabilityData> {
+  const now = new Date();
+
+  const [workingHours, appointments, blockedDates, recurringBlocked, dateOverrides] =
+    await Promise.all([
+      db.workingHours.findMany({ where: { staffId } }),
+      db.appointment.findMany({
+        where: {
+          businessId,
+          staffId,
+          dateTime: { gte: from, lte: to },
+          status: { in: [...OCCUPYING_STATUSES] },
+          // A booking awaiting payment only holds the slot until it expires.
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+        select: { dateTime: true, endTime: true },
+        orderBy: { dateTime: "asc" },
+      }),
+      db.blockedDate.findMany({ where: { staffId, date: { gte: from, lte: to } } }),
+      db.recurringBlockedSlot.findMany({ where: { staffId } }),
+      db.dateSlotOverride.findMany({ where: { staffId, date: { gte: from, lte: to } } }),
+    ]);
+
+  return { workingHours, appointments, blockedDates, recurringBlocked, dateOverrides };
 }
 
 /**
  * Get available time slots for a staff member on a given date.
- * Multi-tenant: all queries scoped by businessId via staffId.
+ * Multi-tenant: all queries scoped by businessId / staffId.
  */
 export async function getAvailableSlots({
   businessId,
   staffId,
   date,
-  serviceDuration,
-  slotInterval = 30,
-  minHoursAdvance = 2,
-  bufferMinutes = 0,
+  ...options
 }: AvailabilityOptions): Promise<TimeSlot[]> {
   const tzDate = toArgentinaDate(date);
-  const dayOfWeek = tzDate.getDay();
+  const data = await fetchAvailabilityData(
+    businessId,
+    staffId,
+    startOfDay(tzDate),
+    endOfDay(tzDate)
+  );
 
-  // 1. Get working hours for this day
-  const workingHours = await db.workingHours.findUnique({
-    where: {
-      staffId_dayOfWeek: {
-        staffId,
-        dayOfWeek,
-      },
-    },
-  });
-
-  if (!workingHours || !workingHours.isActive) {
-    return [];
-  }
-
-  // 2. Check if date is fully blocked
-  const blockedDate = await db.blockedDate.findFirst({
-    where: {
-      staffId,
-      date: {
-        gte: startOfDay(tzDate),
-        lte: endOfDay(tzDate),
-      },
-    },
-  });
-
-  if (blockedDate?.type === "FULL_DAY") {
-    return [];
-  }
-
-  // 3. Parse working hours
-  const [startHour, startMin] = workingHours.startTime.split(":").map(Number);
-  const [endHour, endMin] = workingHours.endTime.split(":").map(Number);
-
-  const workStart = setMinutes(setHours(tzDate, startHour), startMin);
-  const workEnd = setMinutes(setHours(tzDate, endHour), endMin);
-
-  // 4. Batch fetch appointments, recurring blocks, and date overrides
-  const [existingAppointments, recurringBlocked, dateOverrides] = await Promise.all([
-    db.appointment.findMany({
-      where: {
-        businessId,
-        staffId,
-        dateTime: {
-          gte: startOfDay(tzDate),
-          lte: endOfDay(tzDate),
-        },
-        status: {
-          in: ["PENDING_PAYMENT", "PENDING", "CONFIRMED"],
-        },
-      },
-      orderBy: { dateTime: "asc" },
-    }),
-    db.recurringBlockedSlot.findMany({
-      where: { staffId, dayOfWeek },
-    }),
-    db.dateSlotOverride.findMany({
-      where: {
-        staffId,
-        date: {
-          gte: startOfDay(tzDate),
-          lte: endOfDay(tzDate),
-        },
-      },
-    }),
-  ]);
-
-  const recurringBlockedSet = new Set(recurringBlocked.map((s) => s.time));
-  const dateOverrideMap = new Map(dateOverrides.map((o) => [o.time, o.type]));
-
-  // 5. Generate all possible slots
-  const slots: TimeSlot[] = [];
-  const now = nowInArgentina();
-  const minBookingTime = addHours(now, minHoursAdvance);
-
-  let current = workStart;
-  const totalServiceTime = serviceDuration + bufferMinutes;
-
-  while (isBefore(current, workEnd)) {
-    const slotEnd = addMinutes(current, totalServiceTime);
-
-    // Slot must not extend past closing time
-    if (isAfter(slotEnd, workEnd)) {
-      break;
-    }
-
-    const slotTimeStr = format(current, "HH:mm");
-
-    // Check minimum advance time
-    if (isBefore(current, minBookingTime)) {
-      slots.push({ time: new Date(current), display: slotTimeStr, available: false });
-      current = addMinutes(current, slotInterval);
-      continue;
-    }
-
-    // Check for blocked partial date
-    if (blockedDate?.type === "PARTIAL" && blockedDate.startTime && blockedDate.endTime) {
-      const [bStartH, bStartM] = blockedDate.startTime.split(":").map(Number);
-      const [bEndH, bEndM] = blockedDate.endTime.split(":").map(Number);
-      const blockStart = setMinutes(setHours(tzDate, bStartH), bStartM);
-      const blockEnd = setMinutes(setHours(tzDate, bEndH), bEndM);
-
-      if (isBefore(current, blockEnd) && isAfter(slotEnd, blockStart)) {
-        slots.push({ time: new Date(current), display: slotTimeStr, available: false });
-        current = addMinutes(current, slotInterval);
-        continue;
-      }
-    }
-
-    // Check slot-level availability (DateSlotOverride > RecurringBlockedSlot)
-    const dateOverride = dateOverrideMap.get(slotTimeStr);
-
-    if (dateOverride === "BLOCKED") {
-      slots.push({ time: new Date(current), display: slotTimeStr, available: false });
-      current = addMinutes(current, slotInterval);
-      continue;
-    }
-
-    if (dateOverride !== "AVAILABLE" && recurringBlockedSet.has(slotTimeStr)) {
-      slots.push({ time: new Date(current), display: slotTimeStr, available: false });
-      current = addMinutes(current, slotInterval);
-      continue;
-    }
-
-    // Check for conflicting appointments (with buffer)
-    const hasConflict = existingAppointments.some((appt) => {
-      const slotTime = current.getTime();
-      const apptEnd = appt.endTime.getTime() + bufferMinutes * 60 * 1000;
-      return slotTime >= appt.dateTime.getTime() && slotTime < apptEnd;
-    });
-
-    slots.push({ time: new Date(current), display: slotTimeStr, available: !hasConflict });
-    current = addMinutes(current, slotInterval);
-  }
-
-  return slots;
+  return computeSlotsForDay(data, date, options);
 }
 
 /**
- * Get available dates for the next N days — optimized with batch queries.
- * Multi-tenant scoped via staffId.
+ * Get availability for the next N days in a single batch of queries.
+ *
+ * When `serviceDuration` is provided, `hasSlots` reflects real occupancy — a day
+ * whose slots are all taken is reported as unavailable. Without it, the answer is
+ * limited to "does this staff member work that day and is it not blocked".
  */
-export async function getAvailableDates(
-  staffId: string,
-  daysAhead: number = 30
-): Promise<{ date: Date; hasSlots: boolean }[]> {
+export async function getAvailableDates({
+  businessId,
+  staffId,
+  daysAhead = 30,
+  ...options
+}: {
+  businessId: string;
+  staffId: string;
+  daysAhead?: number;
+} & Partial<SlotOptions>): Promise<
+  { date: Date; hasSlots: boolean; slotCount: number }[]
+> {
   const today = startOfDay(nowInArgentina());
-  const endDate = addDays(today, daysAhead - 1);
+  const lastDay = addDays(today, daysAhead - 1);
 
-  const allWorkingHours = await db.workingHours.findMany({
-    where: { staffId, isActive: true },
-  });
-  const activeDays = new Set(allWorkingHours.map((wh) => wh.dayOfWeek));
-
-  const blockedDates = await db.blockedDate.findMany({
-    where: {
-      staffId,
-      type: "FULL_DAY",
-      date: {
-        gte: startOfDay(today),
-        lte: endOfDay(endDate),
-      },
-    },
-  });
-  const blockedSet = new Set(
-    blockedDates.map((bd) => format(bd.date, "yyyy-MM-dd"))
+  const data = await fetchAvailabilityData(
+    businessId,
+    staffId,
+    today,
+    endOfDay(lastDay)
   );
 
-  const dates: { date: Date; hasSlots: boolean }[] = [];
+  const activeDays = new Set(
+    data.workingHours.filter((wh) => wh.isActive).map((wh) => wh.dayOfWeek)
+  );
+  const fullyBlocked = new Set(
+    data.blockedDates.filter((bd) => bd.type === "FULL_DAY").map((bd) => dayKey(bd.date))
+  );
+
+  const dates: { date: Date; hasSlots: boolean; slotCount: number }[] = [];
 
   for (let i = 0; i < daysAhead; i++) {
     const date = addDays(today, i);
     const tzDate = toArgentinaDate(date);
-    const dayOfWeek = tzDate.getDay();
-    const dateKey = format(tzDate, "yyyy-MM-dd");
 
-    const hasSlots = activeDays.has(dayOfWeek) && !blockedSet.has(dateKey);
-    dates.push({ date, hasSlots });
+    // Cheap checks first — they also cover the case where no duration is known.
+    if (!activeDays.has(tzDate.getDay()) || fullyBlocked.has(dayKey(date))) {
+      dates.push({ date, hasSlots: false, slotCount: 0 });
+      continue;
+    }
+
+    if (!options.serviceDuration) {
+      dates.push({ date, hasSlots: true, slotCount: 0 });
+      continue;
+    }
+
+    // Full slot computation, in memory — no extra queries.
+    const slots = computeSlotsForDay(data, date, options as SlotOptions);
+    const slotCount = slots.filter((s) => s.available).length;
+    dates.push({ date, hasSlots: slotCount > 0, slotCount });
   }
 
   return dates;
 }
 
-/** Format a time slot for display */
-export function formatSlotTime(date: Date): string {
-  return format(toArgentinaDate(date), "HH:mm");
-}

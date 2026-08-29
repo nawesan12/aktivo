@@ -11,14 +11,14 @@ function InvitationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
-  const [status, setStatus] = useState<"loading" | "success" | "register" | "error">("loading");
+  // Derived at first render: no token means error, no effect needed.
+  const [status, setStatus] = useState<"loading" | "success" | "register" | "error">(
+    token ? "loading" : "error"
+  );
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      return;
-    }
+    if (!token) return;
 
     fetch("/api/team/accept-invite", {
       method: "POST",
@@ -29,7 +29,7 @@ function InvitationContent() {
       .then((data) => {
         if (data.success) {
           setStatus("success");
-          toast.success("Invitacion aceptada");
+          toast.success("Invitación aceptada");
         } else if (data.needsRegistration) {
           setStatus("register");
           setEmail(data.email);
@@ -51,16 +51,16 @@ function InvitationContent() {
 
       {status === "success" && (
         <div className="flex flex-col items-center gap-4">
-          <CheckCircle className="w-12 h-12 text-emerald-500" />
+          <CheckCircle className="w-12 h-12 text-success-foreground" />
           <h2 className="text-xl font-heading font-bold">Invitacion aceptada</h2>
           <p className="text-muted-foreground text-sm">
-            Ya podes acceder al panel del negocio.
+            Ya podés acceder al panel del negocio.
           </p>
           <button
             onClick={() => router.push("/iniciar-sesion")}
             className="h-10 px-6 rounded-lg brand-gradient text-white font-medium text-sm"
           >
-            Iniciar sesion
+            Iniciar sesión
           </button>
         </div>
       )}

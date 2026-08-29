@@ -5,6 +5,7 @@ import {
   autoTable,
   logPdfExport,
 } from "./generate-pdf";
+import { formatCurrency } from "@/lib/format";
 
 interface ReportsData {
   summary: { totalAppointments: number; totalRevenue: number; totalClients: number };
@@ -39,7 +40,7 @@ export async function exportReportsPdf(
   doc.setFont("helvetica", "normal");
   doc.text(`Turnos: ${data.summary.totalAppointments}`, 20, y);
   doc.text(
-    `Ingresos: $${data.summary.totalRevenue.toLocaleString("es-AR")}`,
+    `Ingresos: ${formatCurrency(data.summary.totalRevenue)}`,
     80,
     y
   );
@@ -58,7 +59,7 @@ export async function exportReportsPdf(
       body: data.byStaff.map((s) => [
         s.name,
         String(s.count),
-        `$${s.revenue.toLocaleString("es-AR")}`,
+        `${formatCurrency(s.revenue)}`,
       ]),
       styles: { fontSize: 9, font: "helvetica" },
       headStyles: { fillColor: [34, 197, 94] },
@@ -80,7 +81,7 @@ export async function exportReportsPdf(
       head: [["Servicio", "Ingresos"]],
       body: data.byService.map((s) => [
         s.name,
-        `$${s.revenue.toLocaleString("es-AR")}`,
+        `${formatCurrency(s.revenue)}`,
       ]),
       styles: { fontSize: 9, font: "helvetica" },
       headStyles: { fillColor: [34, 197, 94] },

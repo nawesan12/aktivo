@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Users } from "lucide-react";
+import Image from "next/image";
 
 interface StaffCardProps {
   id: string;
@@ -40,9 +41,11 @@ export function StaffCard({ name, image, specialty, bio, isAny, selected, onClic
             <Users className="w-5 h-5 text-primary" />
           </div>
         ) : image ? (
-          <img
+          <Image
             src={image}
             alt={name}
+            width={48}
+            height={48}
             className="w-12 h-12 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
           />
         ) : (

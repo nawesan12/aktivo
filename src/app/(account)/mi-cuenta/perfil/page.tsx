@@ -59,7 +59,7 @@ export default function ProfilePage() {
             <ImageUploader
               value={image}
               onChange={(url) => setImage(url)}
-              folder="aktivo/profiles"
+              folder="jiku/profiles"
               aspectRatio="1:1"
               className="w-16 h-16 rounded-full"
             />
@@ -72,24 +72,27 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Nombre</label>
+            <label htmlFor="nombre" className="text-sm font-medium mb-1.5 block">Nombre</label>
             <input
+              id="nombre"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Email</label>
+            <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
             <input
+              id="email"
               value={data?.email || ""}
               disabled
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none opacity-60"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
+            <label htmlFor="telefono" className="text-sm font-medium mb-1.5 block">Teléfono</label>
             <input
+              id="telefono"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+54 11 1234-5678"

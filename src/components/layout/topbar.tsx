@@ -37,6 +37,7 @@ export function Topbar() {
           variant="ghost"
           size="icon"
           className="lg:hidden"
+          aria-label="Abrir el menú"
           onClick={() => setMobileNavOpen(true)}
         >
           <Menu className="w-5 h-5" />
@@ -47,7 +48,12 @@ export function Topbar() {
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={toggleTheme}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          onClick={toggleTheme}
+        >
           {theme === "dark" ? (
             <Sun className="w-4 h-4" />
           ) : (
@@ -59,7 +65,11 @@ export function Topbar() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+            <Button
+              variant="ghost"
+              aria-label="Abrir el menú de la cuenta"
+              className="relative h-9 w-9 rounded-full"
+            >
               <Avatar className="h-9 w-9">
                 <AvatarImage src={session?.user?.image || ""} />
                 <AvatarFallback className="bg-primary/10 text-primary text-sm">

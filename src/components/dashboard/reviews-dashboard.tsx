@@ -32,7 +32,7 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`${sizeClass} ${i <= rating ? "text-yellow-500 fill-yellow-500" : "text-zinc-600"}`}
+          className={`${sizeClass} ${i <= rating ? "text-warning-foreground fill-yellow-500" : "text-neutral-foreground"}`}
         />
       ))}
     </div>
@@ -165,7 +165,7 @@ export function ReviewsDashboard() {
                     {review.user?.name || review.guestClient?.name || "Anónimo"}
                   </span>
                   {!review.isVisible && (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-zinc-500/10 text-zinc-400">Oculta</span>
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-neutral-muted text-neutral-foreground">Oculta</span>
                   )}
                 </div>
                 {review.comment && (

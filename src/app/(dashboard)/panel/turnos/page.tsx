@@ -1,20 +1,35 @@
 import type { Metadata } from "next";
+import { getSessionBusiness } from "@/lib/auth/session-business";
+import { requirePermission } from "@/lib/auth/rbac";
+import { appointmentListKey, listAppointments } from "@/lib/panel/appointments";
 import { AppointmentsTable } from "@/components/dashboard/appointments-table";
 
 export const metadata: Metadata = {
   title: "Gestión de Turnos",
 };
 
-export default function TurnosPage() {
+/**
+ * The first page of appointments is queried while this renders, so the table
+ * arrives filled in instead of showing a skeleton and then fetching.
+ */
+export default async function TurnosPage() {
+  const session = await getSessionBusiness();
+  requirePermission(session.role, "appointments:read");
+
+  const initialData = await listAppointments(session.businessId, { page: 1, pageSize: 20 });
+
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-heading font-bold">Gestión de Turnos</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Administra y gestiona todos los turnos de tu negocio
+          Administrá y gestioná todos los turnos de tu negocio
         </p>
       </div>
-      <AppointmentsTable />
+      <AppointmentsTable
+        initialKey={appointmentListKey({ page: 1, pageSize: 20 })}
+        initialData={initialData}
+      />
     </div>
   );
 }

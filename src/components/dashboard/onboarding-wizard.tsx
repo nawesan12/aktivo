@@ -162,8 +162,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Descripción del negocio</label>
+              <label htmlFor="descripcion-del-negocio" className="text-sm font-medium mb-1.5 block">Descripción del negocio</label>
               <textarea
+                id="descripcion-del-negocio"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -172,8 +173,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
+              <label htmlFor="telefono" className="text-sm font-medium mb-1.5 block">Teléfono</label>
               <input
+                id="telefono"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+54 11 1234-5678"
@@ -199,8 +201,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Nombre del servicio</label>
+              <label htmlFor="nombre-del-servicio" className="text-sm font-medium mb-1.5 block">Nombre del servicio</label>
               <input
+                id="nombre-del-servicio"
                 value={serviceName}
                 onChange={(e) => setServiceName(e.target.value)}
                 placeholder="Ej: Corte de pelo"
@@ -209,8 +212,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Duracion (min)</label>
+                <label htmlFor="duracion-min" className="text-sm font-medium mb-1.5 block">Duración (min)</label>
                 <input
+                  id="duracion-min"
                   type="number"
                   value={duration}
                   onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
@@ -219,8 +223,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Precio ($)</label>
+                <label htmlFor="precio" className="text-sm font-medium mb-1.5 block">Precio ($)</label>
                 <input
+                  id="precio"
                   type="number"
                   value={price}
                   onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
@@ -249,8 +254,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Nombre</label>
+              <label htmlFor="nombre" className="text-sm font-medium mb-1.5 block">Nombre</label>
               <input
+                id="nombre"
                 value={staffName}
                 onChange={(e) => setStaffName(e.target.value)}
                 placeholder="Ej: Juan Perez"
@@ -259,8 +265,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Especialidad</label>
+                <label htmlFor="especialidad" className="text-sm font-medium mb-1.5 block">Especialidad</label>
                 <input
+                  id="especialidad"
                   value={specialty}
                   onChange={(e) => setSpecialty(e.target.value)}
                   placeholder="Ej: Barbero"
@@ -268,8 +275,9 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
+                <label htmlFor="telefono-2" className="text-sm font-medium mb-1.5 block">Teléfono</label>
                 <input
+                  id="telefono-2"
                   value={staffPhone}
                   onChange={(e) => setStaffPhone(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
@@ -300,7 +308,7 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
             <div>
               <p className="text-lg font-heading font-bold">Tu negocio esta listo!</p>
               <p className="text-muted-foreground text-sm mt-1">
-                Ya podes empezar a recibir reservas y gestionar tu equipo.
+                Ya podés empezar a recibir reservas y gestionar tu equipo.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

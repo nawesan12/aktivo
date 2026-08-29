@@ -8,12 +8,13 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 
 
 const ranges = [
-  { label: "7 dias", value: "7d" },
-  { label: "30 dias", value: "30d" },
-  { label: "90 dias", value: "90d" },
+  { label: "7 días", value: "7d" },
+  { label: "30 días", value: "30d" },
+  { label: "90 días", value: "90d" },
 ];
 
 const CHART_COLORS = ["#6366F1", "#22D3EE", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
@@ -99,7 +100,7 @@ export function ReportsDashboard() {
         />
         <KpiCard
           label="Ingresos"
-          value={`$${summary.totalRevenue.toLocaleString("es-AR")}`}
+          value={`${formatCurrency(summary.totalRevenue)}`}
           change="Pagos aprobados"
           icon={DollarSign}
           trend="neutral"
@@ -136,7 +137,7 @@ export function ReportsDashboard() {
             </ResponsiveContainer>
           ) : (
             <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
-              Sin datos para este periodo
+              Sin datos para este período
             </div>
           )}
         </div>
@@ -165,13 +166,13 @@ export function ReportsDashboard() {
                 </Pie>
                 <Tooltip
                   contentStyle={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
-                  formatter={(value?: number) => `$${(value || 0).toLocaleString("es-AR")}`}
+                  formatter={(value?: number) => `${formatCurrency((value || 0))}`}
                 />
               </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
-              Sin datos para este periodo
+              Sin datos para este período
             </div>
           )}
         </div>
@@ -197,7 +198,7 @@ export function ReportsDashboard() {
                   <tr key={s.name} className="border-b border-border/50">
                     <td className="px-4 py-2 font-medium">{s.name}</td>
                     <td className="px-4 py-2 text-muted-foreground">{s.count}</td>
-                    <td className="px-4 py-2 text-muted-foreground">${s.revenue.toLocaleString("es-AR")}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{formatCurrency(s.revenue)}</td>
                   </tr>
                 ))}
               </tbody>

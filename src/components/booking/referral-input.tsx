@@ -31,7 +31,7 @@ export function ReferralInput({ slug }: ReferralInputProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Codigo de referido invalido");
+        setError(data.error || "Código de referido inválido");
         setLoading(false);
         return;
       }
@@ -39,7 +39,7 @@ export function ReferralInput({ slug }: ReferralInputProps) {
       setReferralCode(code.trim());
       setApplied(true);
     } catch {
-      setError("Error al validar el codigo");
+      setError("Error al validar el código");
     } finally {
       setLoading(false);
     }
@@ -60,10 +60,10 @@ export function ReferralInput({ slug }: ReferralInputProps) {
 
       {applied ? (
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-            <Check className="w-3.5 h-3.5 text-green-500" />
+          <div className="w-6 h-6 rounded-full bg-success-muted flex items-center justify-center">
+            <Check className="w-3.5 h-3.5 text-success-foreground" />
           </div>
-          <p className="text-sm text-green-500">Codigo de referido aplicado</p>
+          <p className="text-sm text-success-foreground">Código de referido aplicado</p>
         </div>
       ) : (
         <>
@@ -75,7 +75,7 @@ export function ReferralInput({ slug }: ReferralInputProps) {
                 setCode(e.target.value);
                 setError(null);
               }}
-              placeholder="Ingresa el codigo"
+              placeholder="Ingresa el código"
               className="flex-1 px-3 py-2 text-sm rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <button

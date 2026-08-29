@@ -117,9 +117,10 @@ export default function ReferralsPage() {
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={copyLink}
+                aria-label="Copiar el link de referido"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors"
               >
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-success-foreground" /> : <Copy className="w-4 h-4" />}
                 {copied ? "Copiado" : "Copiar link"}
               </button>
               <button

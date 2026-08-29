@@ -134,9 +134,9 @@ export function StepDatetime({ slug }: { slug: string }) {
             </p>
           </div>
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-            suggestion.confidence === "high" ? "bg-green-500/10 text-green-500"
-            : suggestion.confidence === "medium" ? "bg-yellow-500/10 text-yellow-500"
-            : "bg-zinc-500/10 text-zinc-400"
+            suggestion.confidence === "high" ? "bg-success-muted text-success-foreground"
+            : suggestion.confidence === "medium" ? "bg-warning-muted text-warning-foreground"
+            : "bg-neutral-muted text-neutral-foreground"
           }`}>
             {suggestion.confidence === "high" ? "Frecuente" : suggestion.confidence === "medium" ? "Habitual" : "Sugerido"}
           </span>
@@ -270,7 +270,7 @@ export function StepDatetime({ slug }: { slug: string }) {
               )}
 
               {waitlistSuccess && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-green-500">
+                <div className="mt-4 flex items-center gap-2 text-sm text-success-foreground">
                   <Check className="w-4 h-4" />
                   Te avisamos cuando se libere un turno
                 </div>

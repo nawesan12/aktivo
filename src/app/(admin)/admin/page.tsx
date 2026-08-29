@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { formatCurrency } from "@/lib/format";
 
 
 export default function AdminDashboardPage() {
@@ -24,7 +25,7 @@ export default function AdminDashboardPage() {
         <KpiCard label="Negocios" value={data?.totalBusinesses?.toString() || "0"} change="Total" icon={Building2} trend="neutral" />
         <KpiCard label="Usuarios" value={data?.totalUsers?.toString() || "0"} change="Total" icon={Users} trend="neutral" />
         <KpiCard label="Turnos este mes" value={data?.appointmentsThisMonth?.toString() || "0"} change="Este mes" icon={Calendar} trend="neutral" />
-        <KpiCard label="Ingresos este mes" value={`$${(data?.revenueThisMonth || 0).toLocaleString("es-AR")}`} change="Pagos aprobados" icon={DollarSign} trend="neutral" />
+        <KpiCard label="Ingresos este mes" value={`${formatCurrency((data?.revenueThisMonth || 0))}`} change="Pagos aprobados" icon={DollarSign} trend="neutral" />
       </div>
 
       {/* Recent businesses */}

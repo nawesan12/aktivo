@@ -34,7 +34,7 @@ export function CouponInput({ slug, serviceId }: CouponInputProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Cupon invalido");
+        setError(data.error || "Cupón inválido");
         setLoading(false);
         return;
       }
@@ -51,7 +51,7 @@ export function CouponInput({ slug, serviceId }: CouponInputProps) {
       setCoupon(code.trim().toUpperCase(), discount);
       setApplied(true);
     } catch {
-      setError("Error al validar el cupon");
+      setError("Error al validar el cupón");
     } finally {
       setLoading(false);
     }
@@ -93,18 +93,19 @@ export function CouponInput({ slug, serviceId }: CouponInputProps) {
           {applied ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <Check className="w-3.5 h-3.5 text-green-500" />
+                <div className="w-6 h-6 rounded-full bg-success-muted flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-success-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-green-500">{code.toUpperCase()}</p>
+                  <p className="text-sm font-medium text-success-foreground">{code.toUpperCase()}</p>
                   {discountLabel && (
-                    <p className="text-xs text-green-500/80">{discountLabel}</p>
+                    <p className="text-xs text-success-foreground/80">{discountLabel}</p>
                   )}
                 </div>
               </div>
               <button
                 onClick={handleRemove}
+                aria-label="Quitar el cupón"
                 className="p-1 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -120,7 +121,7 @@ export function CouponInput({ slug, serviceId }: CouponInputProps) {
                     setCode(e.target.value.toUpperCase());
                     setError(null);
                   }}
-                  placeholder="Ingresa tu codigo"
+                  placeholder="Ingresa tu código"
                   className="flex-1 px-3 py-2 text-sm rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
                 <button

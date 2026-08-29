@@ -11,6 +11,7 @@ import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { Input } from "@/components/ui/input";
 import { downloadICS } from "@/lib/ics-generator";
 import { RescheduleModal } from "@/components/booking/reschedule-modal";
+import { APPOINTMENT_STATUS_OPTIONS } from "@/lib/appointment-status";
 
 interface Appointment {
   id: string;
@@ -74,11 +75,11 @@ export default function AppointmentsPage() {
             className="h-10 px-3 bg-background border border-border rounded-lg text-sm"
           >
             <option value="">Todos los estados</option>
-            <option value="PENDING">Pendiente</option>
-            <option value="CONFIRMED">Confirmado</option>
-            <option value="COMPLETED">Completado</option>
-            <option value="CANCELLED">Cancelado</option>
-            <option value="NO_SHOW">No asistió</option>
+            {APPOINTMENT_STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <Input
             type="date"

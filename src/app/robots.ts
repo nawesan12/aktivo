@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { appUrl } from "@/lib/env";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/panel/", "/mi-cuenta/", "/api/", "/admin/"],
     },
-    sitemap: "https://jikuapp.com/sitemap.xml",
+    sitemap: appUrl("/sitemap.xml"),
   };
 }

@@ -235,6 +235,7 @@ export function ClientTagAssigner({ clientId }: { clientId: string }) {
           <div className="relative group">
             <button
               disabled={assigning}
+              aria-label="Agregar una etiqueta"
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
             >
               <Plus className="w-3 h-3" />

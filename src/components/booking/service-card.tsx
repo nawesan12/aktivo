@@ -2,6 +2,7 @@
 
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 
 interface ServiceCardProps {
   name: string;
@@ -19,8 +20,9 @@ function formatDuration(minutes: number): string {
   return m > 0 ? `${h} h ${m} min` : `${h} h`;
 }
 
+/** Kept as a local alias so the call sites read the same; the format lives in @/lib/format. */
 function formatPrice(price: number): string {
-  return price.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 });
+  return formatCurrency(price);
 }
 
 export function ServiceCard({ name, description, duration, price, selected, onClick }: ServiceCardProps) {

@@ -4,13 +4,26 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Activity, Users, TrendingUp, AlertTriangle, Loader2, DollarSign, UserCheck } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
-import { AnalyticsRetentionChart } from "./analytics-retention-chart";
-import { AnalyticsLTVChart } from "./analytics-ltv-chart";
+import dynamic from "next/dynamic";
+
+// Both live behind tabs and both pull in Recharts. Loading them with the page
+// meant paying for the library even when nobody opened those tabs.
+const chartFallback = <div className="h-64 w-full animate-pulse rounded-lg bg-muted/30" />;
+
+const AnalyticsRetentionChart = dynamic(
+  () => import("./analytics-retention-chart").then((m) => m.AnalyticsRetentionChart),
+  { ssr: false, loading: () => chartFallback }
+);
+const AnalyticsLTVChart = dynamic(
+  () => import("./analytics-ltv-chart").then((m) => m.AnalyticsLTVChart),
+  { ssr: false, loading: () => chartFallback }
+);
 import { AnalyticsPeakHeatmap } from "./analytics-peak-heatmap";
 import { AnalyticsChurnList } from "./analytics-churn-list";
 import { AnalyticsDatePicker } from "./analytics-date-picker";
 import { AnalyticsRevenueChart } from "./analytics-revenue-chart";
 import { AnalyticsStaffPerformance } from "./analytics-staff-performance";
+import { formatCurrency } from "@/lib/format";
 
 type Tab = "retention" | "ltv" | "peak" | "churn" | "revenue" | "staff";
 
@@ -82,7 +95,7 @@ export function AnalyticsDashboard() {
         </div>
         <div className="glass rounded-xl p-4 text-center">
           <p className="text-2xl font-bold">
-            ${(ltv?.averageLTV || 0).toLocaleString("es-AR")}
+            {formatCurrency(ltv?.averageLTV || 0)}
           </p>
           <p className="text-sm text-muted-foreground">LTV Promedio</p>
         </div>

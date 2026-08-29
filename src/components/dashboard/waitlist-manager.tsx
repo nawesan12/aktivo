@@ -74,14 +74,14 @@ export function WaitlistManager() {
     switch (entry.status) {
       case "pending":
         return (
-          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500">
+          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-warning-muted text-warning-foreground">
             <Clock className="w-3 h-3" />
             Esperando
           </span>
         );
       case "notified":
         return (
-          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-500">
+          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-success-muted text-success-foreground">
             <CheckCircle className="w-3 h-3" />
             Notificado
             {entry.notifiedAt && (
@@ -173,7 +173,7 @@ export function WaitlistManager() {
                           </button>
                           <button
                             onClick={() => handleDiscard(entry.id)}
-                            className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                            className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-lg bg-danger-muted text-danger-foreground hover:bg-danger-muted transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             Descartar

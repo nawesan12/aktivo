@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import { AlertTriangle, ShieldAlert, Ban, TrendingUp } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import Link from "next/link";
 
 
 export function NoShowTracker() {
@@ -30,7 +31,7 @@ export function NoShowTracker() {
       label: "Total No-Shows",
       value: stats.totalNoShows,
       icon: AlertTriangle,
-      color: "text-yellow-500",
+      color: "text-warning-foreground",
     },
     {
       label: "Últimos 30 días",
@@ -42,7 +43,7 @@ export function NoShowTracker() {
       label: "Penalizaciones Activas",
       value: stats.activePenalties,
       icon: Ban,
-      color: "text-red-500",
+      color: "text-danger-foreground",
     },
     {
       label: "Reincidentes",
@@ -91,7 +92,7 @@ export function NoShowTracker() {
                     <td className="py-3">{p.user?.name || p.guestClient?.name || "—"}</td>
                     <td className="py-3 text-muted-foreground">{p.user?.phone || p.guestClient?.phone || "—"}</td>
                     <td className="py-3 text-muted-foreground">{new Date(p.blockedUntil).toLocaleDateString("es-AR")}</td>
-                    <td className="py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{p.reason}</span></td>
+                    <td className="py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-danger-muted text-danger-foreground">{p.reason}</span></td>
                     <td className="py-3 text-right">
                       <button
                         onClick={() => handleLiftPenalty(p.id)}
@@ -114,9 +115,9 @@ export function NoShowTracker() {
         </h3>
         <p className="text-sm text-muted-foreground">
           Ajusta el umbral de no-shows y los días de penalización desde{" "}
-          <a href="/panel/configuracion" className="text-primary hover:underline">
+          <Link href="/panel/configuracion" className="text-primary hover:underline">
             Configuración
-          </a>
+          </Link>
           .
         </p>
       </div>

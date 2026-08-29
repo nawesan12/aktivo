@@ -24,16 +24,16 @@ export function KpiCard({ label, value, change, icon: Icon, trend }: KpiCardProp
       <div className="flex items-center gap-1 mt-1">
         {trend !== "neutral" && (
           trend === "up" ? (
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
+            <TrendingUp className="w-3 h-3 text-success-foreground" />
           ) : (
-            <TrendingDown className="w-3 h-3 text-red-500" />
+            <TrendingDown className="w-3 h-3 text-danger-foreground" />
           )
         )}
         <span
           className={cn(
             "text-xs",
-            trend === "up" && "text-emerald-500",
-            trend === "down" && "text-red-500",
+            trend === "up" && "text-success-foreground",
+            trend === "down" && "text-danger-foreground",
             trend === "neutral" && "text-muted-foreground"
           )}
         >

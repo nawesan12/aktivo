@@ -2,6 +2,7 @@
 
 import { Download } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
+import { formatCurrency } from "@/lib/format";
 
 interface TimelineEntry {
   period: string;
@@ -28,7 +29,7 @@ interface AnalyticsRevenueChartProps {
 }
 
 function formatARS(value: number) {
-  return `$${value.toLocaleString("es-AR")}`;
+  return `${formatCurrency(value)}`;
 }
 
 export function AnalyticsRevenueChart({ data }: AnalyticsRevenueChartProps) {
@@ -39,7 +40,7 @@ export function AnalyticsRevenueChart({ data }: AnalyticsRevenueChartProps) {
   const handleExport = () => {
     downloadCSV(
       timeline.map((t) => ({
-        Periodo: t.period,
+        Período: t.period,
         Ingresos: t.revenue,
         Turnos: t.count,
       })),

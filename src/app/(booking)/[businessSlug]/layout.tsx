@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { hexToHsl } from "@/lib/utils";
+import Image from "next/image";
 
 export default async function BookingLayout({
   children,
@@ -50,9 +51,11 @@ export default async function BookingLayout({
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {business.logo ? (
-              <img
+              <Image
                 src={business.logo}
                 alt={business.name}
+                width={28}
+                height={28}
                 className="w-7 h-7 rounded-lg object-cover"
               />
             ) : (
@@ -67,7 +70,7 @@ export default async function BookingLayout({
           </Link>
         </div>
       </header>
-      <main className="pt-14">{children}</main>
+      <main id="contenido" className="pt-14">{children}</main>
     </div>
   );
 }

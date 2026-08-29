@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { formatCurrency } from "@/lib/format";
 
 interface LTVData {
   clients: {
@@ -30,7 +31,7 @@ export function AnalyticsLTVChart({ data }: { data: LTVData }) {
     <div>
       <h3 className="text-lg font-semibold mb-1">Client Lifetime Value</h3>
       <p className="text-sm text-muted-foreground mb-6">
-        LTV promedio: <span className="font-semibold text-foreground">${data.averageLTV.toLocaleString("es-AR")}</span>/mes
+        LTV promedio: <span className="font-semibold text-foreground">{formatCurrency(data.averageLTV)}</span>/mes
       </p>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -44,7 +45,7 @@ export function AnalyticsLTVChart({ data }: { data: LTVData }) {
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: 8,
               }}
-              formatter={(value) => [`$${Number(value).toLocaleString("es-AR")}`, "LTV/mes"]}
+              formatter={(value) => [`${formatCurrency(Number(value))}`, "LTV/mes"]}
             />
             <Bar dataKey="ltv" fill="#22D3EE" radius={[0, 4, 4, 0]} />
           </BarChart>
@@ -66,10 +67,10 @@ export function AnalyticsLTVChart({ data }: { data: LTVData }) {
             {data.clients.slice(0, 10).map((c) => (
               <tr key={c.clientId} className="border-b border-border/50">
                 <td className="py-2">{c.clientName}</td>
-                <td className="py-2 text-right">${c.totalRevenue.toLocaleString("es-AR")}</td>
+                <td className="py-2 text-right">{formatCurrency(c.totalRevenue)}</td>
                 <td className="py-2 text-right">{c.totalAppointments}</td>
                 <td className="py-2 text-right">{c.monthsActive}</td>
-                <td className="py-2 text-right font-medium">${c.ltv.toLocaleString("es-AR")}</td>
+                <td className="py-2 text-right font-medium">{formatCurrency(c.ltv)}</td>
               </tr>
             ))}
           </tbody>

@@ -8,9 +8,7 @@ import {
   Plus,
   Pencil,
   Trash2,
-  X,
   Loader2,
-  User,
   Mail,
   Phone,
   Scissors,
@@ -20,6 +18,13 @@ import { toast } from "sonner";
 import { staffSchema, type StaffInput } from "@/lib/validations";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { ImageUploader } from "@/components/upload/image-uploader";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 interface StaffMember {
@@ -201,8 +206,8 @@ export function StaffManager() {
                   onClick={() => toggleActive(member)}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     member.isActive
-                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                      : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                      ? "bg-success-muted text-success-foreground border-success/20"
+                      : "bg-neutral-muted text-neutral-foreground border-neutral/20"
                   }`}
                 >
                   {member.isActive ? "Activo" : "Inactivo"}
@@ -216,48 +221,47 @@ export function StaffManager() {
         </div>
       )}
 
-      {/* Create/Edit dialog */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
-          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="font-heading font-semibold">{editingStaff ? "Editar profesional" : "Nuevo profesional"}</h2>
-              <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+      {/* Dialog from shadcn: focus trap, Escape, and an announced role —
+          none of which the hand-rolled overlay had. */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingStaff ? "Editar profesional" : "Nuevo profesional"}
+            </DialogTitle>
+          </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Foto</label>
                 <ImageUploader
                   value={staffImage || null}
                   onChange={setStaffImage}
-                  folder="aktivo/staff"
+                  folder="jiku/staff"
                   aspectRatio="1:1"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Nombre</label>
-                <input {...register("name")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                <label htmlFor="name" className="text-sm font-medium mb-1.5 block">Nombre</label>
+                <input id="name" {...register("name")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                 {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Email</label>
-                  <input {...register("email")} type="email" className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                  <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
+                  <input id="email" {...register("email")} type="email" className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
-                  <input {...register("phone")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                  <label htmlFor="phone" className="text-sm font-medium mb-1.5 block">Teléfono</label>
+                  <input id="phone" {...register("phone")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Especialidad</label>
-                <input {...register("specialty")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                <label htmlFor="specialty" className="text-sm font-medium mb-1.5 block">Especialidad</label>
+                <input id="specialty" {...register("specialty")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Bio</label>
-                <textarea {...register("bio")} rows={2} className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none" />
+                <label htmlFor="bio" className="text-sm font-medium mb-1.5 block">Bio</label>
+                <textarea id="bio" {...register("bio")} rows={2} className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none" />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Servicios asignados</label>
@@ -288,29 +292,18 @@ export function StaffManager() {
                 {editingStaff ? "Guardar cambios" : "Crear profesional"}
               </button>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Delete confirmation */}
-      {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteId(null)}>
-          <div className="glass rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-heading font-semibold">Eliminar profesional</h2>
-            <p className="text-sm text-muted-foreground">
-              Esta acción no se puede deshacer. No se podra eliminar si tiene turnos pendientes.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setDeleteId(null)} className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">
-                Cancelar
-              </button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 h-9 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Eliminar profesional"
+        description="Esta acción no se puede deshacer. No se puede eliminar si tiene turnos pendientes."
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+      />
     </>
   );
 }

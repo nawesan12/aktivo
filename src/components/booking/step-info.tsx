@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, User, LogIn } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
 import Link from "next/link";
 
 export function StepInfo({ slug }: { slug: string }) {
@@ -50,8 +50,8 @@ export function StepInfo({ slug }: { slug: string }) {
             <LogIn className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium">Tenes cuenta?</p>
-            <p className="text-xs text-muted-foreground">Inicia sesion para guardar tu historial de turnos</p>
+            <p className="text-sm font-medium">¿Tenés cuenta?</p>
+            <p className="text-xs text-muted-foreground">Iniciá sesión para guardar tu historial de turnos</p>
           </div>
           <Link href="/iniciar-sesion" className="shrink-0">
             <Button variant="outline" size="sm" className="rounded-lg text-xs">

@@ -17,6 +17,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/format";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const PLANS = [
   {
@@ -53,15 +55,16 @@ const PLANS = [
 ];
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  AUTHORIZED: { label: "Activa", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-  PENDING: { label: "Pendiente", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+  AUTHORIZED: { label: "Activa", color: "bg-success-muted text-success-foreground border-success/20" },
+  PENDING: { label: "Pendiente", color: "bg-warning-muted text-warning-foreground border-warning/20" },
   PAUSED: { label: "Pausada", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
-  CANCELLED: { label: "Cancelada", color: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
-  EXPIRED: { label: "Expirada", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+  CANCELLED: { label: "Cancelada", color: "bg-neutral-muted text-neutral-foreground border-neutral/20" },
+  EXPIRED: { label: "Expirada", color: "bg-danger-muted text-danger-foreground border-danger/20" },
 };
 
+/** Local alias; the format itself lives in @/lib/format. */
 function formatPrice(amount: number) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(amount);
+  return formatCurrency(amount);
 }
 
 export default function SubscriptionPage() {
@@ -70,6 +73,7 @@ export default function SubscriptionPage() {
   const { data, isLoading, mutate } = useSWR("/api/panel/subscription");
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   // Poll on callback until subscription is AUTHORIZED
   useEffect(() => {
@@ -104,7 +108,7 @@ export default function SubscriptionPage() {
   }
 
   async function handleCancel() {
-    if (!confirm("¿Estás seguro de cancelar tu suscripción? Mantendrás el acceso hasta el fin del período actual.")) return;
+    setConfirmingCancel(false);
     setCancelling(true);
     try {
       const res = await fetch("/api/panel/subscription/cancel", {
@@ -140,6 +144,17 @@ export default function SubscriptionPage() {
 
   return (
     <div className="space-y-8 max-w-5xl">
+      <ConfirmDialog
+        open={confirmingCancel}
+        onOpenChange={setConfirmingCancel}
+        title="Cancelar la suscripción"
+        description="Mantenés el acceso hasta el final del período que ya pagaste. Después, el negocio vuelve al plan gratuito."
+        confirmLabel="Cancelar la suscripción"
+        cancelLabel="Volver"
+        destructive
+        onConfirm={handleCancel}
+      />
+
       <div>
         <h1 className="text-2xl font-heading font-bold">Suscripción</h1>
         <p className="text-muted-foreground text-sm mt-1">Administrá tu plan y facturación</p>
@@ -165,7 +180,7 @@ export default function SubscriptionPage() {
           </div>
           {subscription && (subscription.status === "AUTHORIZED" || subscription.status === "PAUSED") && (
             <button
-              onClick={handleCancel}
+              onClick={() => setConfirmingCancel(true)}
               disabled={cancelling}
               className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-50"
             >

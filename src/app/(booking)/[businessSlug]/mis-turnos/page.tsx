@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { downloadICS } from "@/lib/ics-generator";
 import { RescheduleModal } from "@/components/booking/reschedule-modal";
 import Link from "next/link";
+import { statusStyle } from "@/lib/appointment-status";
 
 interface Appointment {
   id: string;
@@ -130,14 +131,6 @@ export default function MisTurnosPage() {
     }
   };
 
-  const statusLabel: Record<string, { label: string; className: string }> = {
-    PENDING: { label: "Pendiente", className: "bg-yellow-500/10 text-yellow-500" },
-    CONFIRMED: { label: "Confirmado", className: "bg-green-500/10 text-green-500" },
-    COMPLETED: { label: "Completado", className: "bg-blue-500/10 text-blue-500" },
-    CANCELLED: { label: "Cancelado", className: "bg-red-500/10 text-red-500" },
-    NO_SHOW: { label: "No asistió", className: "bg-orange-500/10 text-orange-500" },
-  };
-
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
       {state === "phone" && (
@@ -160,7 +153,7 @@ export default function MisTurnosPage() {
               onChange={(e) => setPhone(e.target.value)}
               className="text-center text-lg"
             />
-            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            {error && <p className="text-sm text-danger-foreground text-center">{error}</p>}
             <Button
               onClick={handleSendCode}
               disabled={phone.length < 10 || loading}
@@ -195,7 +188,7 @@ export default function MisTurnosPage() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               className="text-center text-2xl tracking-[0.5em] font-mono"
             />
-            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            {error && <p className="text-sm text-danger-foreground text-center">{error}</p>}
             <Button
               onClick={handleVerify}
               disabled={code.length !== 6 || loading}
@@ -263,8 +256,8 @@ export default function MisTurnosPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className={cn("text-xs px-2 py-0.5 rounded-full", statusLabel[apt.status]?.className)}>
-                          {statusLabel[apt.status]?.label}
+                        <span className={cn("text-xs px-2 py-0.5 rounded-full", statusStyle(apt.status).badge)}>
+                          {statusStyle(apt.status).label}
                         </span>
                         {/* Add to calendar */}
                         <button
@@ -295,7 +288,7 @@ export default function MisTurnosPage() {
                         <button
                           onClick={() => handleCancel(apt.id)}
                           disabled={cancelling === apt.id}
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-danger-muted text-muted-foreground hover:text-danger-foreground transition-colors"
                           title="Cancelar turno"
                         >
                           {cancelling === apt.id ? (
@@ -330,7 +323,7 @@ export default function MisTurnosPage() {
                       </div>
                       <span className={cn(
                         "text-xs px-2 py-0.5 rounded-full",
-                        entry.notified ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"
+                        entry.notified ? "bg-success-muted text-success-foreground" : "bg-warning-muted text-warning-foreground"
                       )}>
                         {entry.notified ? "Notificado" : "En espera"}
                       </span>
@@ -364,8 +357,8 @@ export default function MisTurnosPage() {
                           </span>
                         </div>
                       </div>
-                      <span className={cn("text-xs px-2 py-0.5 rounded-full shrink-0", statusLabel[apt.status]?.className)}>
-                        {statusLabel[apt.status]?.label}
+                      <span className={cn("text-xs px-2 py-0.5 rounded-full shrink-0", statusStyle(apt.status).badge)}>
+                        {statusStyle(apt.status).label}
                       </span>
                     </div>
                   </div>

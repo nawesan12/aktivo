@@ -3,18 +3,19 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+import {
+  APPOINTMENT_STATUS_ORDER,
+  APPOINTMENT_STATUS_STYLES,
+} from "@/lib/appointment-status";
+
 // Re-export autoTable so consumers don't need to import it separately
 export { autoTable };
 
 // ─── Status label maps (Spanish) ────────────────────────────────
-export const appointmentStatusLabel: Record<string, string> = {
-  PENDING_PAYMENT: "Pago pendiente",
-  PENDING: "Pendiente",
-  CONFIRMED: "Confirmado",
-  COMPLETED: "Completado",
-  CANCELLED: "Cancelado",
-  NO_SHOW: "No asistió",
-};
+/** Same labels the interface shows, so an exported PDF matches the screen. */
+export const appointmentStatusLabel: Record<string, string> = Object.fromEntries(
+  APPOINTMENT_STATUS_ORDER.map((status) => [status, APPOINTMENT_STATUS_STYLES[status].label])
+);
 
 export const paymentStatusLabel: Record<string, string> = {
   PENDING: "Pendiente",

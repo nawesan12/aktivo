@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MagneticButton } from "@/components/premium/magnetic-button";
+import { formatCurrency } from "@/lib/format";
+import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -86,8 +88,9 @@ function formatDuration(minutes: number): string {
   return m > 0 ? `${h} h ${m} min` : `${h} h`;
 }
 
+/** Kept as a local alias so the call sites read the same; the format lives in @/lib/format. */
 function formatPrice(price: number): string {
-  return price.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 });
+  return formatCurrency(price);
 }
 
 function getInitials(name: string): string {
@@ -303,9 +306,12 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
           {/* Logo / Avatar */}
           <div className="bp-hero-logo opacity-0 mb-6 inline-block">
             {business.logoUrl ? (
-              <img
+              <Image
                 src={business.logoUrl}
                 alt={business.name}
+                width={96}
+                height={96}
+                priority
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-2 ring-white/10 shadow-2xl"
               />
             ) : (
@@ -395,9 +401,11 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
                     >
                       <div className="flex items-start gap-3 p-5">
                         {service.image && (
-                          <img
+                          <Image
                             src={service.image}
                             alt={service.name}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 rounded-lg object-cover shrink-0 ring-1 ring-white/10"
                           />
                         )}
@@ -447,9 +455,11 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
               >
                 <div className="flex items-start gap-4">
                   {member.image ? (
-                    <img
+                    <Image
                       src={member.image}
                       alt={member.name}
+                      width={80}
+                      height={80}
                       className="w-20 h-20 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
                     />
                   ) : (

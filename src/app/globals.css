@@ -28,6 +28,26 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  /* Semantic state colours. Deliberately separate from --primary: a business
+     can rebrand the product green, but "cancelled" still has to read as a
+     problem. Before this, every state colour was a literal Tailwind class
+     repeated across the interface, so the same status came out in different
+     shades depending on the screen. */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-muted: var(--danger-muted);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
+  --color-neutral: var(--neutral);
+  --color-neutral-foreground: var(--neutral-foreground);
+  --color-neutral-muted: var(--neutral-muted);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -75,6 +95,23 @@
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.15);
   --ring: #4ADE80;
+  /* Semantic states (dark) */
+  --success: #10b981;
+  --success-foreground: #34d399;
+  --success-muted: rgba(16, 185, 129, 0.1);
+  --warning: #eab308;
+  --warning-foreground: #facc15;
+  --warning-muted: rgba(234, 179, 8, 0.1);
+  --danger: #ef4444;
+  --danger-foreground: #f87171;
+  --danger-muted: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --info-foreground: #60a5fa;
+  --info-muted: rgba(59, 130, 246, 0.1);
+  --neutral: #71717a;
+  --neutral-foreground: #a1a1aa;
+  --neutral-muted: rgba(113, 113, 122, 0.1);
+
 
   /* Charts */
   --chart-1: #4ADE80;
@@ -119,6 +156,23 @@
   --border: #e4e4e7;
   --input: #e4e4e7;
   --ring: #4ADE80;
+  /* Semantic states (light): darker text so contrast holds on a white surface */
+  --success: #059669;
+  --success-foreground: #047857;
+  --success-muted: rgba(5, 150, 105, 0.12);
+  --warning: #ca8a04;
+  --warning-foreground: #a16207;
+  --warning-muted: rgba(202, 138, 4, 0.12);
+  --danger: #dc2626;
+  --danger-foreground: #b91c1c;
+  --danger-muted: rgba(220, 38, 38, 0.12);
+  --info: #2563eb;
+  --info-foreground: #1d4ed8;
+  --info-muted: rgba(37, 99, 235, 0.12);
+  --neutral: #52525b;
+  --neutral-foreground: #3f3f46;
+  --neutral-muted: rgba(82, 82, 91, 0.12);
+
 
   --chart-1: #4ADE80;
   --chart-2: #22c55e;

@@ -28,9 +28,9 @@ interface TimeSuggestionProps {
 }
 
 const CONFIDENCE_STYLES: Record<string, string> = {
-  high: "bg-green-500/20 text-green-500",
-  medium: "bg-yellow-500/20 text-yellow-500",
-  low: "bg-zinc-500/20 text-zinc-400",
+  high: "bg-success-muted text-success-foreground",
+  medium: "bg-warning-muted text-warning-foreground",
+  low: "bg-neutral/20 text-neutral-foreground",
 };
 
 const CONFIDENCE_LABELS: Record<string, string> = {

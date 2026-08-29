@@ -97,8 +97,8 @@ export default function AdminBusinessesPage() {
                           onClick={() => handleUpdate(biz.id as string, { isActive: !(biz.isActive as boolean) })}
                           className={`text-xs px-2.5 py-1 rounded-full border ${
                             biz.isActive
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                              : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                              ? "bg-success-muted text-success-foreground border-success/20"
+                              : "bg-neutral-muted text-neutral-foreground border-neutral/20"
                           }`}
                         >
                           {biz.isActive ? "Activo" : "Inactivo"}
@@ -134,11 +134,11 @@ export default function AdminBusinessesPage() {
 function SubscriptionBadge({ status }: { status?: string }) {
   if (!status) return <span className="text-xs text-muted-foreground">—</span>;
   const colors: Record<string, string> = {
-    AUTHORIZED: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-    PENDING: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+    AUTHORIZED: "bg-success-muted text-success-foreground border-success/20",
+    PENDING: "bg-warning-muted text-warning-foreground border-warning/20",
     PAUSED: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-    CANCELLED: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-    EXPIRED: "bg-red-500/10 text-red-400 border-red-500/20",
+    CANCELLED: "bg-neutral-muted text-neutral-foreground border-neutral/20",
+    EXPIRED: "bg-danger-muted text-danger-foreground border-danger/20",
   };
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full border ${colors[status] || "bg-muted text-muted-foreground border-border"}`}>

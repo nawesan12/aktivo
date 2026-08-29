@@ -9,9 +9,17 @@ import {
   Scissors,
   CreditCard,
   FileText,
-  X,
 } from "lucide-react";
 import { StatusBadge } from "./status-badge";
+import { formatCurrency } from "@/lib/format";
+import { statusStyle } from "@/lib/appointment-status";
+import type { AppointmentStatus } from "@/generated/prisma/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AppointmentDetail {
   id: string;
@@ -40,38 +48,37 @@ interface Props {
 export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }: Props) {
   if (!appointment) return null;
 
-  const statusActions: Record<string, { label: string; status: string; className: string }[]> = {
+  // Colours come from the shared status map, so the "Completar" button is the
+  // same green as the COMPLETED badge it produces.
+  const statusActions: Record<string, { label: string; status: AppointmentStatus }[]> = {
     PENDING: [
-      { label: "Confirmar", status: "CONFIRMED", className: "bg-blue-500 hover:bg-blue-600 text-white" },
-      { label: "Cancelar", status: "CANCELLED", className: "bg-red-500/10 hover:bg-red-500/20 text-red-500" },
+      { label: "Confirmar", status: "CONFIRMED" },
+      { label: "Cancelar", status: "CANCELLED" },
     ],
     PENDING_PAYMENT: [
-      { label: "Confirmar", status: "CONFIRMED", className: "bg-blue-500 hover:bg-blue-600 text-white" },
-      { label: "Cancelar", status: "CANCELLED", className: "bg-red-500/10 hover:bg-red-500/20 text-red-500" },
+      { label: "Confirmar", status: "CONFIRMED" },
+      { label: "Cancelar", status: "CANCELLED" },
     ],
     CONFIRMED: [
-      { label: "Completar", status: "COMPLETED", className: "bg-emerald-500 hover:bg-emerald-600 text-white" },
-      { label: "No asistió", status: "NO_SHOW", className: "bg-zinc-500/10 hover:bg-zinc-500/20 text-zinc-400" },
-      { label: "Cancelar", status: "CANCELLED", className: "bg-red-500/10 hover:bg-red-500/20 text-red-500" },
+      { label: "Completar", status: "COMPLETED" },
+      { label: "No asistió", status: "NO_SHOW" },
+      { label: "Cancelar", status: "CANCELLED" },
     ],
   };
 
   const actions = statusActions[appointment.status] || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="font-heading font-semibold text-lg">Detalle del turno</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    // Dialog brings the focus trap, Escape, and the close button — the
+    // hand-rolled overlay had none of them, so a keyboard user could tab out
+    // of the dialog and keep operating the table behind it.
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalle del turno</DialogTitle>
+        </DialogHeader>
 
-        <div className="p-6 space-y-5">
+        <div className="space-y-5">
           <div className="flex items-center justify-between">
             <StatusBadge status={appointment.status} />
             {appointment.paymentStatus && (
@@ -103,7 +110,7 @@ export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }
               </div>
               <p className="text-sm font-medium">{appointment.serviceName}</p>
               <p className="text-xs text-muted-foreground">
-                {appointment.serviceDuration} min · ${appointment.servicePrice.toLocaleString("es-AR")}
+                {appointment.serviceDuration} min · {formatCurrency(appointment.servicePrice)}
               </p>
             </div>
 
@@ -142,7 +149,7 @@ export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }
                   <CreditCard className="w-3.5 h-3.5" />
                   <span className="text-xs">Pago</span>
                 </div>
-                <p className="text-sm font-medium">${appointment.paymentAmount.toLocaleString("es-AR")}</p>
+                <p className="text-sm font-medium">{formatCurrency(appointment.paymentAmount)}</p>
               </div>
             )}
           </div>
@@ -163,7 +170,7 @@ export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }
                 <button
                   key={action.status}
                   onClick={() => onStatusChange(appointment.id, action.status)}
-                  className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors ${action.className}`}
+                  className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors ${statusStyle(action.status).action}`}
                 >
                   {action.label}
                 </button>
@@ -171,7 +178,7 @@ export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

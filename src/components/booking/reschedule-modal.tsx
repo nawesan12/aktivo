@@ -50,6 +50,9 @@ export function RescheduleModal({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Intentional: the extra render is what triggers the entrance transition —
+    // the modal must first paint hidden, then flip to visible.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisible(true);
   }, []);
 
@@ -102,7 +105,7 @@ export function RescheduleModal({
       toast.success("Turno reprogramado correctamente");
       onSuccess();
     } catch {
-      toast.error("Error de conexion. Intenta de nuevo.");
+      toast.error("Error de conexión. Intentá de nuevo.");
       setSubmitting(false);
     }
   };
@@ -135,6 +138,7 @@ export function RescheduleModal({
           <h2 className="text-xl font-heading font-bold">Reprogramar turno</h2>
           <button
             onClick={handleClose}
+            aria-label="Cerrar"
             className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="w-5 h-5" />

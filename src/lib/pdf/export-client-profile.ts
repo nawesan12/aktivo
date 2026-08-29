@@ -7,6 +7,7 @@ import {
   appointmentStatusLabel,
   logPdfExport,
 } from "./generate-pdf";
+import { formatCurrency } from "@/lib/format";
 
 interface ClientDetail {
   id: string;
@@ -46,7 +47,7 @@ export async function exportClientProfilePdf(detail: ClientDetail, businessName:
     `Teléfono: ${detail.phone || "—"}`,
     `Email: ${detail.email || "—"}`,
     `Cliente desde: ${format(new Date(detail.createdAt), "MMMM yyyy", { locale: es })}`,
-    `Total gastado: $${detail.totalSpent.toLocaleString("es-AR")}`,
+    `Total gastado: ${formatCurrency(detail.totalSpent)}`,
   ];
   for (const line of info) {
     doc.text(line, 20, y);
@@ -67,7 +68,7 @@ export async function exportClientProfilePdf(detail: ClientDetail, businessName:
       a.staffName,
       format(new Date(a.dateTime), "dd/MM/yy HH:mm", { locale: es }),
       appointmentStatusLabel[a.status] || a.status,
-      `$${(a.paymentAmount ?? a.price).toLocaleString("es-AR")}`,
+      `${formatCurrency((a.paymentAmount ?? a.price))}`,
     ]),
     styles: { fontSize: 9, font: "helvetica" },
     headStyles: { fillColor: [34, 197, 94] },

@@ -5,7 +5,6 @@ import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   Bell,
@@ -33,15 +32,15 @@ const channelIcons: Record<string, typeof MessageSquare> = {
 };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  SENT: { label: "Enviado", className: "bg-emerald-500/10 text-emerald-500" },
-  PENDING: { label: "Pendiente", className: "bg-yellow-500/10 text-yellow-500" },
-  FAILED: { label: "Fallido", className: "bg-red-500/10 text-red-500" },
+  SENT: { label: "Enviado", className: "bg-success-muted text-success-foreground" },
+  PENDING: { label: "Pendiente", className: "bg-warning-muted text-warning-foreground" },
+  FAILED: { label: "Fallido", className: "bg-danger-muted text-danger-foreground" },
 };
 
 const typeLabels: Record<string, string> = {
-  confirmation: "Confirmacion",
+  confirmation: "Confirmación",
   reminder: "Recordatorio",
-  cancellation: "Cancelacion",
+  cancellation: "Cancelación",
 };
 
 export function NotificationsLog() {
@@ -154,7 +153,7 @@ export function NotificationsLog() {
 
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between p-3 border-t border-border">
-            <p className="text-xs text-muted-foreground">{pagination.total} notificacion{pagination.total !== 1 ? "es" : ""}</p>
+            <p className="text-xs text-muted-foreground">{pagination.total} notificación{pagination.total !== 1 ? "es" : ""}</p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
                 <ChevronLeft className="w-4 h-4" />

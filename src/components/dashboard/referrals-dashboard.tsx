@@ -143,8 +143,9 @@ export function ReferralsDashboard() {
 
           {/* Reward type */}
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Tipo de recompensa</label>
+            <label htmlFor="tipo-de-recompensa" className="text-sm text-muted-foreground">Tipo de recompensa</label>
             <select
+              id="tipo-de-recompensa"
               value={activeConfig.referralRewardType ?? "PERCENTAGE"}
               onChange={(e) =>
                 updateConfig({
@@ -160,11 +161,12 @@ export function ReferralsDashboard() {
 
           {/* Reward value */}
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">
+            <label htmlFor="valor-de-recompensa-activeconfig-referralrewardtype-percentage" className="text-sm text-muted-foreground">
               Valor de recompensa{" "}
               {activeConfig.referralRewardType === "PERCENTAGE" ? "(%)" : "($)"}
             </label>
             <input
+              id="valor-de-recompensa-activeconfig-referralrewardtype-percentage"
               type="number"
               min={0}
               value={activeConfig.referralRewardValue ?? ""}
@@ -180,10 +182,11 @@ export function ReferralsDashboard() {
 
           {/* Max redemptions */}
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">
+            <label htmlFor="max-canjes-por-codigo-vacio-ilimitado" className="text-sm text-muted-foreground">
               Máx. canjes por código (vacío = ilimitado)
             </label>
             <input
+              id="max-canjes-por-codigo-vacio-ilimitado"
               type="number"
               min={0}
               value={activeConfig.referralMaxRedemptions ?? ""}

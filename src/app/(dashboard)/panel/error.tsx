@@ -1,5 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("ui:panel");
+
 export default function DashboardError({
   error,
   reset,
@@ -7,6 +12,10 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    log.error("boundary caught an error", error, { digest: error.digest });
+  }, [error]);
+
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="glass rounded-2xl p-12 text-center max-w-md w-full">

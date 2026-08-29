@@ -8,7 +8,7 @@ const STEPS = [
   { label: "Profesional", icon: UserCheck },
   { label: "Fecha y Hora", icon: CalendarDays },
   { label: "Tus Datos", icon: ClipboardList },
-  { label: "Confirmacion", icon: CheckCircle2 },
+  { label: "Confirmación", icon: CheckCircle2 },
 ];
 
 interface ProgressBarProps {

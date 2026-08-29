@@ -29,18 +29,12 @@ import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { CalendarSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { toast } from "sonner";
+import { statusStyle } from "@/lib/appointment-status";
 
 
 type ViewMode = "month" | "week" | "day";
 
-const statusColors: Record<string, string> = {
-  PENDING_PAYMENT: "bg-amber-500",
-  PENDING: "bg-yellow-500",
-  CONFIRMED: "bg-blue-500",
-  COMPLETED: "bg-emerald-500",
-  CANCELLED: "bg-red-500",
-  NO_SHOW: "bg-zinc-500",
-};
+
 
 interface CalendarAppointment {
   id: string;
@@ -266,7 +260,7 @@ function MonthView({
                     onClick={(e) => { e.stopPropagation(); onSelectAppointment(apt); }}
                     className="flex items-center gap-1 group"
                   >
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusColors[apt.status] || "bg-gray-500"}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusStyle(apt.status).dot || "bg-gray-500"}`} />
                     <span className="text-[10px] truncate group-hover:text-primary transition-colors">
                       {format(new Date(apt.dateTime), "HH:mm")} {apt.clientName.split(" ")[0]}
                     </span>
@@ -335,7 +329,7 @@ function WeekView({
                       <button
                         key={apt.id}
                         onClick={() => onSelectAppointment(apt)}
-                        className={`w-full text-left p-1 rounded text-[10px] leading-tight truncate ${statusColors[apt.status]?.replace("bg-", "bg-")}/20 hover:opacity-80 transition-opacity`}
+                        className={`w-full text-left p-1 rounded text-[10px] leading-tight truncate ${statusStyle(apt.status).dot?.replace("bg-", "bg-")}/20 hover:opacity-80 transition-opacity`}
                       >
                         <span className="font-medium">{format(new Date(apt.dateTime), "HH:mm")}</span>{" "}
                         {apt.clientName.split(" ")[0]}
@@ -393,7 +387,7 @@ function DayView({
                   onClick={() => onSelectAppointment(apt)}
                   className="w-full text-left p-2 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors flex items-center gap-3"
                 >
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${statusColors[apt.status] || "bg-gray-500"}`} />
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${statusStyle(apt.status).dot || "bg-gray-500"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{apt.clientName}</p>
                     <p className="text-xs text-muted-foreground truncate">

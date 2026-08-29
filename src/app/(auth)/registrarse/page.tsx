@@ -54,8 +54,9 @@ export default function RegisterPage() {
         <div className="glass rounded-2xl p-8 space-y-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Nombre</label>
+              <label htmlFor="name" className="text-sm font-medium mb-1.5 block">Nombre</label>
               <input
+                id="name"
                 {...register("name")}
                 type="text"
                 placeholder="Tu nombre"
@@ -66,8 +67,9 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Nombre del negocio</label>
+              <label htmlFor="businessName" className="text-sm font-medium mb-1.5 block">Nombre del negocio</label>
               <input
+                id="businessName"
                 {...register("businessName")}
                 type="text"
                 placeholder="Ej: Barberia Don Lucas"
@@ -78,8 +80,9 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Email</label>
+              <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
               <input
+                id="email"
                 {...register("email")}
                 type="email"
                 placeholder="tu@email.com"
@@ -90,8 +93,9 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Contraseña</label>
+              <label htmlFor="password" className="text-sm font-medium mb-1.5 block">Contraseña</label>
               <input
+                id="password"
                 {...register("password")}
                 type="password"
                 placeholder="********"
@@ -102,8 +106,9 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Confirmar contraseña</label>
+              <label htmlFor="confirmPassword" className="text-sm font-medium mb-1.5 block">Confirmar contraseña</label>
               <input
+                id="confirmPassword"
                 {...register("confirmPassword")}
                 type="password"
                 placeholder="********"

@@ -20,6 +20,7 @@ import {
 import { StatusBadge } from "./status-badge";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { formatCurrency } from "@/lib/format";
 
 
 interface Client {
@@ -165,8 +166,8 @@ export function ClientsList() {
                       <td className="p-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           client.type === "registered"
-                            ? "bg-blue-500/10 text-blue-500"
-                            : "bg-zinc-500/10 text-zinc-400"
+                            ? "bg-info-muted text-info-foreground"
+                            : "bg-neutral-muted text-neutral-foreground"
                         }`}>
                           {client.type === "registered" ? "Registrado" : "Invitado"}
                         </span>
@@ -221,7 +222,7 @@ export function ClientsList() {
                 <Calendar className="w-3.5 h-3.5" /> Cliente desde {format(new Date(detail.createdAt), "MMM yyyy", { locale: es })}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <DollarSign className="w-3.5 h-3.5" /> Total gastado: ${detail.totalSpent.toLocaleString("es-AR")}
+                <DollarSign className="w-3.5 h-3.5" /> Total gastado: {formatCurrency(detail.totalSpent)}
               </div>
             </div>
 

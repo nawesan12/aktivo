@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -11,14 +12,13 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function InstallPWAButton({ collapsed = false }: { collapsed?: boolean }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  // `display-mode: standalone` is a media query — read it through the hook
+  // rather than through a setState on mount.
+  const isStandalone = useMediaQuery("(display-mode: standalone)");
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setInstalled(true);
-      return;
-    }
+    if (isStandalone) return;
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -31,7 +31,7 @@ export function InstallPWAButton({ collapsed = false }: { collapsed?: boolean })
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
     };
-  }, []);
+  }, [isStandalone]);
 
   if (installed || !deferredPrompt) return null;
 

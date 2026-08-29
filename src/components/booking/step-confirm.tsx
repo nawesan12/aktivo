@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Calendar,
-  Clock,
   User,
   Scissors,
   CreditCard,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 import { CouponInput } from "./coupon-input";
 import { ReferralInput } from "./referral-input";
+import { formatCurrency } from "@/lib/format";
 
 interface PaymentConfig {
   paymentMode: "DISABLED" | "FULL" | "PERCENTAGE" | "FIXED";
@@ -30,8 +30,9 @@ interface PaymentConfig {
   currency: string;
 }
 
+/** Kept as a local alias so the call sites read the same; the format lives in @/lib/format. */
 function formatPrice(price: number): string {
-  return price.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 });
+  return formatCurrency(price);
 }
 
 function formatDuration(minutes: number): string {
@@ -214,8 +215,8 @@ export function StepConfirm({ slug }: { slug: string }) {
       {/* Discount display */}
       {store.discountAmount && store.discountAmount > 0 && (
         <div className="glass rounded-xl p-4 mb-4 flex items-center justify-between">
-          <span className="text-sm text-emerald-400">Descuento aplicado</span>
-          <span className="text-sm font-bold text-emerald-400">-{formatPrice(store.discountAmount)}</span>
+          <span className="text-sm text-success-foreground">Descuento aplicado</span>
+          <span className="text-sm font-bold text-success-foreground">-{formatPrice(store.discountAmount)}</span>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { formatNumber } from "@/lib/format";
 
 export const fadeInUp = {
   from: { opacity: 0, y: 40 },
@@ -58,7 +59,7 @@ export function smoothCounter(
     duration,
     ease: "power2.out",
     onUpdate: () => {
-      element.textContent = Math.round(obj.value).toLocaleString("es-AR");
+      element.textContent = formatNumber(Math.round(obj.value));
     },
   });
 }

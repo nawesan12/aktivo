@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("auth:register");
 
 export async function registerUser(formData: {
   name: string;
@@ -95,7 +98,7 @@ export async function registerUser(formData: {
 
     return { success: true };
   } catch (error) {
-    console.error("Registration error:", error);
+    log.error("registration failed", error);
     return { success: false, error: "Error al crear la cuenta. Intenta nuevamente." };
   }
 }

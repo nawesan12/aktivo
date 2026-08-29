@@ -17,7 +17,12 @@ export const authConfig = {
         nextUrl.pathname.startsWith("/recuperar-contrasena") ||
         nextUrl.pathname.startsWith("/invitacion");
 
-      if (isOnPanel || isOnAdmin || isOnAccount) {
+      // The admin area needs the role, not just a session.
+      if (isOnAdmin) {
+        return isLoggedIn && auth?.user?.role === "PLATFORM_ADMIN";
+      }
+
+      if (isOnPanel || isOnAccount) {
         return isLoggedIn;
       }
 

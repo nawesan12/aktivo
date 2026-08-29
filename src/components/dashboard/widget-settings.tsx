@@ -136,9 +136,10 @@ export function WidgetSettings() {
               </a>
               <button
                 onClick={copyCode}
+                aria-label="Copiar el código para incrustar"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-muted hover:bg-muted/80"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-success-foreground" /> : <Copy className="w-4 h-4" />}
                 {copied ? "Copiado" : "Copiar"}
               </button>
             </div>

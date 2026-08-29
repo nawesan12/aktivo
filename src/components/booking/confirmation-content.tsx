@@ -17,9 +17,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { downloadICS } from "@/lib/ics-generator";
+import { formatCurrency } from "@/lib/format";
 
+/** Kept as a local alias so the call sites read the same; the format lives in @/lib/format. */
 function formatPrice(price: number): string {
-  return price.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 });
+  return formatCurrency(price);
 }
 
 function formatDuration(minutes: number): string {
@@ -184,14 +186,14 @@ export function ConfirmationContent({ slug }: { slug: string }) {
         <div className="space-y-2 mb-8">
           {booking.guestPhone && (
             <div className="confirm-notif opacity-0 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-              Confirmacion enviada por WhatsApp
+              <MessageCircle className="w-4 h-4 text-success-foreground" />
+              Confirmación enviada por WhatsApp
             </div>
           )}
           {booking.guestEmail && (
             <div className="confirm-notif opacity-0 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Mail className="w-4 h-4 text-primary" />
-              Confirmacion enviada por email
+              Confirmación enviada por email
             </div>
           )}
         </div>

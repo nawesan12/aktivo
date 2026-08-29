@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Save, CreditCard, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
+import { Loader2, Save, CreditCard, CheckCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { paymentConfigSchema, type PaymentConfigInput } from "@/lib/validations";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { PermissionGate } from "@/components/auth/permission-gate";
+import { formatCurrency } from "@/lib/format";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 
 export function PaymentConfig() {
@@ -18,6 +20,9 @@ export function PaymentConfig() {
   const { data: paymentsData, mutate: mutatePayments } = useSWR("/api/panel/payments");
   const [cancellationPolicy, setCancellationPolicy] = useState("");
   const [refundingId, setRefundingId] = useState<string | null>(null);
+  // A refund moves real money: it deserves a dialog the browser cannot
+  // suppress, which `window.confirm` is not.
+  const [pendingRefund, setPendingRefund] = useState<string | null>(null);
 
   const {
     register,
@@ -64,7 +69,7 @@ export function PaymentConfig() {
   }
 
   async function handleRefund(paymentId: string) {
-    if (!confirm("¿Estas seguro? Se reembolsara el pago y se cancelara el turno.")) return;
+    setPendingRefund(null);
     setRefundingId(paymentId);
     try {
       const res = await fetch(`/api/panel/payments/${paymentId}/refund`, { method: "POST" });
@@ -86,16 +91,25 @@ export function PaymentConfig() {
   const payments = paymentsData?.data || [];
 
   const statusLabels: Record<string, { label: string; className: string }> = {
-    APPROVED: { label: "Aprobado", className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-    PENDING: { label: "Pendiente", className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
-    REFUNDED: { label: "Reembolsado", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-    REJECTED: { label: "Rechazado", className: "bg-red-500/10 text-red-500 border-red-500/20" },
-    CANCELLED: { label: "Cancelado", className: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
-    IN_PROCESS: { label: "En proceso", className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
+    APPROVED: { label: "Aprobado", className: "bg-success-muted text-success-foreground border-success/20" },
+    PENDING: { label: "Pendiente", className: "bg-warning-muted text-warning-foreground border-warning/20" },
+    REFUNDED: { label: "Reembolsado", className: "bg-info-muted text-info-foreground border-info/20" },
+    REJECTED: { label: "Rechazado", className: "bg-danger-muted text-danger-foreground border-danger/20" },
+    CANCELLED: { label: "Cancelado", className: "bg-neutral-muted text-neutral-foreground border-neutral/20" },
+    IN_PROCESS: { label: "En proceso", className: "bg-warning-muted text-warning-foreground border-warning/20" },
   };
 
   return (
     <div className="space-y-6">
+    <ConfirmDialog
+      open={pendingRefund !== null}
+      onOpenChange={(open) => !open && setPendingRefund(null)}
+      title="Reembolsar el pago"
+      description="Se devuelve el dinero al cliente y el turno queda cancelado. No se puede deshacer."
+      confirmLabel="Reembolsar"
+      destructive
+      onConfirm={() => pendingRefund && handleRefund(pendingRefund)}
+    />
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Payment mode */}
       <div className="glass rounded-xl p-6 space-y-4">
@@ -134,8 +148,9 @@ export function PaymentConfig() {
 
         {paymentMode === "PERCENTAGE" && (
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Porcentaje de seña (%)</label>
+            <label htmlFor="depositPercentage" className="text-sm font-medium mb-1.5 block">Porcentaje de seña (%)</label>
             <input
+              id="depositPercentage"
               {...register("depositPercentage", { valueAsNumber: true })}
               type="number"
               min={1}
@@ -150,8 +165,9 @@ export function PaymentConfig() {
 
         {paymentMode === "FIXED" && (
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Monto fijo ($)</label>
+            <label htmlFor="depositFixedAmount" className="text-sm font-medium mb-1.5 block">Monto fijo ($)</label>
             <input
+              id="depositFixedAmount"
               {...register("depositFixedAmount", { valueAsNumber: true })}
               type="number"
               min={0}
@@ -169,8 +185,9 @@ export function PaymentConfig() {
       <div className="glass rounded-xl p-6 space-y-4">
         <h3 className="font-heading font-semibold">MercadoPago</h3>
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Access Token</label>
+          <label htmlFor="mpAccessToken" className="text-sm font-medium mb-1.5 block">Access Token</label>
           <input
+            id="mpAccessToken"
             {...register("mpAccessToken")}
             type="password"
             placeholder={data?.hasMpToken ? "Token configurado (dejar vacio para mantener)" : "APP_USR-..."}
@@ -182,7 +199,7 @@ export function PaymentConfig() {
           </p>
         </div>
         {data?.hasMpToken && (
-          <div className="flex items-center gap-2 text-sm text-emerald-500">
+          <div className="flex items-center gap-2 text-sm text-success-foreground">
             <CheckCircle className="w-4 h-4" /> Token configurado
           </div>
         )}
@@ -243,7 +260,7 @@ export function PaymentConfig() {
                   <tr key={p.id as string} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="px-4 py-3 font-medium">{clientName as string}</td>
                     <td className="px-4 py-3 text-muted-foreground">{serviceName as string}</td>
-                    <td className="px-4 py-3">${(p.amount as number).toLocaleString("es-AR")}</td>
+                    <td className="px-4 py-3">{formatCurrency(p.amount as number)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full border ${status.className}`}>
                         {status.label}
@@ -256,9 +273,9 @@ export function PaymentConfig() {
                       {p.status === "APPROVED" && (
                         <PermissionGate permission="payments:configure">
                           <button
-                            onClick={() => handleRefund(p.id as string)}
+                            onClick={() => setPendingRefund(p.id as string)}
                             disabled={refundingId === p.id}
-                            className="text-xs px-2.5 py-1 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 disabled:opacity-50 flex items-center gap-1"
+                            className="text-xs px-2.5 py-1 rounded-lg border border-danger/20 text-danger-foreground hover:bg-danger-muted disabled:opacity-50 flex items-center gap-1"
                           >
                             {refundingId === p.id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />

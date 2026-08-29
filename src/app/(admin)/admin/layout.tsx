@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Shield, LayoutDashboard, Building2, Users, Settings, ArrowLeft, LogOut } from "lucide-react";
+import { Shield, LayoutDashboard, Building2, Users, Settings, ArrowLeft } from "lucide-react";
 import { AdminMobileHeader } from "@/components/admin/admin-mobile-header";
 
 const adminNav = [
@@ -63,7 +63,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </Link>
           </div>
         </header>
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
+        <main id="contenido" className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

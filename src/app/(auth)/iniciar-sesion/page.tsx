@@ -56,8 +56,9 @@ export default function LoginPage() {
         <div className="glass rounded-2xl p-8 space-y-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Email</label>
+              <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
               <input
+                id="email"
                 {...register("email")}
                 type="email"
                 placeholder="tu@email.com"
@@ -68,8 +69,9 @@ export default function LoginPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Contraseña</label>
+              <label htmlFor="password" className="text-sm font-medium mb-1.5 block">Contraseña</label>
               <input
+                id="password"
                 {...register("password")}
                 type="password"
                 placeholder="********"

@@ -37,10 +37,10 @@ const typeLabels: Record<string, string> = {
 };
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: "Borrador", color: "text-zinc-400 bg-zinc-500/10" },
-  ACTIVE: { label: "Activa", color: "text-emerald-400 bg-emerald-500/10" },
-  PAUSED: { label: "Pausada", color: "text-yellow-400 bg-yellow-500/10" },
-  COMPLETED: { label: "Completada", color: "text-blue-400 bg-blue-500/10" },
+  DRAFT: { label: "Borrador", color: "text-neutral-foreground bg-neutral-muted" },
+  ACTIVE: { label: "Activa", color: "text-success-foreground bg-success-muted" },
+  PAUSED: { label: "Pausada", color: "text-warning-foreground bg-warning-muted" },
+  COMPLETED: { label: "Completada", color: "text-info-foreground bg-info-muted" },
 };
 
 export function CampaignsManager() {
@@ -178,8 +178,9 @@ export function CampaignsManager() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-muted-foreground">Nombre</label>
+              <label htmlFor="name" className="text-sm text-muted-foreground">Nombre</label>
               <input
+                id="name"
                 {...register("name")}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
                 placeholder="Ej: Reactivación clientes inactivos"
@@ -187,8 +188,9 @@ export function CampaignsManager() {
               {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Tipo</label>
+              <label htmlFor="type" className="text-sm text-muted-foreground">Tipo</label>
               <select
+                id="type"
                 {...register("type")}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               >
@@ -202,10 +204,11 @@ export function CampaignsManager() {
 
           {(watchType === "INACTIVITY" || watchType === "REBOOKING") && (
             <div>
-              <label className="text-sm text-muted-foreground">
+              <label htmlFor="watchtype-inactivity-dias-de-inactividad-dias-desde-ultimo-turno" className="text-sm text-muted-foreground">
                 {watchType === "INACTIVITY" ? "Días de inactividad" : "Días desde último turno"}
               </label>
               <input
+                id="watchtype-inactivity-dias-de-inactividad-dias-desde-ultimo-turno"
                 type="number"
                 defaultValue={30}
                 onChange={(e) => {
@@ -220,8 +223,9 @@ export function CampaignsManager() {
           )}
 
           <div>
-            <label className="text-sm text-muted-foreground">Asunto del email</label>
+            <label htmlFor="messageSubject" className="text-sm text-muted-foreground">Asunto del email</label>
             <input
+              id="messageSubject"
               {...register("messageSubject")}
               className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               placeholder="Ej: ¡Te extrañamos, {{clientName}}!"
@@ -229,10 +233,11 @@ export function CampaignsManager() {
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground">
+            <label htmlFor="messageBody" className="text-sm text-muted-foreground">
               Mensaje <span className="text-xs">(Variables: {"{{clientName}}"}, {"{{businessName}}"})</span>
             </label>
             <textarea
+              id="messageBody"
               {...register("messageBody")}
               rows={4}
               className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm resize-none"
@@ -243,8 +248,9 @@ export function CampaignsManager() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-muted-foreground">Canal</label>
+              <label htmlFor="channel" className="text-sm text-muted-foreground">Canal</label>
               <select
+                id="channel"
                 {...register("channel")}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               >

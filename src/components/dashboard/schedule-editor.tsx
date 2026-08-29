@@ -208,8 +208,9 @@ export function ScheduleEditor() {
               ))}
               <div className="flex items-end gap-3 flex-wrap">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Dia</label>
+                  <label htmlFor="dia" className="text-xs text-muted-foreground mb-1 block">Dia</label>
                   <select
+                    id="dia"
                     value={newRecurringDay}
                     onChange={(e) => setNewRecurringDay(parseInt(e.target.value))}
                     className="h-9 px-2 rounded-lg bg-muted/50 border border-border text-sm"
@@ -218,8 +219,9 @@ export function ScheduleEditor() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Hora</label>
+                  <label htmlFor="hora" className="text-xs text-muted-foreground mb-1 block">Hora</label>
                   <input
+                    id="hora"
                     type="time"
                     value={newRecurringTime}
                     onChange={(e) => setNewRecurringTime(e.target.value)}
@@ -250,8 +252,9 @@ export function ScheduleEditor() {
               ))}
               <div className="flex items-end gap-3 flex-wrap">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Fecha</label>
+                  <label htmlFor="fecha" className="text-xs text-muted-foreground mb-1 block">Fecha</label>
                   <input
+                    id="fecha"
                     type="date"
                     value={newBlockDate}
                     onChange={(e) => setNewBlockDate(e.target.value)}
@@ -259,8 +262,9 @@ export function ScheduleEditor() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Motivo (opcional)</label>
+                  <label htmlFor="motivo-opcional" className="text-xs text-muted-foreground mb-1 block">Motivo (opcional)</label>
                   <input
+                    id="motivo-opcional"
                     type="text"
                     value={newBlockReason}
                     onChange={(e) => setNewBlockReason(e.target.value)}

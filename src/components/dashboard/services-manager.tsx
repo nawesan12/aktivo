@@ -11,7 +11,6 @@ import {
   X,
   Loader2,
   Clock,
-  DollarSign,
   FolderPlus,
   Scissors,
 } from "lucide-react";
@@ -19,6 +18,14 @@ import { toast } from "sonner";
 import { serviceSchema } from "@/lib/validations";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { ImageUploader } from "@/components/upload/image-uploader";
+import { formatCurrency } from "@/lib/format";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 interface Service {
@@ -144,7 +151,7 @@ export function ServicesManager() {
         const err = await res.json();
         throw new Error(err.error);
       }
-      toast.success("Categoria creada");
+      toast.success("Categoría creada");
       mutateCategories();
       setNewCategoryName("");
       setShowCategoryForm(false);
@@ -160,7 +167,7 @@ export function ServicesManager() {
         const err = await res.json();
         throw new Error(err.error);
       }
-      toast.success("Categoria eliminada");
+      toast.success("Categoría eliminada");
       mutateCategories();
       mutateServices();
     } catch (error) {
@@ -199,8 +206,9 @@ export function ServicesManager() {
       {showCategoryForm && (
         <div className="glass rounded-xl p-4 flex gap-3 items-end">
           <div className="flex-1">
-            <label className="text-sm font-medium mb-1.5 block">Nombre de la categoría</label>
+            <label htmlFor="nombre-de-la-categoria" className="text-sm font-medium mb-1.5 block">Nombre de la categoría</label>
             <input
+              id="nombre-de-la-categoria"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               placeholder="Ej: Cortes"
@@ -215,6 +223,7 @@ export function ServicesManager() {
           </button>
           <button
             onClick={() => setShowCategoryForm(false)}
+            aria-label="Cancelar la nueva categoría"
             className="h-9 w-9 rounded-lg border border-border flex items-center justify-center hover:bg-muted"
           >
             <X className="w-4 h-4" />
@@ -280,50 +289,47 @@ export function ServicesManager() {
         </div>
       )}
 
-      {/* Create/Edit dialog */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
-          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="font-heading font-semibold">{editingService ? "Editar servicio" : "Nuevo servicio"}</h2>
-              <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+      {/* Dialog from shadcn: focus trap, Escape, and an announced role —
+          none of which the hand-rolled overlay had. */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingService ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
+          </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Imagen</label>
                 <ImageUploader
                   value={serviceImage || null}
                   onChange={setServiceImage}
-                  folder="aktivo/services"
+                  folder="jiku/services"
                   aspectRatio="16:9"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Nombre</label>
-                <input {...register("name")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                <label htmlFor="name" className="text-sm font-medium mb-1.5 block">Nombre</label>
+                <input id="name" {...register("name")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                 {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Descripción</label>
-                <textarea {...register("description")} rows={2} className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none" />
+                <label htmlFor="description" className="text-sm font-medium mb-1.5 block">Descripción</label>
+                <textarea id="description" {...register("description")} rows={2} className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Duracion (min)</label>
-                  <input {...register("duration", { valueAsNumber: true })} type="number" min={5} max={480} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                  <label htmlFor="duration" className="text-sm font-medium mb-1.5 block">Duración (min)</label>
+                  <input id="duration" {...register("duration", { valueAsNumber: true })} type="number" min={5} max={480} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                   {errors.duration && <p className="text-xs text-destructive mt-1">{errors.duration.message}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Precio ($)</label>
-                  <input {...register("price", { valueAsNumber: true })} type="number" min={0} step={100} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
+                  <label htmlFor="price" className="text-sm font-medium mb-1.5 block">Precio ($)</label>
+                  <input id="price" {...register("price", { valueAsNumber: true })} type="number" min={0} step={100} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary" />
                   {errors.price && <p className="text-xs text-destructive mt-1">{errors.price.message}</p>}
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Categoria</label>
-                <select {...register("categoryId")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary">
+                <label htmlFor="categoryId" className="text-sm font-medium mb-1.5 block">Categoría</label>
+                <select id="categoryId" {...register("categoryId")} className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary">
                   <option value="">Sin categoría</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -366,27 +372,18 @@ export function ServicesManager() {
                 {editingService ? "Guardar cambios" : "Crear servicio"}
               </button>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Delete confirmation */}
-      {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteId(null)}>
-          <div className="glass rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-heading font-semibold">Eliminar servicio</h2>
-            <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer. Se eliminara el servicio permanentemente.</p>
-            <div className="flex gap-2">
-              <button onClick={() => setDeleteId(null)} className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">
-                Cancelar
-              </button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 h-9 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Eliminar servicio"
+        description="Esta acción no se puede deshacer: el servicio se elimina de forma permanente."
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+      />
     </>
   );
 }
@@ -400,17 +397,25 @@ function ServiceCard({ service, onEdit, onDelete }: { service: Service; onEdit: 
           {service.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{service.description}</p>}
         </div>
         <div className="flex gap-1">
-          <button onClick={onEdit} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+          <button
+            onClick={onEdit}
+            aria-label={`Editar ${service.name}`}
+            className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center"
+          >
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={onDelete} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center text-destructive">
+          <button
+            onClick={onDelete}
+            aria-label={`Eliminar ${service.name}`}
+            className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center text-destructive"
+          >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{service.duration} min</span>
-        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />${service.price.toLocaleString("es-AR")}</span>
+        <span className="flex items-center gap-1">{formatCurrency(service.price)}</span>
       </div>
       {service.staff.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
@@ -420,7 +425,7 @@ function ServiceCard({ service, onEdit, onDelete }: { service: Service; onEdit: 
         </div>
       )}
       {!service.isActive && (
-        <span className="inline-block mt-2 text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500">Inactivo</span>
+        <span className="inline-block mt-2 text-[10px] px-1.5 py-0.5 rounded bg-warning-muted text-warning-foreground">Inactivo</span>
       )}
     </div>
   );

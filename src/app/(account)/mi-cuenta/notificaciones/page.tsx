@@ -92,8 +92,8 @@ export default function NotificationsPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                      <MessageCircle className="w-4 h-4 text-emerald-500" />
+                    <div className="w-9 h-9 rounded-lg bg-success-muted flex items-center justify-center">
+                      <MessageCircle className="w-4 h-4 text-success-foreground" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">WhatsApp</p>
@@ -109,8 +109,8 @@ export default function NotificationsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Mail className="w-4 h-4 text-blue-500" />
+                    <div className="w-9 h-9 rounded-lg bg-info-muted flex items-center justify-center">
+                      <Mail className="w-4 h-4 text-info-foreground" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Email</p>
@@ -126,8 +126,8 @@ export default function NotificationsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                      <Bell className="w-4 h-4 text-yellow-500" />
+                    <div className="w-9 h-9 rounded-lg bg-warning-muted flex items-center justify-center">
+                      <Bell className="w-4 h-4 text-warning-foreground" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Recordatorios</p>

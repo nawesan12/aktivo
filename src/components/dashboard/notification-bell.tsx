@@ -12,15 +12,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const statusColors: Record<string, string> = {
-  SENT: "bg-emerald-500",
-  FAILED: "bg-red-500",
-  PENDING: "bg-yellow-500",
+  SENT: "bg-success",
+  FAILED: "bg-danger",
+  PENDING: "bg-warning",
 };
 
 const typeLabels: Record<string, string> = {
-  confirmation: "Confirmacion",
+  confirmation: "Confirmación",
   reminder: "Recordatorio",
-  cancellation: "Cancelacion",
+  cancellation: "Cancelación",
 };
 
 export function NotificationBell() {
@@ -35,10 +35,24 @@ export function NotificationBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          aria-label={
+            unreadCount > 0
+              ? `Notificaciones, ${unreadCount} sin leer`
+              : "Notificaciones"
+          }
+        >
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full brand-gradient text-white text-[10px] font-bold flex items-center justify-center px-1">
+            <span
+              // The count is already in the button's label; announcing the badge
+              // as well would read it twice.
+              aria-hidden="true"
+              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full brand-gradient text-white text-[10px] font-bold flex items-center justify-center px-1"
+            >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}

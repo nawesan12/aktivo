@@ -29,9 +29,9 @@ export function AnalyticsChurnList({ data }: { data: ChurnData }) {
   }
 
   function getRiskLevel(days: number): { label: string; color: string } {
-    if (days >= 60) return { label: "Alto", color: "text-red-500 bg-red-500/10" };
+    if (days >= 60) return { label: "Alto", color: "text-danger-foreground bg-danger-muted" };
     if (days >= 45) return { label: "Medio", color: "text-orange-500 bg-orange-500/10" };
-    return { label: "Bajo", color: "text-yellow-500 bg-yellow-500/10" };
+    return { label: "Bajo", color: "text-warning-foreground bg-warning-muted" };
   }
 
   return (
@@ -86,7 +86,7 @@ export function AnalyticsChurnList({ data }: { data: ChurnData }) {
                         </a>
                       )}
                       {client.phone && (
-                        <a href={`https://wa.me/${client.phone.replace(/\D/g, "")}`} className="text-muted-foreground hover:text-emerald-500">
+                        <a href={`https://wa.me/${client.phone.replace(/\D/g, "")}`} className="text-muted-foreground hover:text-success-foreground">
                           <Phone className="w-4 h-4" />
                         </a>
                       )}

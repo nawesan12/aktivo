@@ -40,7 +40,7 @@ export function TeamManager() {
         throw new Error(err.error);
       }
 
-      toast.success("Invitacion enviada");
+      toast.success("Invitación enviada");
       setInviteEmail("");
       mutate();
     } catch (error) {

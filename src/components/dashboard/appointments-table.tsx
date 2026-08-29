@@ -23,6 +23,8 @@ import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { APPOINTMENT_STATUS_OPTIONS, isTerminal } from "@/lib/appointment-status";
+import type { AppointmentListPage } from "@/lib/panel/appointments";
 
 
 interface Appointment {
@@ -46,15 +48,17 @@ interface Appointment {
 
 const statuses = [
   { value: "", label: "Todos" },
-  { value: "PENDING_PAYMENT", label: "Pago pendiente" },
-  { value: "PENDING", label: "Pendiente" },
-  { value: "CONFIRMED", label: "Confirmado" },
-  { value: "COMPLETED", label: "Completado" },
-  { value: "CANCELLED", label: "Cancelado" },
-  { value: "NO_SHOW", label: "No asistió" },
+  ...APPOINTMENT_STATUS_OPTIONS,
 ];
 
-export function AppointmentsTable() {
+export function AppointmentsTable({
+  initialKey,
+  initialData,
+}: {
+  /** SWR key the server-rendered page corresponds to. */
+  initialKey?: string;
+  initialData?: AppointmentListPage;
+} = {}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -70,9 +74,14 @@ export function AppointmentsTable() {
   if (dateFrom) params.set("dateFrom", dateFrom);
   if (dateTo) params.set("dateTo", dateTo);
 
-  const { data, isLoading, mutate } = useSWR(
-    `/api/panel/appointments?${params.toString()}`, { refreshInterval: 30000 }
-  );
+  const swrKey = `/api/panel/appointments?${params.toString()}`;
+
+  // The unfiltered first page arrives with the document; any other combination
+  // of filters is fetched as before.
+  const { data, isLoading, mutate } = useSWR<AppointmentListPage>(swrKey, {
+    refreshInterval: 30000,
+    ...(swrKey === initialKey && initialData ? { fallbackData: initialData } : {}),
+  });
   const { data: settingsData } = useSWR("/api/panel/settings");
 
   async function handleExportPdf() {
@@ -133,7 +142,9 @@ export function AppointmentsTable() {
     [mutate]
   );
 
-  if (isLoading) return <TableSkeleton rows={8} />;
+  // `data` covers the server-rendered first page; showing the skeleton while
+  // SWR revalidates would hide rows that are already on screen.
+  if (isLoading && !data) return <TableSkeleton rows={8} />;
 
   const appointments: Appointment[] = data?.data || [];
   const pagination = data?.pagination || { page: 1, totalPages: 1, total: 0 };
@@ -255,7 +266,7 @@ export function AppointmentsTable() {
                               {(apt.status === "PENDING" || apt.status === "PENDING_PAYMENT") && (
                                 <button
                                   onClick={() => handleStatusChange(apt.id, "CONFIRMED")}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-blue-500"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-info-foreground"
                                 >
                                   <Check className="w-3.5 h-3.5" /> Confirmar
                                 </button>
@@ -264,22 +275,22 @@ export function AppointmentsTable() {
                                 <>
                                   <button
                                     onClick={() => handleStatusChange(apt.id, "COMPLETED")}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-emerald-500"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-success-foreground"
                                   >
                                     <CheckCheck className="w-3.5 h-3.5" /> Completar
                                   </button>
                                   <button
                                     onClick={() => handleNoShow(apt.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-zinc-400"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-neutral-foreground"
                                   >
                                     <UserX className="w-3.5 h-3.5" /> No asistió
                                   </button>
                                 </>
                               )}
-                              {!["COMPLETED", "CANCELLED", "NO_SHOW"].includes(apt.status) && (
+                              {!isTerminal(apt.status) && (
                                 <button
                                   onClick={() => handleStatusChange(apt.id, "CANCELLED")}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-red-500"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-danger-foreground"
                                 >
                                   <XCircle className="w-3.5 h-3.5" /> Cancelar
                                 </button>

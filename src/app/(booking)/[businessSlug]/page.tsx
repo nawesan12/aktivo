@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { BusinessProfile } from "@/components/booking/business-profile";
+import { appUrl } from "@/lib/env";
 
 interface Props {
   params: Promise<{ businessSlug: string }>;
@@ -23,12 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${business.name} - Reserva tu turno`,
     description: business.description || `Reserva turnos online en ${business.name}. Rapido, simple y seguro con Jiku.`,
     alternates: {
-      canonical: `https://jikuapp.com/${businessSlug}`,
+      canonical: appUrl(`/${businessSlug}`),
     },
     openGraph: {
       title: `${business.name} - Reserva tu turno`,
       description: business.description || `Reserva turnos online en ${business.name}`,
-      url: `https://jikuapp.com/${businessSlug}`,
+      url: appUrl(`/${businessSlug}`),
       ...(ogImage && { images: [{ url: ogImage }] }),
     },
     twitter: {
@@ -152,7 +153,7 @@ export default async function BusinessProfilePage({ params }: Props) {
     "@type": "LocalBusiness",
     name: business.name,
     ...(business.description && { description: business.description }),
-    url: `https://jikuapp.com/${business.slug}`,
+    url: appUrl(`/${business.slug}`),
     ...(business.logo && { image: business.logo }),
     ...(business.phone && { telephone: business.phone }),
     ...((business.address || business.city) && {

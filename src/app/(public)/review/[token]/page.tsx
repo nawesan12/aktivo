@@ -85,7 +85,7 @@ export default function PublicReviewPage({ params }: { params: Promise<{ token: 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="glass rounded-2xl p-8 max-w-md w-full text-center">
-          <CheckCircle className="w-16 h-16 mx-auto mb-4 text-emerald-500" />
+          <CheckCircle className="w-16 h-16 mx-auto mb-4 text-success-foreground" />
           <h1 className="text-xl font-bold mb-2">¡Gracias por tu reseña!</h1>
           <p className="text-muted-foreground">
             Tu opinión nos ayuda a mejorar nuestro servicio.
@@ -122,8 +122,8 @@ export default function PublicReviewPage({ params }: { params: Promise<{ token: 
                 <Star
                   className={`w-10 h-10 transition-colors ${
                     i <= (hoveredRating || rating)
-                      ? "text-yellow-500 fill-yellow-500"
-                      : "text-zinc-600"
+                      ? "text-warning-foreground fill-yellow-500"
+                      : "text-neutral-foreground"
                   }`}
                 />
               </button>

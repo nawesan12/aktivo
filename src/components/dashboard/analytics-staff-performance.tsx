@@ -2,6 +2,7 @@
 
 import { Download, Star } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
+import { formatCurrency } from "@/lib/format";
 
 interface StaffPerformanceEntry {
   staffId: string;
@@ -18,7 +19,7 @@ interface AnalyticsStaffPerformanceProps {
 }
 
 function formatARS(value: number) {
-  return `$${value.toLocaleString("es-AR")}`;
+  return `${formatCurrency(value)}`;
 }
 
 export function AnalyticsStaffPerformance({ data }: AnalyticsStaffPerformanceProps) {
@@ -84,7 +85,7 @@ export function AnalyticsStaffPerformance({ data }: AnalyticsStaffPerformancePro
                 <td className="py-2 text-right">
                   {staff.avgRating != null ? (
                     <span className="inline-flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                      <Star className="w-3.5 h-3.5 text-warning-foreground fill-yellow-500" />
                       {staff.avgRating.toFixed(1)}
                     </span>
                   ) : (

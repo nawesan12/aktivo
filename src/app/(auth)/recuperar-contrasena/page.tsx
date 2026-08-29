@@ -69,7 +69,7 @@ function ForgotForm() {
   if (sent) {
     return (
       <div className="glass rounded-2xl p-8 text-center">
-        <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+        <CheckCircle className="w-12 h-12 text-success-foreground mx-auto mb-4" />
         <h1 className="text-xl font-heading font-bold mb-2">Email enviado</h1>
         <p className="text-muted-foreground text-sm mb-6">
           Si existe una cuenta con ese email, recibiras un enlace para restablecer tu contraseña.
@@ -94,8 +94,9 @@ function ForgotForm() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Email</label>
+          <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -174,8 +175,9 @@ function ResetForm({ token }: { token: string }) {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Nueva contraseña</label>
+          <label htmlFor="nueva-contrasena" className="text-sm font-medium mb-1.5 block">Nueva contraseña</label>
           <input
+            id="nueva-contrasena"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -186,8 +188,9 @@ function ResetForm({ token }: { token: string }) {
           />
         </div>
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Confirmar contraseña</label>
+          <label htmlFor="confirmar-contrasena" className="text-sm font-medium mb-1.5 block">Confirmar contraseña</label>
           <input
+            id="confirmar-contrasena"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

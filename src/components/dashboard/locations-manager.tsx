@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { MapPin, Plus, Building2, Users, Scissors, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { formatCurrency } from "@/lib/format";
 
 
 interface Location {
@@ -152,7 +153,7 @@ export function LocationsManager() {
           </div>
           <div className="glass rounded-xl p-4 text-center">
             <p className="text-2xl font-bold">
-              ${(reports.totals?.revenue || 0).toLocaleString("es-AR")}
+              {formatCurrency(reports.totals?.revenue || 0)}
             </p>
             <p className="text-sm text-muted-foreground">Ingresos (30d)</p>
           </div>
@@ -183,32 +184,36 @@ export function LocationsManager() {
           <h3 className="font-medium">Nueva Sucursal</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-muted-foreground">Nombre</label>
+              <label htmlFor="nombre" className="text-sm text-muted-foreground">Nombre</label>
               <input
+                id="nombre"
                 value={locName}
                 onChange={(e) => { setLocName(e.target.value); if (!locSlug) setLocSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")); }}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Slug (URL)</label>
+              <label htmlFor="slug-url" className="text-sm text-muted-foreground">Slug (URL)</label>
               <input
+                id="slug-url"
                 value={locSlug}
                 onChange={(e) => setLocSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Dirección</label>
+              <label htmlFor="direccion" className="text-sm text-muted-foreground">Dirección</label>
               <input
+                id="direccion"
                 value={locAddress}
                 onChange={(e) => setLocAddress(e.target.value)}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Ciudad</label>
+              <label htmlFor="ciudad" className="text-sm text-muted-foreground">Ciudad</label>
               <input
+                id="ciudad"
                 value={locCity}
                 onChange={(e) => setLocCity(e.target.value)}
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
@@ -260,7 +265,7 @@ export function LocationsManager() {
               {locReport && (
                 <div className="mt-3 pt-3 border-t border-border">
                   <p className="text-sm font-medium">
-                    ${(locReport.revenue || 0).toLocaleString("es-AR")}
+                    {formatCurrency(locReport.revenue || 0)}
                     <span className="text-xs text-muted-foreground ml-1">/ 30d</span>
                   </p>
                 </div>

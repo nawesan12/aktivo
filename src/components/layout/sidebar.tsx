@@ -78,6 +78,8 @@ export function Sidebar() {
         )}
         <button
           onClick={toggleSidebarCollapsed}
+          aria-label="Contraer el menú lateral"
+          aria-expanded={!sidebarCollapsed}
           className={cn(
             "p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground transition-colors",
             sidebarCollapsed && "hidden"
@@ -99,6 +101,8 @@ export function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
+                // The colour alone says "you are here" to people who can see it.
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                   isActive
@@ -139,6 +143,8 @@ export function Sidebar() {
         <div className="p-2 border-t border-sidebar-border">
           <button
             onClick={toggleSidebarCollapsed}
+            aria-label="Expandir el menú lateral"
+            aria-expanded={!sidebarCollapsed}
             className="w-full p-2 rounded-md hover:bg-sidebar-accent text-muted-foreground transition-colors flex items-center justify-center"
           >
             <ChevronLeft className="w-4 h-4 rotate-180" />

@@ -3,21 +3,56 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authConfig } from "@/lib/auth.config";
 
+/**
+ * Runs before every matched request.
+ *
+ * Renamed from `middleware.ts`: Next 16 deprecated that convention in favour of
+ * `proxy`, to stop it being read as Express-style middleware.
+ */
+
 const { auth } = NextAuth(authConfig);
+
+type AuthedRequest = NextRequest & {
+  auth?: { user?: { role?: string } };
+};
 
 export default auth((request: NextRequest) => {
   const { pathname } = request.nextUrl;
+  const user = (request as AuthedRequest).auth?.user;
+  const isAuthenticated = !!user;
+
+  // Admin surface: both the pages and their API. Enforced here so that adding a
+  // new /api/admin route can't accidentally ship without a role check — each
+  // route still checks too, this is the floor, not the only lock.
+  const isOnAdmin = pathname.startsWith("/admin");
+  const isOnAdminApi = pathname.startsWith("/api/admin");
+
+  if (isOnAdminApi) {
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+    if (user?.role !== "PLATFORM_ADMIN") {
+      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    }
+    return NextResponse.next();
+  }
 
   // Protect dashboard routes
   const isOnPanel = pathname.startsWith("/panel");
-  const isOnAdmin = pathname.startsWith("/admin");
   const isOnAccount = pathname.startsWith("/mi-cuenta");
-  const isAuthenticated = !!(request as unknown as { auth?: { user?: unknown } }).auth?.user;
 
   if ((isOnPanel || isOnAdmin || isOnAccount) && !isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/iniciar-sesion";
     url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Logged in, but not a platform admin: send them to their own panel rather
+  // than leaving the admin shell to decide.
+  if (isOnAdmin && user?.role !== "PLATFORM_ADMIN") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/panel";
     return NextResponse.redirect(url);
   }
 
@@ -41,6 +76,7 @@ export const config = {
   matcher: [
     "/panel/:path*",
     "/admin/:path*",
+    "/api/admin/:path*",
     "/mi-cuenta/:path*",
     "/iniciar-sesion",
     "/registrarse",

@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Plus, Trash2, Loader2, Tag, TicketPercent } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Coupon {
   id: string;
@@ -75,16 +76,16 @@ export function CouponsDashboard() {
 
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error || "Error al crear el cupon");
+        toast.error(data.error || "Error al crear el cupón");
         return;
       }
 
-      toast.success("Cupon creado correctamente");
+      toast.success("Cupón creado correctamente");
       setForm(INITIAL_FORM);
       setShowForm(false);
       mutate();
     } catch {
-      toast.error("Error de conexion");
+      toast.error("Error de conexión");
     } finally {
       setSubmitting(false);
     }
@@ -98,24 +99,28 @@ export function CouponsDashboard() {
         body: JSON.stringify({ isActive: !isActive }),
       });
       if (!res.ok) throw new Error();
-      toast.success(isActive ? "Cupon desactivado" : "Cupon activado");
+      toast.success(isActive ? "Cupón desactivado" : "Cupón activado");
       mutate();
     } catch {
-      toast.error("Error al actualizar el cupon");
+      toast.error("Error al actualizar el cupón");
     }
   };
 
+  // `window.confirm` blocks the whole tab and browsers can suppress it
+  // outright, in which case the action ran with no confirmation at all.
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
   const handleDelete = async (id: string) => {
-    if (!confirm("Estas seguro de que queres eliminar este cupon?")) return;
+    setPendingDelete(null);
     setDeletingId(id);
 
     try {
       const res = await fetch(`/api/panel/coupons/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      toast.success("Cupon eliminado");
+      toast.success("Cupón eliminado");
       mutate();
     } catch {
-      toast.error("Error al eliminar el cupon");
+      toast.error("Error al eliminar el cupón");
     } finally {
       setDeletingId(null);
     }
@@ -135,6 +140,16 @@ export function CouponsDashboard() {
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Eliminar cupón"
+        description="El cupón deja de poder canjearse. Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => pendingDelete && handleDelete(pendingDelete)}
+      />
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass rounded-xl p-6 text-center">
@@ -169,8 +184,9 @@ export function CouponsDashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Codigo</label>
+              <label htmlFor="codigo" className="text-sm font-medium mb-1 block">Código</label>
               <input
+                id="codigo"
                 type="text"
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
@@ -180,8 +196,9 @@ export function CouponsDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">Tipo</label>
+              <label htmlFor="tipo" className="text-sm font-medium mb-1 block">Tipo</label>
               <select
+                id="tipo"
                 value={form.type}
                 onChange={(e) =>
                   setForm({ ...form, type: e.target.value as "PERCENTAGE" | "FIXED" })
@@ -194,10 +211,11 @@ export function CouponsDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">
+              <label htmlFor="valor-form-type-percentage" className="text-sm font-medium mb-1 block">
                 Valor {form.type === "PERCENTAGE" ? "(%)" : "($)"}
               </label>
               <input
+                id="valor-form-type-percentage"
                 type="number"
                 value={form.value}
                 onChange={(e) => setForm({ ...form, value: e.target.value })}
@@ -208,8 +226,9 @@ export function CouponsDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">Monto minimo (opcional)</label>
+              <label htmlFor="monto-minimo-opcional" className="text-sm font-medium mb-1 block">Monto minimo (opcional)</label>
               <input
+                id="monto-minimo-opcional"
                 type="number"
                 value={form.minAmount}
                 onChange={(e) => setForm({ ...form, minAmount: e.target.value })}
@@ -220,8 +239,9 @@ export function CouponsDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">Usos maximos (opcional)</label>
+              <label htmlFor="usos-maximos-opcional" className="text-sm font-medium mb-1 block">Usos maximos (opcional)</label>
               <input
+                id="usos-maximos-opcional"
                 type="number"
                 value={form.maxUses}
                 onChange={(e) => setForm({ ...form, maxUses: e.target.value })}
@@ -232,8 +252,9 @@ export function CouponsDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">Valido hasta (opcional)</label>
+              <label htmlFor="valido-hasta-opcional" className="text-sm font-medium mb-1 block">Valido hasta (opcional)</label>
               <input
+                id="valido-hasta-opcional"
                 type="date"
                 value={form.validUntil}
                 onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
@@ -286,7 +307,7 @@ export function CouponsDashboard() {
                         : `$${coupon.value}`}
                     </span>
                     {!coupon.isActive && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-zinc-500/10 text-zinc-400">
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-neutral-muted text-neutral-foreground">
                         Inactivo
                       </span>
                     )}
@@ -316,7 +337,7 @@ export function CouponsDashboard() {
                 <button
                   onClick={() => handleToggleActive(coupon.id, coupon.isActive)}
                   className={`relative w-10 h-5 rounded-full transition-colors ${
-                    coupon.isActive ? "bg-green-500" : "bg-zinc-600"
+                    coupon.isActive ? "bg-success" : "bg-neutral"
                   }`}
                   title={coupon.isActive ? "Desactivar" : "Activar"}
                 >
@@ -329,7 +350,7 @@ export function CouponsDashboard() {
 
                 {/* Delete */}
                 <button
-                  onClick={() => handleDelete(coupon.id)}
+                  onClick={() => setPendingDelete(coupon.id)}
                   disabled={deletingId === coupon.id}
                   className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-destructive transition-colors"
                   title="Eliminar"

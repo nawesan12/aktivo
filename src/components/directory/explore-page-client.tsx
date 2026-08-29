@@ -1,48 +1,45 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { Search, MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { BusinessCard } from "@/components/directory/business-card";
-
-interface BusinessResult {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  logo: string | null;
-  city: string | null;
-  province: string | null;
-  averageRating: number;
-  reviewCount: number;
-  topServices: string[];
-}
+import type { DirectoryBusiness, DirectoryPage } from "@/lib/directory";
 
 interface ExplorePageClientProps {
   initialQuery?: string;
+  /** SWR key the server-rendered results correspond to. */
+  initialKey?: string;
+  initialResults?: DirectoryPage;
 }
 
-export function ExplorePageClient({ initialQuery = "" }: ExplorePageClientProps) {
+export function ExplorePageClient({
+  initialQuery = "",
+  initialKey,
+  initialResults,
+}: ExplorePageClientProps) {
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
   const [page, setPage] = useState(1);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
-  const debounceTimer = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>;
-      return (value: string) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          setDebouncedQuery(value);
-          setPage(1);
-        }, 300);
-      };
-    })(),
-    []
-  );
+  // The timer lives in a ref rather than in an IIFE closure: the previous
+  // version re-ran the factory on every render and only survived because
+  // useCallback happened to keep the first result.
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const debounceTimer = useCallback((value: string) => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setDebouncedQuery(value);
+      setPage(1);
+    }, 300);
+  }, []);
+
+  // Don't leave a pending search running after the page is gone.
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   const handleSearch = (value: string) => {
     setQuery(value);
@@ -54,12 +51,23 @@ export function ExplorePageClient({ initialQuery = "" }: ExplorePageClientProps)
   if (city) params.set("city", city);
   if (province) params.set("province", province);
 
-  const { data, isLoading } = useSWR(`/api/directory?${params}`);
-  const businesses: BusinessResult[] = data?.data || [];
+  const swrKey = `/api/directory?${params}`;
+
+  // The first render reuses what the server already fetched, so the list is
+  // painted (and indexable) without a client round-trip. Any other filter
+  // combination goes through SWR as usual.
+  const { data, isLoading } = useSWR(
+    swrKey,
+    swrKey === initialKey && initialResults
+      ? { fallbackData: initialResults }
+      : undefined
+  );
+
+  const businesses: DirectoryBusiness[] = data?.data || [];
   const pagination = data?.pagination;
 
   return (
-    <div className="min-h-screen">
+    <main id="contenido" className="min-h-screen">
       {/* Header */}
       <div className="bg-gradient-to-b from-primary/5 to-transparent py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 text-center">
@@ -139,6 +147,6 @@ export function ExplorePageClient({ initialQuery = "" }: ExplorePageClientProps)
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }

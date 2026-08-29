@@ -76,8 +76,9 @@ export default function SecurityPage() {
             <Shield className="w-4 h-4" /> Cambiar contraseña
           </h3>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Contraseña actual</label>
+            <label htmlFor="contrasena-actual" className="text-sm font-medium mb-1.5 block">Contraseña actual</label>
             <input
+              id="contrasena-actual"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -86,8 +87,9 @@ export default function SecurityPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Nueva contraseña</label>
+            <label htmlFor="nueva-contrasena" className="text-sm font-medium mb-1.5 block">Nueva contraseña</label>
             <input
+              id="nueva-contrasena"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -97,8 +99,9 @@ export default function SecurityPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Confirmar nueva contraseña</label>
+            <label htmlFor="confirmar-nueva-contrasena" className="text-sm font-medium mb-1.5 block">Confirmar nueva contraseña</label>
             <input
+              id="confirmar-nueva-contrasena"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

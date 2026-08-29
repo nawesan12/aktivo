@@ -28,30 +28,25 @@ export function StepService({ slug }: { slug: string }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
-  const [autoSelected, setAutoSelected] = useState(false);
-
-  useEffect(() => {
-    if (categories && categories.length > 0 && !activeCategory) {
-      setActiveCategory(categories[0].id);
-    }
-  }, [categories, activeCategory]);
+  // A guard, not render state: a ref avoids an extra render pass.
+  const autoSelectedRef = useRef(false);
 
   // Auto-select service from URL params (rebook flow)
   useEffect(() => {
-    if (autoSelected || !categories || isLoading) return;
+    if (autoSelectedRef.current || !categories || isLoading) return;
     const preselectedServiceId = searchParams.get("serviceId");
     if (preselectedServiceId) {
       for (const cat of categories) {
         const svc = cat.services.find((s) => s.id === preselectedServiceId);
         if (svc) {
           setService(svc.id, svc.name, svc.duration, svc.price);
-          setAutoSelected(true);
+          autoSelectedRef.current = true;
           setStep(1);
           break;
         }
       }
     }
-  }, [categories, isLoading, searchParams, autoSelected, setService, setStep]);
+  }, [categories, isLoading, searchParams, setService, setStep]);
 
   useEffect(() => {
     if (!gridRef.current || isLoading) return;
@@ -60,7 +55,7 @@ export function StepService({ slug }: { slug: string }) {
       { opacity: 0, y: 30 },
       { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power3.out" }
     );
-  }, [activeCategory, isLoading]);
+  }, [activeCategory, isLoading]); // activeCategory: re-animate on tab change
 
   if (isLoading) {
     return (
@@ -106,7 +101,7 @@ export function StepService({ slug }: { slug: string }) {
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200",
-                cat.id === activeCategory
+                cat.id === currentCategory.id
                   ? "brand-gradient text-white shadow-md shadow-primary/20"
                   : "glass text-muted-foreground hover:text-foreground"
               )}

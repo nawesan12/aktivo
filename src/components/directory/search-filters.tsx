@@ -78,7 +78,7 @@ export function SearchFilters({ onFilter }: SearchFiltersProps) {
           type="text"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          placeholder="Categoria"
+          placeholder="Categoría"
           className="px-3 py-2 text-sm rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
       </div>

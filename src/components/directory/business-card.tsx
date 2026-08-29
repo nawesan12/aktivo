@@ -10,7 +10,8 @@ interface Business {
   logo: string | null;
   city: string | null;
   province: string | null;
-  averageRating: number;
+  /** Null until the business has its first visible review. */
+  averageRating: number | null;
   reviewCount: number;
   topServices: string[];
 }
@@ -27,8 +28,8 @@ function StarRating({ rating }: { rating: number }) {
           key={i}
           className={`w-3.5 h-3.5 ${
             i <= Math.round(rating)
-              ? "text-yellow-500 fill-yellow-500"
-              : "text-zinc-600"
+              ? "text-warning-foreground fill-yellow-500"
+              : "text-neutral-foreground"
           }`}
         />
       ))}
@@ -82,13 +83,21 @@ export function BusinessCard({ business }: BusinessCardProps) {
               </p>
             )}
 
-            {/* Rating */}
+            {/* Rating. A business with no reviews yet has no average — this
+                used to call .toFixed(1) on null and take the whole page down
+                with it, which is every business on its first day. */}
             <div className="flex items-center gap-2 mt-2">
-              <StarRating rating={business.averageRating} />
-              <span className="text-xs text-muted-foreground">
-                {business.averageRating.toFixed(1)} ({business.reviewCount}{" "}
-                {business.reviewCount === 1 ? "resena" : "resenas"})
-              </span>
+              {business.averageRating !== null ? (
+                <>
+                  <StarRating rating={business.averageRating} />
+                  <span className="text-xs text-muted-foreground">
+                    {business.averageRating.toFixed(1)} ({business.reviewCount}{" "}
+                    {business.reviewCount === 1 ? "reseña" : "reseñas"})
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground">Sin reseñas todavía</span>
+              )}
             </div>
           </div>
         </div>

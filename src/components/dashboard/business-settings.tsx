@@ -124,24 +124,27 @@ export function BusinessSettings() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Nombre del negocio</label>
+            <label htmlFor="nombre-del-negocio" className="text-sm font-medium mb-1.5 block">Nombre del negocio</label>
             <input
+              id="nombre-del-negocio"
               value={business.name}
               onChange={(e) => setBusiness((p) => ({ ...p, name: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Slug (URL)</label>
+            <label htmlFor="slug-url" className="text-sm font-medium mb-1.5 block">Slug (URL)</label>
             <input
+              id="slug-url"
               value={business.slug}
               disabled
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none opacity-60"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm font-medium mb-1.5 block">Descripción</label>
+            <label htmlFor="descripcion" className="text-sm font-medium mb-1.5 block">Descripción</label>
             <textarea
+              id="descripcion"
               value={business.description}
               onChange={(e) => setBusiness((p) => ({ ...p, description: e.target.value }))}
               rows={3}
@@ -149,24 +152,27 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
+            <label htmlFor="telefono" className="text-sm font-medium mb-1.5 block">Teléfono</label>
             <input
+              id="telefono"
               value={business.phone}
               onChange={(e) => setBusiness((p) => ({ ...p, phone: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">WhatsApp</label>
+            <label htmlFor="whatsapp" className="text-sm font-medium mb-1.5 block">WhatsApp</label>
             <input
+              id="whatsapp"
               value={business.whatsapp}
               onChange={(e) => setBusiness((p) => ({ ...p, whatsapp: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Email</label>
+            <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
             <input
+              id="email"
               value={business.email}
               onChange={(e) => setBusiness((p) => ({ ...p, email: e.target.value }))}
               type="email"
@@ -174,32 +180,36 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Website</label>
+            <label htmlFor="website" className="text-sm font-medium mb-1.5 block">Website</label>
             <input
+              id="website"
               value={business.website}
               onChange={(e) => setBusiness((p) => ({ ...p, website: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Dirección</label>
+            <label htmlFor="direccion" className="text-sm font-medium mb-1.5 block">Dirección</label>
             <input
+              id="direccion"
               value={business.address}
               onChange={(e) => setBusiness((p) => ({ ...p, address: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Ciudad</label>
+            <label htmlFor="ciudad" className="text-sm font-medium mb-1.5 block">Ciudad</label>
             <input
+              id="ciudad"
               value={business.city}
               onChange={(e) => setBusiness((p) => ({ ...p, city: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Provincia</label>
+            <label htmlFor="provincia" className="text-sm font-medium mb-1.5 block">Provincia</label>
             <input
+              id="provincia"
               value={business.province}
               onChange={(e) => setBusiness((p) => ({ ...p, province: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
@@ -250,8 +260,9 @@ export function BusinessSettings() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Intervalo de slots (min)</label>
+            <label htmlFor="intervalo-de-slots-min" className="text-sm font-medium mb-1.5 block">Intervalo de slots (min)</label>
             <select
+              id="intervalo-de-slots-min"
               value={settings.slotInterval}
               onChange={(e) => setSettings((p) => ({ ...p, slotInterval: parseInt(e.target.value) }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
@@ -262,8 +273,9 @@ export function BusinessSettings() {
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Anticipación mínima (hs)</label>
+            <label htmlFor="anticipacion-minima-hs" className="text-sm font-medium mb-1.5 block">Anticipación mínima (hs)</label>
             <input
+              id="anticipacion-minima-hs"
               type="number"
               min={0}
               max={72}
@@ -273,8 +285,9 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Días de anticipación max</label>
+            <label htmlFor="dias-de-anticipacion-max" className="text-sm font-medium mb-1.5 block">Días de anticipación max</label>
             <input
+              id="dias-de-anticipacion-max"
               type="number"
               min={1}
               max={365}
@@ -284,8 +297,9 @@ export function BusinessSettings() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Buffer entre turnos (min)</label>
+            <label htmlFor="buffer-entre-turnos-min" className="text-sm font-medium mb-1.5 block">Buffer entre turnos (min)</label>
             <input
+              id="buffer-entre-turnos-min"
               type="number"
               min={0}
               max={60}

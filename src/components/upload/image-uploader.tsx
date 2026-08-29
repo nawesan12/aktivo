@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Camera, ImageIcon, CloudOff } from "lucide-react";
 import { toast } from "sonner";
 import { cloudinaryConfig } from "@/lib/cloudinary";
@@ -14,6 +15,16 @@ interface ImageUploaderProps {
 }
 
 const isCloudinaryConfigured = !!cloudinaryConfig.cloudName;
+
+// Loaded on demand: a synchronous require() still bundles next-cloudinary for
+// every user, including the ones whose business never uploads an image.
+const CldUploadWidget = dynamic(
+  () => import("next-cloudinary").then((m) => m.CldUploadWidget),
+  { ssr: false }
+);
+const CldImage = dynamic(() => import("next-cloudinary").then((m) => m.CldImage), {
+  ssr: false,
+});
 
 export function ImageUploader({
   value,
@@ -39,9 +50,6 @@ export function ImageUploader({
     );
   }
 
-  // Dynamic import to avoid errors when credentials are missing
-  const { CldUploadWidget, CldImage } = require("next-cloudinary");
-
   return (
     <CldUploadWidget
       uploadPreset={cloudinaryConfig.uploadPreset}
@@ -52,7 +60,9 @@ export function ImageUploader({
         cropping: true,
         croppingAspectRatio: isSquare ? 1 : 16 / 9,
       }}
-      onSuccess={(result: { info?: { secure_url?: string } }) => {
+      // Type inferred from the library: `info` can also arrive as a string,
+      // which the hand-written annotation here used to hide.
+      onSuccess={(result) => {
         if (typeof result.info === "object" && result.info?.secure_url) {
           onChange(result.info.secure_url);
           toast.success("Imagen subida");
