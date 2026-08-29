@@ -5,6 +5,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authConfig } from "./auth.config";
+import { rateLimit, peekRateLimit, getClientIP } from "@/lib/rate-limit";
+import { env } from "@/lib/env";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -12,8 +14,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {
           scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
@@ -28,21 +30,53 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Contraseña", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        // Password login had no rate limit at all: bcrypt slows an attacker
+        // down but never stops them. Two independent budgets — one per IP
+        // (someone spraying many accounts) and one per account (a distributed
+        // attempt against a single user).
+        //
+        // The budget is spent by *failures* only. Charging every attempt meant
+        // that signing in five times in a quarter of an hour — a second device,
+        // an expired session — locked the account, while a brute force run, all
+        // failures, faced exactly the same ceiling.
+        const ip = getClientIP(request as unknown as Request);
+        const emailKey = String(credentials.email).toLowerCase();
+        const ipBudget = { key: `login:ip:${ip}`, limit: 10, windowMs: 15 * 60_000 };
+        const accountBudget = { key: `login:email:${emailKey}`, limit: 5, windowMs: 15 * 60_000 };
+
+        const [byIp, byAccount] = await Promise.all([
+          peekRateLimit(ipBudget),
+          peekRateLimit(accountBudget),
+        ]);
+
+        if (!byIp.success || !byAccount.success) {
+          throw new Error("Demasiados intentos fallidos. Probá de nuevo en unos minutos.");
+        }
+
+        const spendAttempt = () =>
+          Promise.all([rateLimit(ipBudget), rateLimit(accountBudget)]);
 
         const user = await db.user.findUnique({
           where: { email: credentials.email as string },
         });
 
-        if (!user || !user.hashedPassword) return null;
+        if (!user || !user.hashedPassword) {
+          await spendAttempt();
+          return null;
+        }
 
         const isValid = await bcrypt.compare(
           credentials.password as string,
           user.hashedPassword
         );
 
-        if (!isValid) return null;
+        if (!isValid) {
+          await spendAttempt();
+          return null;
+        }
 
         return {
           id: user.id,

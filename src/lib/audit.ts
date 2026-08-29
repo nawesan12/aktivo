@@ -1,5 +1,8 @@
 import { db } from "./db";
 import type { Prisma } from "@/generated/prisma/client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("audit");
 
 export async function logAction({
   businessId,
@@ -28,6 +31,6 @@ export async function logAction({
       },
     });
   } catch (err) {
-    console.error("Audit log error:", err);
+    log.error("could not write audit entry", err);
   }
 }

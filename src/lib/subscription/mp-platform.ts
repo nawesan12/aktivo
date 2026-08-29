@@ -1,10 +1,11 @@
 import { MercadoPagoConfig, PreApproval, PreApprovalPlan } from "mercadopago";
+import { env } from "@/lib/env";
 
 let _client: MercadoPagoConfig | null = null;
 
 function getClient(): MercadoPagoConfig {
   if (!_client) {
-    const token = process.env.MP_PLATFORM_ACCESS_TOKEN;
+    const token = env.MP_PLATFORM_ACCESS_TOKEN;
     if (!token) {
       throw new Error("MP_PLATFORM_ACCESS_TOKEN no configurado");
     }

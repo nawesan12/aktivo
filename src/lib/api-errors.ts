@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("api");
 
 export class AppError extends Error {
   constructor(
@@ -56,7 +59,33 @@ export class PlanLimitError extends AppError {
 }
 
 
-export function handleApiError(error: unknown): NextResponse {
+/**
+ * True when the database rejected a booking because it overlaps an existing one.
+ * Postgres reports this as SQLSTATE 23P01 (exclusion_violation); Prisma surfaces
+ * the driver message, so both the code and the constraint name are checked.
+ */
+export function isSlotTakenError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const code = (error as { code?: unknown }).code;
+  if (code === "23P01") return true;
+
+  const message = error instanceof Error ? error.message : "";
+  return (
+    message.includes("Appointment_no_overlap_per_staff") ||
+    message.includes("exclusion constraint")
+  );
+}
+
+/**
+ * Single exit point for a failed request.
+ *
+ * `scope` names the operation (`account:profile:PATCH`) so the log line is
+ * searchable. It replaces the per-route `console.error("X error:", error)` that
+ * used to sit next to a hand-written 500 — which also swallowed the status code
+ * of every typed error thrown underneath.
+ */
+export function handleApiError(error: unknown, scope?: string): NextResponse {
   if (error instanceof PlanLimitError) {
     return NextResponse.json(
       { error: error.message, requiredPlan: error.requiredPlan, code: "PLAN_LIMIT" },
@@ -68,6 +97,18 @@ export function handleApiError(error: unknown): NextResponse {
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
+    );
+  }
+
+  // Two clients raced for the same slot and the database rejected the loser
+  // (exclusion constraint "Appointment_no_overlap_per_staff").
+  if (isSlotTakenError(error)) {
+    return NextResponse.json(
+      {
+        error: "Ese horario acaba de ser reservado. Elegí otro, por favor.",
+        code: "SLOT_TAKEN",
+      },
+      { status: 409 }
     );
   }
 
@@ -93,7 +134,7 @@ export function handleApiError(error: unknown): NextResponse {
     );
   }
 
-  console.error("Unhandled error:", error);
+  (scope ? log.child(scope) : log).error("unhandled error", error);
   return NextResponse.json(
     { error: "Error interno" },
     { status: 500 }

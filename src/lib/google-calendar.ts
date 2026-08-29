@@ -1,10 +1,14 @@
 import { db } from "@/lib/db";
 import { google } from "googleapis";
+import { env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("google-calendar");
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
+    env.GOOGLE_CLIENT_ID,
+    env.GOOGLE_CLIENT_SECRET
   );
 }
 
@@ -59,7 +63,7 @@ export async function createCalendarEvent(
 
     return event.data.id ?? null;
   } catch (error) {
-    console.error("[Google Calendar] Create event error:", error);
+    log.error("create event failed", error);
     return null;
   }
 }
@@ -94,7 +98,7 @@ export async function updateCalendarEvent(
       },
     });
   } catch (error) {
-    console.error("[Google Calendar] Update event error:", error);
+    log.error("update event failed", error);
   }
 }
 
@@ -111,6 +115,6 @@ export async function deleteCalendarEvent(
       eventId,
     });
   } catch (error) {
-    console.error("[Google Calendar] Delete event error:", error);
+    log.error("delete event failed", error);
   }
 }
