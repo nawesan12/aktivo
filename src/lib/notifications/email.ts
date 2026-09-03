@@ -22,7 +22,7 @@ function getResend(): Resend | null {
 
 interface EmailData {
   to: string;
-  type: "confirmation" | "reminder" | "cancellation" | "waitlist_slot_open";
+  type: "confirmation" | "reminder" | "cancellation" | "waitlist_slot_open" | "slot_lost";
   businessName: string;
   clientName: string;
   serviceName: string;
@@ -38,8 +38,22 @@ function getSubject(type: string, businessName: string): string {
     reminder: `Recordatorio de turno — ${businessName}`,
     cancellation: `Turno cancelado — ${businessName}`,
     waitlist_slot_open: `Se liberó un turno — ${businessName}`,
+    slot_lost: `No pudimos confirmar tu turno — ${businessName}`,
   };
   return subjects[type] || businessName;
+}
+
+/** Closing line, or the call to action when there is one worth making. */
+function getFooterHtml(data: EmailData): string {
+  const line = (text: string) =>
+    `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">${text}</p>`;
+
+  if (data.type === "waitlist_slot_open" && data.bookingUrl) {
+    return `<a href="${data.bookingUrl}" style="display:inline-block;background-color:#4ADE80;color:#09090b;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:8px;">Reservar este turno</a>`;
+  }
+  if (data.type === "cancellation") return line("Podés reservar un nuevo turno en nuestra web.");
+  if (data.type === "slot_lost") return line("Podés elegir otro horario en nuestra web cuando quieras.");
+  return line("¡Te esperamos!");
 }
 
 function getEmailHtml(data: EmailData): string {
@@ -53,6 +67,8 @@ function getEmailHtml(data: EmailData): string {
     cancellation: "Tu turno fue cancelado.",
     waitlist_slot_open:
       "Se liberó un turno en el horario que estabas esperando. El primero que reserve se lo lleva.",
+    slot_lost:
+      "Tu pago se acreditó, pero mientras tanto ese horario fue tomado por otra persona y no pudimos confirmarte el turno. El negocio te va a devolver el dinero. Perdón por la molestia.",
   };
 
   return `
@@ -94,13 +110,7 @@ function getEmailHtml(data: EmailData): string {
           </tr>
         </table>
       </div>
-      ${
-        data.type === "waitlist_slot_open" && data.bookingUrl
-          ? `<a href="${data.bookingUrl}" style="display:inline-block;background-color:#4ADE80;color:#09090b;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:8px;">Reservar este turno</a>`
-          : data.type === "cancellation"
-            ? `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Podés reservar un nuevo turno en nuestra web.</p>`
-            : `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">¡Te esperamos!</p>`
-      }
+      ${getFooterHtml(data)}
     </div>
     <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">
       ${data.businessName} &middot; Powered by Jiku

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getAvailableSlots } from "@/lib/availability";
+import { releaseExpiredHolds } from "@/lib/bookings/expiry";
 import { parseDateInArgentina } from "@/lib/timezone";
 import { sendNotification } from "@/lib/notifications";
 import { addMinutes } from "date-fns";
@@ -62,6 +63,10 @@ export async function POST(
     // Parse new date and check slot availability
     const date = parseDateInArgentina(newDate);
     const settings = appointment.business.settings;
+
+    // Expired unpaid holds still occupy the slot for the database constraint,
+    // so they have to go before we read availability or write into it.
+    await releaseExpiredHolds({ businessId: appointment.businessId });
 
     const slots = await getAvailableSlots({
       businessId: appointment.businessId,

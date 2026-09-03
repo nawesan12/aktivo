@@ -10,6 +10,7 @@ import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
 import { calculateCouponDiscount, applyDiscount } from "@/lib/pricing";
 import { handleApiError } from "@/lib/api-errors";
 import { getAvailableSlots } from "@/lib/availability";
+import { releaseExpiredHolds } from "@/lib/bookings/expiry";
 import { formatArgentinaDate, parseDateInArgentina } from "@/lib/timezone";
 import { addMinutes, addWeeks, addMonths } from "date-fns";
 import { randomUUID } from "crypto";
@@ -134,6 +135,11 @@ export async function POST(request: Request) {
     const date = hasTimezone
       ? parseDateInArgentina(formatArgentinaDate(new Date(dateTime)))
       : parseDateInArgentina(datePart);
+
+    // Before reading availability: an unpaid hold that already expired still
+    // occupies the slot as far as the database constraint is concerned, so the
+    // slot would read as free and every insert into it would fail with 409.
+    await releaseExpiredHolds({ businessId: business.id });
 
     const slots = await getAvailableSlots({
       businessId: business.id,

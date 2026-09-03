@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
 import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
+import { sendEmail } from "@/lib/notifications/email";
 import { getPlatformPreApproval } from "@/lib/subscription/mp-platform";
 import { GRACE_PERIOD_DAYS } from "@/lib/subscription/config";
 import { addDays } from "date-fns";
@@ -10,6 +11,7 @@ import { createHmac } from "crypto";
 import { env } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 import { runInBackground } from "@/lib/background";
+import { isSlotTakenError } from "@/lib/api-errors";
 
 const log = createLogger("webhook:mercadopago");
 
@@ -184,14 +186,61 @@ async function handlePaymentWebhook(paymentId: string) {
     },
   });
 
+  // The customer paid, but the slot may be gone: the hold expires after 15
+  // minutes and whoever booked it next now owns it as far as the exclusion
+  // constraint is concerned. Confirming blindly throws 23P01, the webhook
+  // answers 500, and MercadoPago retries the same failure forever — meaning
+  // nobody ever finds out that someone paid for nothing.
+  let slotLost = false;
+
   if (appointmentStatus) {
-    await db.appointment.update({
-      where: { id: appointmentId },
-      data: { status: appointmentStatus as "CONFIRMED" },
-    });
+    try {
+      await db.appointment.update({
+        where: { id: appointmentId },
+        data: { status: appointmentStatus as "CONFIRMED" },
+      });
+    } catch (error) {
+      if (!isSlotTakenError(error)) throw error;
+
+      slotLost = true;
+
+      // The payment stays APPROVED against a cancelled appointment on purpose:
+      // that is what surfaces it in the panel's payments list, where the refund
+      // button already exists. Losing the record would lose the debt.
+      log.error("payment approved but the slot was already taken", error, {
+        appointmentId,
+        paymentId,
+        businessId: payment.businessId,
+      });
+
+      await logAction({
+        businessId: payment.businessId,
+        action: "payment:slot-lost",
+        entity: "Payment",
+        entityId: payment.id,
+        details: { mpPaymentId: paymentId, appointmentId, refundPending: true },
+      });
+
+      // Telling them beats letting them show up to a turn that does not exist.
+      const apt = payment.appointment;
+      const email = apt?.user?.email || apt?.guestClient?.email;
+
+      if (apt && email) {
+        runInBackground("payment-slot-lost", () =>
+          sendEmail({
+            to: email,
+            type: "slot_lost",
+            businessName: apt.business.name,
+            clientName: apt.user?.name || apt.guestClient?.name || "Cliente",
+            serviceName: apt.service.name,
+            staffName: apt.staff.name,
+            dateTime: apt.dateTime,
+          }), { appointmentId });
+      }
+    }
   }
 
-  if (mpStatus === "approved" && payment.appointment) {
+  if (mpStatus === "approved" && !slotLost && payment.appointment) {
     const apt = payment.appointment;
     const clientName = apt.user?.name || apt.guestClient?.name || "Cliente";
     const clientEmail = apt.user?.email || apt.guestClient?.email;
