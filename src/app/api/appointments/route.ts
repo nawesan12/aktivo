@@ -18,6 +18,7 @@ import { checkAppointmentLimit, getPlanForBusiness } from "@/lib/subscription/en
 import { PLAN_LIMITS } from "@/lib/subscription/config";
 import { appUrl } from "@/lib/env";
 import { runInBackground } from "@/lib/background";
+import { maybeTick } from "@/lib/jobs/tick";
 import { normalisePhone, phoneLookupVariants } from "@/lib/phone";
 import { createLogger } from "@/lib/logger";
 
@@ -135,6 +136,10 @@ export async function POST(request: Request) {
     const date = hasTimezone
       ? parseDateInArgentina(formatArgentinaDate(new Date(dateTime)))
       : parseDateInArgentina(datePart);
+
+    // Real traffic is what drives the background jobs on the free plan: no
+    // Vercel cron can run more than once a day there. See `src/lib/jobs/tick.ts`.
+    runInBackground("tick", maybeTick);
 
     // Before reading availability: an unpaid hold that already expired still
     // occupies the slot as far as the database constraint is concerned, so the
@@ -260,6 +265,11 @@ export async function POST(request: Request) {
               ? addMinutes(new Date(), PENDING_PAYMENT_TTL_MINUTES)
               : null,
           notes: notes || null,
+          // Booked for later today: the confirmation just went out and it says
+          // the same thing, so the "reminder" would be noise. Marking it here
+          // also keeps the job from chasing appointments it can never remind.
+          reminder24hSentAt:
+            slot.time.getTime() - Date.now() < 25 * 60 * 60 * 1000 ? new Date() : null,
           recurrenceGroupId,
           recurrenceFrequency: isRecurring ? recurrenceFrequency : null,
           recurrenceCount: isRecurring ? recurrenceCount : null,

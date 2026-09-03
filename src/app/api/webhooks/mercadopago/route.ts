@@ -11,6 +11,7 @@ import { createHmac } from "crypto";
 import { env } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 import { runInBackground } from "@/lib/background";
+import { maybeTick } from "@/lib/jobs/tick";
 import { isSlotTakenError } from "@/lib/api-errors";
 
 const log = createLogger("webhook:mercadopago");
@@ -266,6 +267,10 @@ async function handlePaymentWebhook(paymentId: string) {
     entityId: payment.id,
     details: { mpPaymentId: paymentId, mpStatus, paymentStatus },
   });
+
+  // Webhooks arrive even when nobody is browsing the site, which makes them one
+  // of the more reliable tick sources. See `src/lib/jobs/tick.ts`.
+  runInBackground("tick", maybeTick);
 
   return NextResponse.json({ received: true });
 }

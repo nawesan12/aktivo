@@ -9,7 +9,7 @@ const log = createLogger("background");
  * The pattern this replaces was `sendNotification(...).catch(console.error)`.
  * On serverless that is a coin flip: the response is returned, the function
  * suspends, and any promise still in flight is dropped. The confirmation
- * WhatsApp that "sometimes doesn't arrive" is exactly this.
+ * email that "sometimes doesn't arrive" is exactly this.
  *
  * `after()` keeps the invocation alive until the callback settles, so the send
  * either completes or fails loudly — never silently vanishes.

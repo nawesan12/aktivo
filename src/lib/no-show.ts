@@ -1,18 +1,33 @@
 import { db } from "@/lib/db";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("no-show");
+
+/** Only the two fields the penalty decision needs. */
+interface PenaltySettings {
+  noShowThreshold: number;
+  noShowPenaltyDays: number;
+}
 
 /**
  * Record a no-show for a client and check if penalties should be applied.
+ *
+ * `settings` can be passed in by a caller that already has it. The batch job
+ * marks up to 200 appointments in one pass, and looking the same business's
+ * settings up once per appointment was most of its query budget.
  */
 export async function recordNoShow({
   businessId,
   appointmentId,
   userId,
   guestClientId,
+  settings: providedSettings,
 }: {
   businessId: string;
   appointmentId: string;
   userId?: string | null;
   guestClientId?: string | null;
+  settings?: PenaltySettings | null;
 }) {
   // Mark appointment as NO_SHOW
   await db.appointment.update({
@@ -20,10 +35,10 @@ export async function recordNoShow({
     data: { status: "NO_SHOW" },
   });
 
-  // Get business settings for threshold
-  const settings = await db.businessSettings.findUnique({
-    where: { businessId },
-  });
+  const settings =
+    providedSettings !== undefined
+      ? providedSettings
+      : await db.businessSettings.findUnique({ where: { businessId } });
 
   if (!settings) return { penalized: false };
 
@@ -147,4 +162,78 @@ export async function getNoShowStats(businessId: string) {
     activePenalties,
     repeatOffenderCount: repeatOffenders.length,
   };
+}
+
+/**
+ * Marks appointments nobody closed as NO_SHOW.
+ *
+ * Only for businesses that opted in (`BusinessSettings.noShowAutoMark`). An
+ * appointment qualifies once it ended more than GRACE_MINUTES ago and nobody
+ * marked it completed — the grace exists so a staff member who closes the
+ * appointment a bit late doesn't get their client penalised.
+ */
+const GRACE_MINUTES = 120;
+const BATCH_SIZE = 200;
+
+export interface NoShowRunResult {
+  marked: number;
+  penalized: number;
+  saturated: boolean;
+}
+
+export async function autoMarkNoShows(): Promise<NoShowRunResult> {
+  const cutoff = new Date(Date.now() - GRACE_MINUTES * 60 * 1000);
+
+  const candidates = await db.appointment.findMany({
+    where: {
+      status: { in: ["PENDING", "CONFIRMED"] },
+      endTime: { lt: cutoff },
+      business: { settings: { noShowAutoMark: true } },
+    },
+    select: {
+      id: true,
+      businessId: true,
+      userId: true,
+      guestClientId: true,
+    },
+    orderBy: { endTime: "asc" },
+    take: BATCH_SIZE,
+  });
+
+  if (candidates.length === 0) {
+    return { marked: 0, penalized: 0, saturated: false };
+  }
+
+  // One lookup per business instead of one per appointment.
+  const businessIds = [...new Set(candidates.map((a) => a.businessId))];
+  const settingsRows = await db.businessSettings.findMany({
+    where: { businessId: { in: businessIds } },
+    select: {
+      businessId: true,
+      noShowThreshold: true,
+      noShowPenaltyDays: true,
+    },
+  });
+  const settingsByBusiness = new Map(settingsRows.map((s) => [s.businessId, s]));
+
+  let marked = 0;
+  let penalized = 0;
+
+  for (const appointment of candidates) {
+    try {
+      const result = await recordNoShow({
+        businessId: appointment.businessId,
+        appointmentId: appointment.id,
+        userId: appointment.userId,
+        guestClientId: appointment.guestClientId,
+        settings: settingsByBusiness.get(appointment.businessId) ?? null,
+      });
+      marked++;
+      if (result.penalized) penalized++;
+    } catch (error) {
+      log.error("could not mark as no-show", error, { appointmentId: appointment.id });
+    }
+  }
+
+  return { marked, penalized, saturated: candidates.length === BATCH_SIZE };
 }

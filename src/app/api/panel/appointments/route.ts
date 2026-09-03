@@ -3,6 +3,8 @@ import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { handleApiError } from "@/lib/api-errors";
 import { listAppointments } from "@/lib/panel/appointments";
+import { runInBackground } from "@/lib/background";
+import { maybeTick } from "@/lib/jobs/tick";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +22,10 @@ export async function GET(request: NextRequest) {
       dateTo: searchParams.get("dateTo"),
       search: searchParams.get("search"),
     });
+
+    // Real traffic is what drives the background jobs on the free plan: no
+    // Vercel cron can run more than once a day there. See `src/lib/jobs/tick.ts`.
+    runInBackground("tick", maybeTick);
 
     return NextResponse.json(result);
   } catch (error) {

@@ -1033,3 +1033,24 @@ model WaitlistEntry {
 
   @@index([businessId, serviceId, notified])
 }
+
+// ──────────────────────────────────────────
+// Scheduled work
+// ──────────────────────────────────────────
+
+/**
+ * Throttle for background jobs. One row per job; `lastRunAt` is both the record
+ * of the last pass and the lock that keeps two of them from overlapping.
+ *
+ * Deliberately without a `running` flag: a boolean stays true forever when a
+ * serverless function dies mid-pass, and recovering from that needs lease
+ * timeouts. Here the claim *is* the bump of `lastRunAt`, so the worst case is
+ * one skipped interval, never a permanent deadlock.
+ */
+model JobRun {
+  name      String    @id
+  lastRunAt DateTime
+  lastEndAt DateTime?
+  lastError String?
+  runs      Int       @default(0)
+}

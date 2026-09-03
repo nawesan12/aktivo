@@ -2,28 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/reminders",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/expire-bookings",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/no-shows",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/retry-notifications",
-      "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/campaigns",
+      "path": "/api/cron/daily",
       "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron/review-requests",
-      "schedule": "0 * * * *"
     }
   ]
 }
