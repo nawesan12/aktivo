@@ -35,7 +35,7 @@ export default function LandingLayout({
           billingDuration: "P1M",
         },
         description:
-          "Turnos ilimitados, hasta 5 profesionales, WhatsApp + Email, pagos con MercadoPago",
+          "Turnos ilimitados, recordatorios por email, pagos con MercadoPago",
       },
       {
         "@type": "Offer",

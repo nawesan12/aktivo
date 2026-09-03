@@ -5,12 +5,12 @@ import { z } from "zod";
  *
  * Before this existed, 24 different variables were read with `process.env.X`
  * scattered across 40+ files, each with its own fallback. A deploy missing a
- * variable did not fail: it degraded silently — no WhatsApp, no emails, no
- * payments — and nobody noticed until a customer complained.
+ * variable did not fail: it degraded silently — no emails, no payments — and
+ * nobody noticed until a customer complained.
  *
  * Here the contract is explicit and checked once, at startup (see
  * `src/instrumentation.ts`). Anything genuinely optional stays optional, but
- * *partially* configured integrations are treated as errors: half a WhatsApp
+ * *partially* configured integrations are treated as errors: half a payment
  * setup is a silent outage waiting to happen.
  */
 
@@ -26,7 +26,7 @@ const baseSchema = z.object({
       message: "must be a postgres:// connection string",
     }),
   AUTH_SECRET: secret(),
-  NEXT_PUBLIC_APP_URL: z.url("must be an absolute URL, e.g. https://jiku.app"),
+  NEXT_PUBLIC_APP_URL: z.url("must be an absolute URL, e.g. https://jikuapp.com"),
 
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   /** Read directly by `src/lib/logger.ts`; declared here so it is documented. */
@@ -48,12 +48,6 @@ const baseSchema = z.object({
   MP_PLATFORM_ACCESS_TOKEN: z.string().optional(),
   MP_PLAN_PROFESSIONAL_ID: z.string().optional(),
   MP_PLAN_ENTERPRISE_ID: z.string().optional(),
-
-  // ── WhatsApp (Meta Cloud API) ───────────────────────────────────────────
-  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
-  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
-  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
-  WHATSAPP_APP_SECRET: z.string().optional(),
 
   // ── Email ───────────────────────────────────────────────────────────────
   RESEND_API_KEY: z.string().optional(),
@@ -84,15 +78,6 @@ const GROUPS: {
   name: string;
   keys: (keyof BaseEnv)[];
 }[] = [
-  {
-    name: "WhatsApp",
-    keys: [
-      "WHATSAPP_ACCESS_TOKEN",
-      "WHATSAPP_PHONE_NUMBER_ID",
-      "WHATSAPP_VERIFY_TOKEN",
-      "WHATSAPP_APP_SECRET",
-    ],
-  },
   { name: "Email (Resend)", keys: ["RESEND_API_KEY", "RESEND_FROM"] },
   {
     name: "Google sign-in",
@@ -148,8 +133,8 @@ const envSchema = baseSchema.superRefine((env, ctx) => {
   const isProduction = env.NODE_ENV === "production";
 
   // Only fatal in production. A half-configured integration is a broken deploy,
-  // but locally it is routine — nobody wants a WhatsApp app secret just to work
-  // on the booking form, and refusing to start would make them fake one.
+  // but locally it is routine — nobody wants a MercadoPago webhook secret just
+  // to work on the booking form, and refusing to start would make them fake one.
   if (isProduction) {
     for (const problem of halfConfiguredGroups(env)) {
       ctx.addIssue({
@@ -277,7 +262,6 @@ export function assertEnv(): void {
 export function integrationStatus() {
   const e = loadEnv();
   return {
-    whatsapp: Boolean(e.WHATSAPP_ACCESS_TOKEN && e.WHATSAPP_PHONE_NUMBER_ID),
     email: Boolean(e.RESEND_API_KEY),
     mercadopago: Boolean(e.MERCADOPAGO_ACCESS_TOKEN),
     platformBilling: Boolean(e.MP_PLATFORM_ACCESS_TOKEN),

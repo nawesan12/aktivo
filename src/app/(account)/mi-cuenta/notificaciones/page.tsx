@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Bell, Mail, MessageCircle, Loader2 } from "lucide-react";
+import { Bell, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Preference {
   id: string;
   businessId: string;
   emailEnabled: boolean;
-  whatsappEnabled: boolean;
   remindersEnabled: boolean;
   business?: { name: string };
 }
@@ -45,7 +44,6 @@ export default function NotificationsPage() {
         body: JSON.stringify({
           businessId,
           emailEnabled: field === "emailEnabled" ? value : existing?.emailEnabled ?? true,
-          whatsappEnabled: field === "whatsappEnabled" ? value : existing?.whatsappEnabled ?? true,
           remindersEnabled: field === "remindersEnabled" ? value : existing?.remindersEnabled ?? true,
         }),
       });
@@ -90,23 +88,6 @@ export default function NotificationsPage() {
               )}
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-success-muted flex items-center justify-center">
-                      <MessageCircle className="w-4 h-4 text-success-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">WhatsApp</p>
-                      <p className="text-xs text-muted-foreground">Confirmaciones y recordatorios</p>
-                    </div>
-                  </div>
-                  <Toggle
-                    checked={pref.whatsappEnabled}
-                    onChange={() => updatePref(pref.businessId, "whatsappEnabled", !pref.whatsappEnabled)}
-                    disabled={saving === pref.businessId}
-                  />
-                </div>
-
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-info-muted flex items-center justify-center">

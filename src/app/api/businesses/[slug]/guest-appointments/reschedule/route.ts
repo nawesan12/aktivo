@@ -124,7 +124,6 @@ export async function POST(
         businessName: business.name,
         appointmentId: result.id,
         clientName: appointment.guestClient?.name ?? "Cliente",
-        clientPhone: appointment.guestClient?.phone,
         clientEmail: appointment.guestClient?.email ?? undefined,
         serviceName: appointment.service.name,
         staffName: appointment.staff.name,

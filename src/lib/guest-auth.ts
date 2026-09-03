@@ -1,6 +1,6 @@
 import { createHash, randomInt, timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
-import { sendWhatsAppText } from "@/lib/notifications/whatsapp";
+import { sendVerificationEmail } from "@/lib/notifications/verification-email";
 import { SignJWT, jwtVerify } from "jose";
 import { env } from "@/lib/env";
 import { phoneLookupVariants } from "@/lib/phone";
@@ -50,13 +50,20 @@ function codesMatch(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
+/**
+ * Delivers the code to the guest's email.
+ *
+ * The flow is still keyed by phone — that is what identifies a guest inside a
+ * business — but email is the only channel the product has, so a guest client
+ * without one cannot be verified at all. Every booking made from now on
+ * requires an email; only legacy rows can hit this.
+ */
 export async function sendVerificationCode(
-  phone: string,
+  email: string,
   code: string,
   businessName: string
 ): Promise<void> {
-  const text = `Tu código de verificación para ${businessName} es: ${code}\n\nExpira en 10 minutos.`;
-  await sendWhatsAppText(phone, text);
+  await sendVerificationEmail(email, code, businessName);
 }
 
 export async function createVerification(phone: string, code: string): Promise<void> {

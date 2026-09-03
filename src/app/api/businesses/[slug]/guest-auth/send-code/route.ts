@@ -4,6 +4,7 @@ import { generateCode, sendVerificationCode, createVerification } from "@/lib/gu
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 import { handleApiError } from "@/lib/api-errors";
 import { phoneLookupVariants } from "@/lib/phone";
+import { maskEmail } from "@/lib/format";
 
 export async function POST(
   request: NextRequest,
@@ -41,11 +42,23 @@ export async function POST(
       return NextResponse.json({ error: "No se encontraron turnos con este número" }, { status: 404 });
     }
 
+    // The code travels by email, so a guest without one cannot be verified.
+    // Only reservations made before email became mandatory can land here.
+    if (!guestClient.email) {
+      return NextResponse.json(
+        {
+          error:
+            "Esta reserva no tiene un email asociado. Contactate con el negocio para gestionar tu turno.",
+        },
+        { status: 409 }
+      );
+    }
+
     const code = generateCode();
     await createVerification(phone, code);
-    await sendVerificationCode(phone, code, business.name);
+    await sendVerificationCode(guestClient.email, code, business.name);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, email: maskEmail(guestClient.email) });
   } catch (error) {
     return handleApiError(error, "businesses:slug:guest-auth:send-code");
   }

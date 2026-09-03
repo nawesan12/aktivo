@@ -34,7 +34,7 @@ export function Pricing() {
                 <span className="price-check">✓</span> Reservas 24/7
               </li>
               <li>
-                <span className="price-check">✓</span> Recordatorios WhatsApp
+                <span className="price-check">✓</span> Recordatorios automáticos
               </li>
               <li>
                 <span className="price-check">✓</span> Hasta 50 turnos/mes

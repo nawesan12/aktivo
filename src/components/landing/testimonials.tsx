@@ -18,7 +18,7 @@ export function Testimonials() {
             <div className="testi-stars">★★★★★</div>
             <p className="testi-text serif">
               &ldquo;Pasé de perder 8 turnos por semana a casi cero. Los
-              recordatorios por WhatsApp cambiaron todo. Mis clientes aman
+              recordatorios automáticos cambiaron todo. Mis clientes aman
               reservar a las 2am.&rdquo;
             </p>
             <div className="testi-author">

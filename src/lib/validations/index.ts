@@ -92,10 +92,15 @@ export const appointmentSchema = z.object({
   recurrenceCount: z.number().min(2).max(12).optional(),
 });
 
+/**
+ * Email is required, not a nicety. It is the only channel the product has: a
+ * booking without one gets no confirmation, no reminder, no cancellation
+ * notice, and its owner cannot get into "mis turnos" either.
+ */
 export const guestInfoSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres"),
   phone: argentinePhone,
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  email: z.string().min(1, "Necesitamos tu email").email("Email inválido"),
 });
 
 // ── Schedule ─────────────────────────────
@@ -131,7 +136,8 @@ export const campaignSchema = z.object({
   type: z.enum(["BIRTHDAY", "REBOOKING", "INACTIVITY", "CUSTOM"]),
   messageSubject: z.string().max(200).optional().nullable(),
   messageBody: z.string().min(1, "Mensaje requerido").max(5000),
-  channel: z.enum(["EMAIL", "WHATSAPP"]).default("EMAIL"),
+  /** Email is the only delivery channel the product has. */
+  channel: z.literal("EMAIL").default("EMAIL"),
   targetTagIds: z.array(z.string()).default([]),
   triggerConfig: z.record(z.string(), z.unknown()).optional().nullable(),
 });

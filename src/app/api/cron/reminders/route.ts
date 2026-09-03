@@ -109,7 +109,6 @@ async function sendReminder(
       businessName: appointment.business.name,
       appointmentId: appointment.id,
       clientName: client.name ?? "Cliente",
-      clientPhone: client.phone ?? undefined,
       clientEmail: client.email ?? undefined,
       serviceName: appointment.service.name,
       staffName: appointment.staff.name,

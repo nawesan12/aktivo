@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { Clock, User, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import Image from "next/image";
@@ -289,14 +287,17 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
               />
             </div>
             <div>
-              <label htmlFor="email-opcional" className="text-sm text-muted-foreground">Email (opcional)</label>
+              <label htmlFor="email" className="text-sm text-muted-foreground">Email</label>
               <input
-                id="email-opcional"
+                id="email"
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 type="email"
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ahí llega la confirmación y el recordatorio.
+              </p>
             </div>
 
             {bookingError && (
@@ -310,7 +311,7 @@ export function EmbedBookingFlow({ businessSlug, businessName, primaryColor }: E
 
             <button
               onClick={handleBook}
-              disabled={booking || !clientName.trim() || !clientPhone.trim()}
+              disabled={booking || !clientName.trim() || !clientPhone.trim() || !clientEmail.trim()}
               className="w-full py-3 rounded-xl text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ background: `linear-gradient(135deg, ${primaryColor}, #22D3EE)` }}
             >

@@ -40,6 +40,8 @@ export default function MisTurnosPage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  /** Masked address the code was sent to, so the person knows which inbox to open. */
+  const [codeSentTo, setCodeSentTo] = useState("");
   const [upcoming, setUpcoming] = useState<Appointment[]>([]);
   const [past, setPast] = useState<Appointment[]>([]);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
@@ -60,6 +62,7 @@ export default function MisTurnosPage() {
         setError(data.error);
         return;
       }
+      setCodeSentTo(data.email ?? "");
       setState("code");
     } catch {
       setError("Error de conexión");
@@ -141,7 +144,7 @@ export default function MisTurnosPage() {
             </div>
             <h1 className="text-xl font-heading font-bold mb-1">Mis turnos</h1>
             <p className="text-sm text-muted-foreground">
-              Ingresa tu teléfono para ver tus turnos
+              Ingresá tu teléfono y te mandamos un código por email
             </p>
           </div>
 
@@ -174,7 +177,7 @@ export default function MisTurnosPage() {
             </div>
             <h1 className="text-xl font-heading font-bold mb-1">Código de verificación</h1>
             <p className="text-sm text-muted-foreground">
-              Te enviamos un código por WhatsApp al {phone}
+              Te enviamos un código por email{codeSentTo ? ` a ${codeSentTo}` : ""}
             </p>
           </div>
 

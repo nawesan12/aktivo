@@ -27,7 +27,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
-    const { businessId, emailEnabled, whatsappEnabled, remindersEnabled } =
+    const { businessId, emailEnabled, remindersEnabled } =
       await request.json();
 
     if (!businessId) {
@@ -46,14 +46,12 @@ export async function PUT(request: Request) {
       },
       update: {
         emailEnabled,
-        whatsappEnabled,
         remindersEnabled,
       },
       create: {
         businessId,
         userId: session.user.id,
         emailEnabled,
-        whatsappEnabled,
         remindersEnabled,
       },
     });

@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { sendWhatsAppText } from "@/lib/notifications/whatsapp";
 import { sendEmail } from "@/lib/notifications/email";
 import { addDays } from "date-fns";
 import { appUrl } from "@/lib/env";
@@ -53,36 +52,28 @@ export async function notifyWaitlistOnCancellation({
   let notifiedCount = 0;
 
   for (const entry of entries) {
-    const message = `¡Buenas noticias! Se liberó un turno para ${serviceName} el ${dateTime.toLocaleDateString("es-AR")} con ${staffName}. Reservá ahora: ${bookingUrl}`;
-
-    const delivered = await Promise.allSettled([
-      sendWhatsAppText(entry.phone, message),
-      ...(entry.email
-        ? [
-            sendEmail({
-              to: entry.email,
-              type: "cancellation",
-              businessName,
-              clientName: entry.name,
-              serviceName,
-              staffName,
-              dateTime,
-            }),
-          ]
-        : []),
-    ]);
-
-    const reached = delivered.some((r) => r.status === "fulfilled");
-    for (const result of delivered) {
-      if (result.status === "rejected") {
-        log.error("could not notify a waitlist entry", result.reason, {
-          entryId: entry.id,
-        });
-      }
+    // Email is the only channel. An entry without one cannot be reached, and
+    // burning it would silently drop the person from the queue.
+    if (!entry.email) {
+      log.warn("waitlist entry has no email, cannot notify", { entryId: entry.id });
+      continue;
     }
 
-    // Only burn the entry if we actually reached the person.
-    if (!reached) continue;
+    try {
+      await sendEmail({
+        to: entry.email,
+        type: "waitlist_slot_open",
+        businessName,
+        clientName: entry.name,
+        serviceName,
+        staffName,
+        dateTime,
+        bookingUrl,
+      });
+    } catch (error) {
+      log.error("could not notify a waitlist entry", error, { entryId: entry.id });
+      continue;
+    }
 
     await db.waitlistEntry.update({
       where: { id: entry.id },

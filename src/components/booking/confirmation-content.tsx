@@ -12,7 +12,6 @@ import {
   Clock,
   User,
   Scissors,
-  MessageCircle,
   Mail,
   ArrowRight,
 } from "lucide-react";
@@ -184,12 +183,6 @@ export function ConfirmationContent({ slug }: { slug: string }) {
 
         {/* Notification status */}
         <div className="space-y-2 mb-8">
-          {booking.guestPhone && (
-            <div className="confirm-notif opacity-0 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <MessageCircle className="w-4 h-4 text-success-foreground" />
-              Confirmación enviada por WhatsApp
-            </div>
-          )}
           {booking.guestEmail && (
             <div className="confirm-notif opacity-0 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Mail className="w-4 h-4 text-primary" />

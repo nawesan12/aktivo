@@ -4,7 +4,6 @@ import {
   isValidArgentinePhone,
   nationalDigits,
   normalisePhone,
-  toWhatsAppFormat,
 } from "@/lib/phone";
 
 describe("normalización", () => {
@@ -54,14 +53,8 @@ describe("formato para almacenar y enviar", () => {
     expect(normalisePhone("+54 9 223 632 7551")).toBe("+5492236327551");
   });
 
-  it("saca el 9 para la API de Meta, que si no descarta el mensaje", () => {
-    expect(toWhatsAppFormat("+54 9 223 632-7551")).toBe("542236327551");
-    expect(toWhatsAppFormat("2236327551")).toBe("542236327551");
-  });
-
   it("devuelve algo utilizable aunque el número sea raro", () => {
     expect(normalisePhone("12345")).toBe("12345");
-    expect(toWhatsAppFormat("12345")).toBe("12345");
   });
 });
 

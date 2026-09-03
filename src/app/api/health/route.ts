@@ -10,7 +10,7 @@ const log = createLogger("health");
  *
  * Checks the database round-trip and reports which optional integrations are
  * configured — a deploy missing a variable degrades silently otherwise (no
- * WhatsApp, no email, no payments), and nothing surfaces it.
+ * no email, no payments), and nothing surfaces it.
  *
  * Deliberately public and free of detail: it exposes booleans, never values.
  */

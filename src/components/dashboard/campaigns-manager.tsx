@@ -23,7 +23,7 @@ interface Campaign {
   messageBody: string;
   triggerConfig: Record<string, unknown> | null;
   targetTagIds: string[];
-  channel: "EMAIL" | "WHATSAPP";
+  channel: "EMAIL";
   createdAt: string;
   updatedAt: string;
   _count: { executions: number };
@@ -255,7 +255,6 @@ export function CampaignsManager() {
                 className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
               >
                 <option value="EMAIL">Email</option>
-                <option value="WHATSAPP">WhatsApp</option>
               </select>
             </div>
             <div>

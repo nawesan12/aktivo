@@ -36,14 +36,14 @@ describe("validación de entorno", () => {
   });
 
   it("rechaza en producción una integración configurada a medias", async () => {
-    // Un WhatsApp con token pero sin app secret arranca, parece habilitado, y
-    // el webhook rechaza todo: falla en silencio hasta que un cliente reclama.
+    // Un cobro de suscripciones con token pero sin los IDs de plan arranca,
+    // parece habilitado, y falla recién cuando un negocio intenta suscribirse.
     const { assertEnv } = await loadWith({
       NODE_ENV: "production",
-      NEXT_PUBLIC_APP_URL: "https://jiku.app",
+      NEXT_PUBLIC_APP_URL: "https://jikuapp.com",
       CRON_SECRET: "a-cron-secret-long-enough",
-      WHATSAPP_ACCESS_TOKEN: "token",
-      WHATSAPP_PHONE_NUMBER_ID: "123",
+      MP_PLATFORM_ACCESS_TOKEN: "token",
+      MP_PLAN_PROFESSIONAL_ID: "plan-pro",
     });
     expect(() => assertEnv()).toThrow(/half configured/);
   });
@@ -51,8 +51,8 @@ describe("validación de entorno", () => {
   it("en desarrollo solo advierte, para no exigir credenciales que no hacen falta", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { assertEnv } = await loadWith({
-      WHATSAPP_ACCESS_TOKEN: "token",
-      WHATSAPP_PHONE_NUMBER_ID: "123",
+      MP_PLATFORM_ACCESS_TOKEN: "token",
+      MP_PLAN_PROFESSIONAL_ID: "plan-pro",
     });
     expect(() => assertEnv()).not.toThrow();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("half configured"));
@@ -61,10 +61,9 @@ describe("validación de entorno", () => {
 
   it("acepta la integración completa", async () => {
     const { assertEnv } = await loadWith({
-      WHATSAPP_ACCESS_TOKEN: "token",
-      WHATSAPP_PHONE_NUMBER_ID: "123",
-      WHATSAPP_VERIFY_TOKEN: "verify",
-      WHATSAPP_APP_SECRET: "secret",
+      MP_PLATFORM_ACCESS_TOKEN: "token",
+      MP_PLAN_PROFESSIONAL_ID: "plan-pro",
+      MP_PLAN_ENTERPRISE_ID: "plan-enterprise",
     });
     expect(() => assertEnv()).not.toThrow();
   });
@@ -100,8 +99,8 @@ describe("integrationStatus", () => {
   it("reporta apagado lo que no está configurado", async () => {
     const { integrationStatus } = await loadWith({});
     const status = integrationStatus();
-    expect(status.whatsapp).toBe(false);
     expect(status.email).toBe(false);
+    expect(status.mercadopago).toBe(false);
     expect(status.cron).toBe(false);
   });
 });

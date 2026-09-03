@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { appUrl } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 import { sendReviewRequestEmail } from "@/lib/notifications/review-request-email";
-import { sendWhatsApp } from "@/lib/notifications/whatsapp";
 
 const log = createLogger("reviews:requests");
 
@@ -29,47 +28,67 @@ export async function sendPendingReviewRequests(limit = 100) {
   const now = new Date();
   const oldest = addDays(now, -MAX_AGE_DAYS);
 
+  // One row per business, so it stays small. The delay is per-business, but
+  // querying appointments once per business turned this into 1+N queries every
+  // time the job ran, whether or not there was anything to send.
   const settings = await db.businessSettings.findMany({
     select: { businessId: true, reviewRequestDelayHours: true },
+  });
+  if (settings.length === 0) return { created: 0, sent: 0, failed: 0 };
+
+  const delayByBusiness = new Map(
+    settings.map((s) => [s.businessId, s.reviewRequestDelayHours])
+  );
+
+  // Fetch with the shortest delay any business configured, then drop the ones
+  // whose own business wants to wait longer. One query instead of N.
+  const shortestDelay = Math.min(...settings.map((s) => s.reviewRequestDelayHours));
+  const readyBefore = new Date(now.getTime() - shortestDelay * 3_600_000);
+
+  const candidates = await db.appointment.findMany({
+    where: {
+      businessId: { in: [...delayByBusiness.keys()] },
+      status: "COMPLETED",
+      dateTime: { lte: readyBefore, gte: oldest },
+      // One token per appointment, and never ask someone who already replied.
+      reviewToken: { is: null },
+      review: { is: null },
+    },
+    include: {
+      business: { select: { name: true } },
+      service: { select: { name: true } },
+      user: { select: { id: true, name: true, email: true } },
+      guestClient: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { dateTime: "asc" },
+    take: limit,
   });
 
   let created = 0;
   let sent = 0;
   let failed = 0;
 
-  for (const { businessId, reviewRequestDelayHours } of settings) {
-    const readyBefore = new Date(now.getTime() - reviewRequestDelayHours * 3_600_000);
+  for (const appointment of candidates) {
+    const delayHours = delayByBusiness.get(appointment.businessId);
+    if (delayHours === undefined) continue;
 
-    const appointments = await db.appointment.findMany({
-      where: {
-        businessId,
-        status: "COMPLETED",
-        dateTime: { lte: readyBefore, gte: oldest },
-        // One token per appointment, and never ask someone who already replied.
-        reviewToken: { is: null },
-        review: { is: null },
-      },
-      include: {
-        business: { select: { name: true } },
-        service: { select: { name: true } },
-        staff: { select: { name: true } },
-        user: { select: { id: true, name: true, email: true, phone: true } },
-        guestClient: { select: { id: true, name: true, email: true, phone: true } },
-      },
-      take: limit,
-    });
+    if (appointment.dateTime > new Date(now.getTime() - delayHours * 3_600_000)) {
+      continue;
+    }
 
-    for (const appointment of appointments) {
-      const client = appointment.user ?? appointment.guestClient;
-      const email = client?.email ?? null;
-      const phone = client?.phone ?? null;
+    const client = appointment.user ?? appointment.guestClient;
+    const email = client?.email ?? null;
 
-      // No way to reach them: creating a token would only leave dead rows.
-      if (!email && !phone) continue;
+    // Email is the only channel: without an address the token would be a dead row.
+    if (!email) continue;
 
+    try {
+      // Inside the try on purpose. `appointmentId` is unique, so two overlapping
+      // runs race here, and an escaping P2002 used to abort the whole pass —
+      // every business still queued behind this one got nothing.
       const token = await db.reviewToken.create({
         data: {
-          businessId,
+          businessId: appointment.businessId,
           appointmentId: appointment.id,
           userId: appointment.userId,
           guestClientId: appointment.guestClientId,
@@ -78,40 +97,34 @@ export async function sendPendingReviewRequests(limit = 100) {
       });
       created++;
 
-      const reviewUrl = appUrl(`/review/${token.token}`);
-      const clientName = client?.name || "Cliente";
+      await sendReviewRequestEmail({
+        to: email,
+        clientName: client?.name || "Cliente",
+        businessName: appointment.business.name,
+        serviceName: appointment.service.name,
+        reviewUrl: appUrl(`/review/${token.token}`),
+      });
+      sent++;
+    } catch (error) {
+      if (isUniqueViolation(error)) continue;
 
-      try {
-        if (email) {
-          await sendReviewRequestEmail({
-            to: email,
-            clientName,
-            businessName: appointment.business.name,
-            serviceName: appointment.service.name,
-            reviewUrl,
-          });
-        } else if (phone) {
-          await sendWhatsApp({
-            to: phone,
-            type: "review_request",
-            businessName: appointment.business.name,
-            clientName,
-            serviceName: appointment.service.name,
-            staffName: appointment.staff.name,
-            dateTime: appointment.dateTime,
-            bookingUrl: reviewUrl,
-          });
-        }
-        sent++;
-      } catch (error) {
-        failed++;
-        log.warn("could not send a review request", {
-          appointmentId: appointment.id,
-          reason: error instanceof Error ? error.message : String(error),
-        });
-      }
+      failed++;
+      log.warn("could not send a review request", {
+        appointmentId: appointment.id,
+        reason: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   return { created, sent, failed };
+}
+
+/** Another run got to this appointment first. Not a failure, just a no-op. */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2002"
+  );
 }

@@ -28,10 +28,10 @@ export function Features() {
           </div>
           <div className="feature jiku-reveal rd2">
             <div className="feature-num mono">02</div>
-            <h3>WhatsApp automático</h3>
+            <h3>Recordatorios automáticos</h3>
             <p>
-              Confirmaciones, recordatorios 24h antes y seguimiento
-              post-servicio. Todo sin que toques el celular.
+              Confirmación al reservar, recordatorio 24 h antes y pedido de
+              reseña después. Todo sin que toques el celular.
             </p>
           </div>
           <div className="feature jiku-reveal rd3">

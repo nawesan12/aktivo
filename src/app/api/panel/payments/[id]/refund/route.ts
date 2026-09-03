@@ -69,7 +69,6 @@ export async function POST(
         businessName: payment.appointment.business.name,
         appointmentId: payment.appointmentId,
         clientName: client.name || "Cliente",
-        clientPhone: client.phone || undefined,
         clientEmail: client.email || undefined,
         serviceName: payment.appointment.service.name,
         staffName: payment.appointment.staff.name,

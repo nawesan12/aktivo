@@ -22,19 +22,22 @@ function getResend(): Resend | null {
 
 interface EmailData {
   to: string;
-  type: "confirmation" | "reminder" | "cancellation";
+  type: "confirmation" | "reminder" | "cancellation" | "waitlist_slot_open";
   businessName: string;
   clientName: string;
   serviceName: string;
   staffName: string;
   dateTime: Date;
+  /** Only used by `waitlist_slot_open`, where the whole point is the link. */
+  bookingUrl?: string;
 }
 
 function getSubject(type: string, businessName: string): string {
   const subjects: Record<string, string> = {
-    confirmation: `Turno Confirmado - ${businessName}`,
-    reminder: `Recordatorio de Turno - ${businessName}`,
-    cancellation: `Turno Cancelado - ${businessName}`,
+    confirmation: `Turno confirmado — ${businessName}`,
+    reminder: `Recordatorio de turno — ${businessName}`,
+    cancellation: `Turno cancelado — ${businessName}`,
+    waitlist_slot_open: `Se liberó un turno — ${businessName}`,
   };
   return subjects[type] || businessName;
 }
@@ -45,9 +48,11 @@ function getEmailHtml(data: EmailData): string {
   const timeStr = format(dt, "HH:mm");
 
   const statusMessages: Record<string, string> = {
-    confirmation: "Tu turno fue confirmado exitosamente.",
-    reminder: "Te recordamos que manana tenes un turno.",
+    confirmation: "Tu turno quedó confirmado.",
+    reminder: "Te recordamos que mañana tenés un turno.",
     cancellation: "Tu turno fue cancelado.",
+    waitlist_slot_open:
+      "Se liberó un turno en el horario que estabas esperando. El primero que reserve se lo lleva.",
   };
 
   return `
@@ -64,7 +69,7 @@ function getEmailHtml(data: EmailData): string {
     </div>
     <div style="background-color:#18181b;border-radius:12px;padding:32px;border:1px solid rgba(255,255,255,0.1);">
       <h2 style="color:#fafafa;font-size:20px;margin:0 0 16px 0;">
-        Hola ${data.clientName}!
+        ¡Hola ${data.clientName}!
       </h2>
       <p style="color:#a1a1aa;font-size:16px;line-height:1.6;margin:0 0 24px 0;">
         ${statusMessages[data.type]}
@@ -90,9 +95,11 @@ function getEmailHtml(data: EmailData): string {
         </table>
       </div>
       ${
-        data.type !== "cancellation"
-          ? `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Te esperamos!</p>`
-          : `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Podes reservar un nuevo turno en nuestra web.</p>`
+        data.type === "waitlist_slot_open" && data.bookingUrl
+          ? `<a href="${data.bookingUrl}" style="display:inline-block;background-color:#4ADE80;color:#09090b;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:8px;">Reservar este turno</a>`
+          : data.type === "cancellation"
+            ? `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">Podés reservar un nuevo turno en nuestra web.</p>`
+            : `<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;">¡Te esperamos!</p>`
       }
     </div>
     <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">

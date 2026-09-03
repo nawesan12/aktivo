@@ -132,7 +132,7 @@ export default function OGImage() {
             marginTop: "32px",
           }}
         >
-          {["Turnos Online", "MercadoPago", "WhatsApp", "CRM"].map((tag) => (
+          {["Turnos Online", "MercadoPago", "Recordatorios", "CRM"].map((tag) => (
             <div
               key={tag}
               style={{

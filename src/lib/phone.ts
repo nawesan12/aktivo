@@ -1,8 +1,8 @@
 /**
  * Argentine phone numbers.
  *
- * The only normalisation in the codebase lived privately inside `whatsapp.ts`,
- * and validation was `z.string().min(10)` — which accepts "0000000000" and
+ * Normalisation used to live privately inside the notification senders, and
+ * validation was `z.string().min(10)` — which accepts "0000000000" and
  * rejects a perfectly valid number typed as "+54 9 223 632-7551". A wrong phone
  * number means the confirmation never arrives and the customer never learns the
  * booking exists.
@@ -12,8 +12,7 @@
  *   +54 9 <area code: 2-4 digits> <subscriber: 6-8 digits>
  *
  * Area code and subscriber number always add up to 10 digits. The `9` marks a
- * mobile line for international dialling; Meta's WhatsApp API wants it removed,
- * which is why `toWhatsAppFormat` exists separately from `normalisePhone`.
+ * mobile line for international dialling.
  */
 
 const COUNTRY_CODE = "54";
@@ -54,16 +53,6 @@ export function normalisePhone(input: string): string {
   const digits = nationalDigits(input);
   if (digits.length !== 10) return input.trim();
   return `+${COUNTRY_CODE}9${digits}`;
-}
-
-/**
- * Meta's Cloud API wants `54` + area code + number, *without* the mobile `9`.
- * Sending it with the 9 gets the message silently dropped.
- */
-export function toWhatsAppFormat(input: string): string {
-  const digits = nationalDigits(input);
-  if (digits.length !== 10) return input.replace(/\D/g, "");
-  return `${COUNTRY_CODE}${digits}`;
 }
 
 /** Readable form for the interface: `223 632-7551`. */

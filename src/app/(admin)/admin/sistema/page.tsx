@@ -4,10 +4,9 @@ import { db } from "@/lib/db";
 import { CheckCircle, XCircle } from "lucide-react";
 
 /**
- * Kept in sync with the schema in `src/lib/env.ts`. The previous list still
- * checked for Twilio variables, which stopped existing when WhatsApp moved to
- * Meta's Cloud API, and for `NEXTAUTH_SECRET`, which was renamed to
- * `AUTH_SECRET` in NextAuth v5 — three rows that were always red for no reason.
+ * Kept in sync with the schema in `src/lib/env.ts`. A row here for a variable
+ * that no longer exists is worse than no row at all: it reads as a broken
+ * integration forever.
  */
 const envVars = [
   "DATABASE_URL",
@@ -23,10 +22,6 @@ const envVars = [
   "MERCADOPAGO_ACCESS_TOKEN",
   "MERCADOPAGO_WEBHOOK_SECRET",
   "MP_PLATFORM_ACCESS_TOKEN",
-  "WHATSAPP_ACCESS_TOKEN",
-  "WHATSAPP_PHONE_NUMBER_ID",
-  "WHATSAPP_VERIFY_TOKEN",
-  "WHATSAPP_APP_SECRET",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
   "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",

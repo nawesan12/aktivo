@@ -91,8 +91,16 @@ export async function POST(request: Request) {
             businessId: business.id,
             name: guest.name,
             phone: normalisePhone(guest.phone),
-            email: guest.email || null,
+            email: guest.email,
           },
+        });
+      } else if (!guestClient.email) {
+        // A row from before email was mandatory. Backfilling it here is what
+        // lets that customer receive anything at all, including the code for
+        // "mis turnos".
+        guestClient = await db.guestClient.update({
+          where: { id: guestClient.id },
+          data: { email: guest.email },
         });
       }
 
@@ -396,7 +404,6 @@ export async function POST(request: Request) {
     const clientName = userId
       ? session?.user?.name ?? "Cliente"
       : body.guest?.name ?? "Cliente";
-    const clientPhone = userId ? undefined : body.guest?.phone;
     const clientEmail = userId ? session?.user?.email ?? undefined : body.guest?.email;
 
     runInBackground("confirmation-notice", () =>
@@ -405,7 +412,6 @@ export async function POST(request: Request) {
         businessName: business.name,
         appointmentId: appointment.id,
         clientName,
-        clientPhone,
         clientEmail: clientEmail ?? undefined,
         serviceName: service.name,
         staffName: staff.name,

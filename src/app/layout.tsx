@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     "cobrar turnos online",
     "crm para negocios",
     "fidelización de clientes",
-    "notificaciones whatsapp turnos",
+    "recordatorios automaticos de turnos",
     "pagina de reservas gratis",
     "sistema de citas",
     "calendario de turnos",

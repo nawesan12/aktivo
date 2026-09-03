@@ -73,7 +73,6 @@ export function NotificationsLog() {
           className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm"
         >
           <option value="">Todos los canales</option>
-          <option value="WHATSAPP">WhatsApp</option>
           <option value="EMAIL">Email</option>
         </select>
         <select

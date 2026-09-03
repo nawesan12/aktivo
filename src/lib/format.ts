@@ -56,3 +56,21 @@ export function formatPercent(value: number, decimals = 0): string {
   if (!Number.isFinite(value)) return "0%";
   return `${formatNumber(value, decimals)}%`;
 }
+
+/**
+ * Partially hides an email so it can be shown back to whoever asked for a code.
+ *
+ * The point is recognition, not secrecy: "ju***@gmail.com" is enough for the
+ * owner of the address to know which inbox to open, and not enough for someone
+ * who guessed a phone number to learn the address behind it.
+ */
+export function maskEmail(email: string): string {
+  const at = email.lastIndexOf("@");
+  if (at <= 0) return "***";
+
+  const local = email.slice(0, at);
+  const domain = email.slice(at);
+  const visible = local.slice(0, Math.min(2, local.length));
+
+  return `${visible}${"*".repeat(3)}${domain}`;
+}

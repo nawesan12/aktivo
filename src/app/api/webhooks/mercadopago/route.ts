@@ -194,7 +194,6 @@ async function handlePaymentWebhook(paymentId: string) {
   if (mpStatus === "approved" && payment.appointment) {
     const apt = payment.appointment;
     const clientName = apt.user?.name || apt.guestClient?.name || "Cliente";
-    const clientPhone = apt.user?.phone || apt.guestClient?.phone;
     const clientEmail = apt.user?.email || apt.guestClient?.email;
 
     runInBackground("payment-confirmation", () =>
@@ -203,7 +202,6 @@ async function handlePaymentWebhook(paymentId: string) {
         businessName: apt.business.name,
         appointmentId,
         clientName,
-        clientPhone: clientPhone || undefined,
         clientEmail: clientEmail || undefined,
         serviceName: apt.service.name,
         staffName: apt.staff.name,

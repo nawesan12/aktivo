@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
-import { sendWhatsAppText } from "@/lib/notifications/whatsapp";
 import { sendEmail } from "@/lib/notifications/email";
 import { handleApiError } from "@/lib/api-errors";
 import { appUrl } from "@/lib/env";
@@ -51,22 +50,30 @@ export async function POST(
       select: { name: true, slug: true },
     });
 
+    // Email is the only channel, so an entry without one cannot be notified.
+    // Marking it as notified anyway would drop the person from the queue in
+    // silence.
+    if (!entry.email) {
+      return NextResponse.json(
+        { error: "Esta persona no dejó un email, no hay forma de avisarle." },
+        { status: 409 }
+      );
+    }
+
     const bookingUrl = appUrl(`/${business!.slug}/reservar`);
-    const message = `¡Buenas noticias! Se liberó un turno para ${entry.service.name}. Reservá ahora: ${bookingUrl}`;
+    const email = entry.email;
 
     runInBackground("waitlist-notify", async () => {
-      await sendWhatsAppText(entry.phone, message);
-      if (entry.email) {
-        await sendEmail({
-          to: entry.email,
-          type: "cancellation",
-          businessName: business!.name,
-          clientName: entry.name,
-          serviceName: entry.service.name,
-          staffName: "",
-          dateTime: entry.preferredDate,
-        });
-      }
+      await sendEmail({
+        to: email,
+        type: "waitlist_slot_open",
+        businessName: business!.name,
+        clientName: entry.name,
+        serviceName: entry.service.name,
+        staffName: "",
+        dateTime: entry.preferredDate,
+        bookingUrl,
+      });
     }, { entryId: entry.id });
 
     await db.waitlistEntry.update({

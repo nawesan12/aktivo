@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { sendWhatsApp } from "./whatsapp";
 import { sendEmail } from "./email";
 
 type NotificationType =
@@ -15,7 +14,6 @@ interface NotificationData {
   businessName: string;
   appointmentId: string;
   clientName: string;
-  clientPhone?: string;
   clientEmail?: string;
   serviceName: string;
   staffName: string;
@@ -56,62 +54,15 @@ export async function sendNotification(data: NotificationData) {
     return results;
   }
 
-  const whatsappEnabled = prefs?.whatsappEnabled !== false;
   const emailEnabled = prefs?.emailEnabled !== false;
 
-  // Map extended types to base types for WhatsApp/Email
+  // Map extended types to the base types the email templates know about
   const baseType = (data.type === "reminder_24h" || data.type === "reminder_1h")
     ? "reminder" as const
     : data.type === "reschedule"
       ? "confirmation" as const
       : data.type;
 
-  // Send WhatsApp
-  if (data.clientPhone && whatsappEnabled) {
-    try {
-      await sendWhatsApp({
-        to: data.clientPhone,
-        type: baseType,
-        businessName: data.businessName,
-        clientName: data.clientName,
-        serviceName: data.serviceName,
-        staffName: data.staffName,
-        dateTime: data.dateTime,
-      });
-
-      await db.notification.create({
-        data: {
-          businessId: data.businessId,
-          appointmentId: data.appointmentId,
-          channel: "WHATSAPP",
-          type: data.type,
-          status: "SENT",
-          recipient: data.clientPhone,
-          sentAt: new Date(),
-        },
-      });
-
-      results.push({ channel: "whatsapp", success: true });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-
-      await db.notification.create({
-        data: {
-          businessId: data.businessId,
-          appointmentId: data.appointmentId,
-          channel: "WHATSAPP",
-          type: data.type,
-          status: "FAILED",
-          recipient: data.clientPhone,
-          error: errorMsg,
-        },
-      });
-
-      results.push({ channel: "whatsapp", success: false, error: errorMsg });
-    }
-  }
-
-  // Send Email
   if (data.clientEmail && emailEnabled) {
     try {
       await sendEmail({

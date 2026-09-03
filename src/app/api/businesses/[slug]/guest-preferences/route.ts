@@ -72,7 +72,7 @@ export async function PUT(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { emailEnabled, whatsappEnabled, remindersEnabled } =
+    const { emailEnabled, remindersEnabled } =
       await request.json();
 
     const preference = await db.notificationPreference.upsert({
@@ -84,14 +84,12 @@ export async function PUT(
       },
       update: {
         emailEnabled,
-        whatsappEnabled,
         remindersEnabled,
       },
       create: {
         businessId: guest.businessId,
         guestClientId: guest.guestClientId,
         emailEnabled,
-        whatsappEnabled,
         remindersEnabled,
       },
     });

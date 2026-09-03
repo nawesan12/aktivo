@@ -96,7 +96,7 @@ export function StepInfo({ slug }: { slug: string }) {
 
         <div>
           <Label htmlFor="email" className="text-sm font-medium mb-1.5 block">
-            Email <span className="text-muted-foreground">(opcional)</span>
+            Email
           </Label>
           <Input
             id="email"
@@ -105,6 +105,9 @@ export function StepInfo({ slug }: { slug: string }) {
             {...register("email")}
             className="rounded-lg"
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Te mandamos ahí la confirmación y el recordatorio del turno.
+          </p>
           {errors.email && (
             <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
           )}

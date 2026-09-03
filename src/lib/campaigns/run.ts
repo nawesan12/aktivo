@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { sendCampaignEmail } from "@/lib/notifications/campaign-email";
-import { sendWhatsAppText } from "@/lib/notifications/whatsapp";
 import { createLogger } from "@/lib/logger";
 import { cooldownDays, resolveAudience, type Recipient } from "./audience";
 import type { Campaign } from "@/generated/prisma/client";
@@ -16,10 +15,6 @@ export interface CampaignRunResult {
   sent: number;
   failed: number;
   skipped: number;
-}
-
-function interpolate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
 }
 
 /**
@@ -97,10 +92,9 @@ async function deliver(
   client: Recipient,
   businessName: string
 ): Promise<"sent" | "failed" | "skipped"> {
-  // The channel decides the address. This used to always take the email and
-  // always send an email, so a WhatsApp campaign silently did nothing for every
-  // client without an email address.
-  const recipient = campaign.channel === "EMAIL" ? client.email : client.phone;
+  // Email is the only channel. A client without an address cannot be reached,
+  // and saying so as "skipped" keeps it out of the failure count.
+  const recipient = client.email;
   if (!recipient) return "skipped";
 
   const variables = {
@@ -111,18 +105,14 @@ async function deliver(
   let error: string | undefined;
 
   try {
-    if (campaign.channel === "EMAIL") {
-      const result = await sendCampaignEmail({
-        to: recipient,
-        subject: campaign.messageSubject || campaign.name,
-        body: campaign.messageBody,
-        businessName,
-        variables,
-      });
-      if (!result.success) error = result.error ?? "Unknown error";
-    } else {
-      await sendWhatsAppText(recipient, interpolate(campaign.messageBody, variables));
-    }
+    const result = await sendCampaignEmail({
+      to: recipient,
+      subject: campaign.messageSubject || campaign.name,
+      body: campaign.messageBody,
+      businessName,
+      variables,
+    });
+    if (!result.success) error = result.error ?? "Unknown error";
   } catch (cause) {
     error = cause instanceof Error ? cause.message : "Unknown error";
   }

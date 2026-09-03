@@ -9,14 +9,14 @@ export function BigFeature() {
           <div className="jiku-reveal">
             <div className="section-eyebrow">Comunicación</div>
             <div className="section-title">
-              WhatsApp en
+              Avisos en
               <br />
               piloto automático
             </div>
             <p className="section-desc" style={{ marginTop: 16 }}>
-              El 98% de tus clientes usa WhatsApp. Jiku envía confirmaciones,
-              recordatorios y mensajes post-servicio para pedir reseñas. Todo
-              automático, todo personalizado.
+              Jiku manda la confirmación al reservar, el recordatorio 24 h antes
+              y el pedido de reseña después. Todo automático, todo con el nombre
+              y los colores de tu negocio.
             </p>
             <div
               style={{ marginTop: 32, display: "flex", gap: 32 }}

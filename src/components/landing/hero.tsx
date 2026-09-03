@@ -18,7 +18,7 @@ export function Hero() {
               <span className="line-2 serif">se mueve sola</span>
             </h1>
             <p className="hero-desc">
-              Reservas 24/7. WhatsApp automático. Cobros integrados. CRM
+              Reservas 24/7. Recordatorios automáticos. Cobros integrados. CRM
               inteligente. Todo girando alrededor de un solo <span className="jade">eje</span>: Jiku.
             </p>
             <div className="hero-ctas">

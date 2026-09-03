@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { sendWhatsApp } from "./whatsapp";
 import { sendEmail } from "./email";
 import { createLogger } from "@/lib/logger";
 
@@ -9,16 +8,21 @@ const log = createLogger("notifications:redelivery");
  * Re-sends notifications that failed.
  *
  * `sendNotification` already records every failure as a row with
- * `status: FAILED` — but nothing ever read those rows back, so a WhatsApp lost
- * to a Meta hiccup was lost for good, and the customer simply never got their
+ * `status: FAILED` — but nothing ever read those rows back, so a mail lost to a
+ * provider hiccup was lost for good, and the customer simply never got their
  * confirmation. This closes that loop.
  */
 
 /** After this many tries the recipient is assumed to be wrong, not unlucky. */
 export const MAX_ATTEMPTS = 4;
 
-/** Older than this, a reminder for a past appointment is noise, not a fix. */
-const MAX_AGE_HOURS = 24;
+/**
+ * Older than this, a reminder for a past appointment is noise, not a fix.
+ *
+ * Wide enough that the daily job alone can still spend the four attempts: at 24
+ * hours, a run once a day meant `MAX_ATTEMPTS` was effectively one.
+ */
+const MAX_AGE_HOURS = 72;
 
 type BaseType = "confirmation" | "reminder" | "cancellation";
 
@@ -61,8 +65,14 @@ export async function redeliverFailedNotifications(limit = 50) {
   for (const notification of pending) {
     const appointment = notification.appointment;
 
-    // The appointment was deleted, or is no longer worth notifying about.
-    if (!appointment || appointment.status === "CANCELLED") {
+    // Nothing left to retry on: the appointment is gone or no longer worth
+    // notifying about, or the row predates WhatsApp being removed and names a
+    // channel the product no longer has.
+    if (
+      !appointment ||
+      appointment.status === "CANCELLED" ||
+      notification.channel !== "EMAIL"
+    ) {
       await db.notification.update({
         where: { id: notification.id },
         data: { attempts: MAX_ATTEMPTS, lastAttemptAt: new Date() },
@@ -85,11 +95,7 @@ export async function redeliverFailedNotifications(limit = 50) {
         dateTime: appointment.dateTime,
       };
 
-      if (notification.channel === "WHATSAPP") {
-        await sendWhatsApp(payload);
-      } else {
-        await sendEmail(payload);
-      }
+      await sendEmail(payload);
 
       await db.notification.update({
         where: { id: notification.id },
