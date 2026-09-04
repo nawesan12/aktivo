@@ -1,23 +1,22 @@
-import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { getBusinessIdentity } from "@/lib/booking/business-page";
 import { EmbedBookingFlow } from "./embed-booking-flow";
+
+/**
+ * Cached: this is an iframe on somebody else's website, so it is requested
+ * once per visitor of *their* site, and it renders nothing that changes between
+ * those visitors.
+ */
+export const revalidate = 600;
+
+export function generateStaticParams() {
+  return [];
+}
 
 export default async function EmbedPage({ params }: { params: Promise<{ businessSlug: string }> }) {
   const { businessSlug } = await params;
 
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      logo: true,
-      primaryColor: true,
-      settings: {
-        select: { widgetEnabled: true },
-      },
-    },
-  });
+  const business = await getBusinessIdentity(businessSlug);
 
   if (!business || !business.settings?.widgetEnabled) {
     notFound();

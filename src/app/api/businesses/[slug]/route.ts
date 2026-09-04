@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
+import { cachedJson } from "@/lib/api-cache";
 
 export async function GET(
   _request: Request,
@@ -36,7 +37,7 @@ export async function GET(
       return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(business);
+    return cachedJson(business);
   } catch (error) {
     return handleApiError(error, "businesses:slug");
   }

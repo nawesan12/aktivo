@@ -54,6 +54,13 @@ export async function GET(
       position: business.settings.widgetPosition,
     });
 
+    // Branding for a button on someone else's website: it is the same answer
+    // for every visitor of that site, and it changes when the owner edits it.
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=0, s-maxage=300, stale-while-revalidate=3600"
+    );
+
     // CORS headers
     response.headers.set("Access-Control-Allow-Origin", "*");
     response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");

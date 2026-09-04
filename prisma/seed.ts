@@ -4,6 +4,36 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import bcrypt from "bcryptjs";
 
+/**
+ * Refuses to run against production.
+ *
+ * This file creates two fake barbershops and a platform administrator whose
+ * password is published in this repository. Running it on the live database
+ * would hand anyone reading the repo an admin account.
+ *
+ * The check is on the host rather than on NODE_ENV because the danger is a
+ * developer's laptop pointed at the wrong connection string — which is exactly
+ * the case where NODE_ENV still says "development". `SEED_ANYWAY=1` is the
+ * escape hatch for a deliberate reseed of a staging database.
+ */
+function assertNotProduction(connectionString: string | undefined) {
+  if (!connectionString) throw new Error("DATABASE_URL no está configurada");
+  if (process.env.SEED_ANYWAY === "1") return;
+
+  const PRODUCTION_HOSTS = ["ep-snowy-pine-acuf5ono"];
+  const host = new URL(connectionString).hostname;
+
+  if (PRODUCTION_HOSTS.some((h) => host.includes(h))) {
+    throw new Error(
+      `\nEste seed apunta a la base de PRODUCCIÓN (${host}).\n` +
+        `Crea barberías falsas y un admin con contraseña publicada en el repo.\n` +
+        `Si de verdad querés hacerlo, corré con SEED_ANYWAY=1.\n`
+    );
+  }
+}
+
+assertNotProduction(process.env.DATABASE_URL);
+
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const db = new PrismaClient({ adapter });

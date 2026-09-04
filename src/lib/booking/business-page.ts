@@ -42,6 +42,31 @@ export const getBusinessProfile = cache(async (slug: string) => {
   return business;
 });
 
+/**
+ * Just enough to render a booking shell: who the business is and whether it is
+ * open for business. Separate from the full profile because the pages that need
+ * only this — the wizard, the client portal, the embedded widget — were each
+ * running their own query for four columns that change once a year.
+ */
+export const getBusinessIdentity = cache(async (slug: string) => {
+  const business = await db.business.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      logo: true,
+      primaryColor: true,
+      isActive: true,
+      settings: { select: { widgetEnabled: true } },
+    },
+  });
+
+  if (!business || !business.isActive) return null;
+
+  return business;
+});
+
 /** Services that were never filed under a category. */
 export const getUncategorizedServices = cache(async (businessId: string) =>
   db.service.findMany({

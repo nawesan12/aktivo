@@ -3,6 +3,7 @@ import { resolveBusinessBySlug } from "@/lib/business-resolver";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
 import { safeImageUrl } from "@/lib/images";
+import { cachedJson } from "@/lib/api-cache";
 
 export async function GET(
   _request: Request,
@@ -77,7 +78,7 @@ export async function GET(
       });
     }
 
-    return NextResponse.json(result);
+    return cachedJson(result);
   } catch (error) {
     return handleApiError(error, "businesses:slug:services");
   }

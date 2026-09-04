@@ -1,18 +1,29 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
+import { getBusinessIdentity } from "@/lib/booking/business-page";
 import { BookingWizard } from "@/components/booking/booking-wizard";
 
 interface Props {
   params: Promise<{ businessSlug: string }>;
 }
 
+/**
+ * Cached like the profile it hangs off. This page is the one every customer
+ * lands on to book, and all it renders from the server is the business's id and
+ * slug — two columns that change about never, fetched twice per visit.
+ *
+ * The wizard itself is a client component that reads live availability, so the
+ * caching stops exactly where freshness starts to matter.
+ */
+export const revalidate = 600;
+
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { businessSlug } = await params;
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    select: { name: true },
-  });
+  const business = await getBusinessIdentity(businessSlug);
 
   return {
     title: business ? `Reservar turno - ${business.name}` : "Reservar Turno",
@@ -22,12 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BookingPage({ params }: Props) {
   const { businessSlug } = await params;
 
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    select: { id: true, slug: true, isActive: true },
-  });
-
-  if (!business || !business.isActive) notFound();
+  const business = await getBusinessIdentity(businessSlug);
+  if (!business) notFound();
 
   return <BookingWizard businessId={business.id} slug={business.slug} />;
 }

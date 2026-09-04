@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { Search, MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,17 +9,20 @@ import { BusinessCard } from "@/components/directory/business-card";
 import type { DirectoryBusiness, DirectoryPage } from "@/lib/directory";
 
 interface ExplorePageClientProps {
-  initialQuery?: string;
   /** SWR key the server-rendered results correspond to. */
   initialKey?: string;
   initialResults?: DirectoryPage;
 }
 
 export function ExplorePageClient({
-  initialQuery = "",
   initialKey,
   initialResults,
 }: ExplorePageClientProps) {
+  // Read here rather than on the server. Reading it there made the page
+  // dynamic, and this filter was always a client-side concern: someone typing
+  // in the box, or arriving with a shared link.
+  const initialQuery = useSearchParams().get("q") ?? "";
+
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState("");
   // No province selector in the interface yet; the API accepts one.
