@@ -62,8 +62,8 @@ test.describe("F12 — Business Directory", () => {
       await page.goto("/explorar");
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByText(/Explorá negocios/i)).toBeVisible();
-      await expect(page.getByPlaceholder(/Buscar por nombre/i)).toBeVisible();
+      await expect(page.getByRole("heading", { name: /Reservá en los mejores/i })).toBeVisible();
+      await expect(page.getByPlaceholder(/Barbería, uñas, spa/i)).toBeVisible();
     });
 
     test("explorar page shows business cards", async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe("F12 — Business Directory", () => {
       await page.goto("/explorar");
       await page.waitForLoadState("networkidle");
 
-      const searchInput = page.getByPlaceholder(/Buscar por nombre/i);
+      const searchInput = page.getByPlaceholder(/Barbería, uñas, spa/i);
       await searchInput.fill("zzzznonexistent");
 
       // Wait for debounce + fetch
@@ -94,7 +94,7 @@ test.describe("F12 — Business Directory", () => {
       await page.goto("/explorar");
       await page.waitForLoadState("networkidle");
 
-      const cityInput = page.getByPlaceholder("Ciudad");
+      const cityInput = page.getByPlaceholder("Tu ciudad");
       await cityInput.fill("Mar del Plata");
 
       await page.waitForTimeout(500);

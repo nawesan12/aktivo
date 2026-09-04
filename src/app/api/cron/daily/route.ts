@@ -7,15 +7,16 @@ import { createLogger } from "@/lib/logger";
 const log = createLogger("cron:daily");
 
 /**
- * The one scheduled job the free plan allows.
+ * The scheduled floor under the opportunistic tick.
  *
- * Everything else runs opportunistically off real traffic (see
- * `src/lib/jobs/tick.ts`); this is the floor underneath, and the only owner of
- * the work that has to happen on a given day whether or not anybody visited the
- * site — campaigns, above all.
+ * Not wired to a Vercel cron right now — `vercel.json` declares none — so
+ * nothing calls this on a timer. Every job in the registry is `opportunistic`,
+ * which means real traffic drives all of them through `maybeTick()`; this route
+ * stays because the moment the shop is quiet enough that traffic is not enough,
+ * adding one line back to `vercel.json` is the whole change.
  *
  * It runs with `force`, so a tick that happened a minute ago cannot talk it out
- * of running.
+ * of running. It can also be hit by hand with the CRON_SECRET.
  */
 export async function GET(request: NextRequest) {
   try {

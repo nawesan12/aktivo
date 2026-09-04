@@ -35,7 +35,7 @@ export async function loginAs(page: Page, email: string, password: string) {
   // By label, not by placeholder: the password field's placeholder is "********".
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/contraseña/i).fill(password);
-  await page.getByRole("button", { name: /iniciar sesión|ingresar/i }).click();
+  await page.getByRole("button", { name: /iniciar sesión|ingresar|entrar al panel/i }).click();
   // Wait for redirect
   await page.waitForURL((url) => !url.pathname.includes("iniciar-sesion"), {
     timeout: 15_000,

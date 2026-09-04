@@ -36,7 +36,7 @@ test.describe("F9 — Coupon/Discount Codes", () => {
       await page.goto(`/${SEED.business.slug}/reservar`);
       await page.waitForLoadState("networkidle");
       // Booking wizard loads with service selection
-      await expect(page.getByText(/Elegir servicio/i)).toBeVisible();
+      await expect(page.getByRole("heading", { name: /Elegí tu servicio/i })).toBeVisible();
     });
   });
 

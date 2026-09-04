@@ -1,109 +1,132 @@
 import {
-  LayoutDashboard,
+  BadgeCheck,
+  BarChart2,
   Calendar,
   CalendarDays,
-  Scissors,
-  Users,
-  UserCircle,
-  Clock,
-  BadgeCheck,
-  CalendarCheck,
-  Globe,
-  UserCog,
   CreditCard,
-  Bell,
-  Settings,
-  Shield,
-  BarChart2,
-  Star,
-  Megaphone,
-  MapPin,
-  Activity,
-  Send,
-  Sparkles,
-  Code2,
-  Hourglass,
-  Ticket,
   Gift,
-  Tags,
+  Globe,
+  Hourglass,
+  LayoutDashboard,
+  Scissors,
+  Settings,
+  Sparkles,
+  Star,
+  UserCircle,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
+export interface PanelNavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  /**
+   * Screens this entry owns without appearing separately in the sidebar —
+   * either a tab of the destination or a page reached from inside it. They stay
+   * listed so the active state survives the jump and so PANEL_ROUTES keeps
+   * covering them.
+   */
+  covers?: string[];
+  /** Live counters the sidebar fills in. */
+  badge?: "waitlist" | "trial";
+}
+
 /**
- * The panel's sections, in one place.
+ * One flat list, grouped only by the hairlines between blocks.
  *
- * The sidebar and the mobile menu each used to carry their own copy, and they
- * drifted: the phone was missing six sections, `Suscripción` among them. That
- * meant a business whose trial had run out — panel read-only, banner telling
- * them to subscribe — had no way of reaching the payment screen from a phone,
- * which is where most of them are.
- */
-/**
- * The panel, in groups.
+ * It used to be five titled sections and twenty-four entries, which did not fit
+ * a 900px viewport without scrolling — so the two screens at the bottom
+ * ("Configuración", "Suscripción") were the ones nobody found. The redesign
+ * trades section headings for 1px rules and folds the pairs that were always
+ * visited together:
  *
- * It was twenty-four entries in one flat column: somebody opening it for the
- * first time had to read the whole list to find anything. And everything about
- * their own account lived in a different shell with a different header,
- * reachable only from a dropdown — so "mi cuenta" and "mi negocio" read as two
- * separate applications.
+ *   Equipo + Horarios        → tabs of /panel/equipo
+ *   Membresías + Cupones     → tabs of /panel/membresias
+ *   Etiquetas                → inside Clientes
+ *   Sucursales, Envíos,
+ *   Historial                → inside Configuración
+ *   Mi perfil, Mis turnos,
+ *   Mis avisos               → the user menu, where account settings belong
  */
-export const PANEL_SECTIONS: {
-  title: string;
-  items: { name: string; href: string; icon: LucideIcon }[];
-}[] = [
-  {
-    title: "Día a día",
-    items: [
-      { name: "Dashboard", href: "/panel", icon: LayoutDashboard },
-      { name: "Turnos", href: "/panel/turnos", icon: Calendar },
-      { name: "Calendario", href: "/panel/calendario", icon: CalendarDays },
-      { name: "Lista de espera", href: "/panel/lista-espera", icon: Hourglass },
-      { name: "Clientes", href: "/panel/clientes", icon: UserCircle },
-    ],
-  },
-  {
-    title: "Tu local",
-    items: [
-      { name: "Mi web", href: "/panel/mi-web", icon: Globe },
-      { name: "Servicios", href: "/panel/servicios", icon: Scissors },
-      { name: "Equipo", href: "/panel/equipo", icon: Users },
-      { name: "Horarios", href: "/panel/horarios", icon: Clock },
-      { name: "Etiquetas", href: "/panel/etiquetas", icon: Tags },
-      { name: "Sucursales", href: "/panel/sucursales", icon: MapPin },
-    ],
-  },
-  {
-    title: "Plata",
-    items: [
-      { name: "Pagos", href: "/panel/pagos", icon: CreditCard },
-      { name: "Membresías", href: "/panel/membresias", icon: BadgeCheck },
-      { name: "Cupones", href: "/panel/cupones", icon: Ticket },
-    ],
-  },
-  {
-    title: "Crecer",
-    items: [
-      { name: "Reseñas", href: "/panel/reviews", icon: Star },
-      { name: "Campañas", href: "/panel/campanas", icon: Megaphone },
-      { name: "Referidos", href: "/panel/referidos", icon: Gift },
-      { name: "Analytics", href: "/panel/analytics", icon: Activity },
-      { name: "Reportes", href: "/panel/reportes", icon: BarChart2 },
-      { name: "Widget", href: "/panel/widget", icon: Code2 },
-      { name: "Envíos", href: "/panel/notificaciones", icon: Send },
-    ],
-  },
-  {
-    title: "Tu cuenta",
-    items: [
-      { name: "Mi perfil", href: "/mi-cuenta/perfil", icon: UserCog },
-      { name: "Mis turnos", href: "/mi-cuenta/turnos", icon: CalendarCheck },
-      { name: "Suscripción", href: "/panel/suscripcion", icon: Sparkles },
-      { name: "Mis avisos", href: "/mi-cuenta/notificaciones", icon: Bell },
-      { name: "Configuración", href: "/panel/configuracion", icon: Settings },
-      { name: "Historial", href: "/panel/audit", icon: Shield },
-    ],
-  },
+export const PANEL_NAV_GROUPS: PanelNavItem[][] = [
+  [
+    { name: "Dashboard", href: "/panel", icon: LayoutDashboard },
+    { name: "Turnos", href: "/panel/turnos", icon: Calendar },
+    { name: "Calendario", href: "/panel/calendario", icon: CalendarDays },
+    { name: "Lista de espera", href: "/panel/lista-espera", icon: Hourglass, badge: "waitlist" },
+    { name: "Clientes", href: "/panel/clientes", icon: UserCircle, covers: ["/panel/etiquetas"] },
+  ],
+  [
+    { name: "Mi web", href: "/panel/mi-web", icon: Globe },
+    { name: "Servicios", href: "/panel/servicios", icon: Scissors },
+    { name: "Equipo y horarios", href: "/panel/equipo", icon: Users, covers: ["/panel/horarios"] },
+  ],
+  [
+    { name: "Pagos", href: "/panel/pagos", icon: CreditCard },
+    {
+      name: "Membresías y cupones",
+      href: "/panel/membresias",
+      icon: BadgeCheck,
+      covers: ["/panel/cupones"],
+    },
+  ],
+  [
+    { name: "Reseñas", href: "/panel/reviews", icon: Star },
+    { name: "Referidos", href: "/panel/referidos", icon: Gift },
+    { name: "Reportes", href: "/panel/reportes", icon: BarChart2 },
+  ],
+  [
+    {
+      name: "Configuración",
+      href: "/panel/configuracion",
+      icon: Settings,
+      covers: ["/panel/sucursales", "/panel/notificaciones", "/panel/audit"],
+    },
+    { name: "Suscripción", href: "/panel/suscripcion", icon: Sparkles, badge: "trial" },
+  ],
 ];
 
-/** The same entries, flat, for anything that only needs the list of screens. */
-export const PANEL_NAVIGATION = PANEL_SECTIONS.flatMap((section) => section.items);
+/** The same entries, flat, for anything that only needs the sidebar's list. */
+export const PANEL_NAVIGATION = PANEL_NAV_GROUPS.flat();
+
+/**
+ * Every panel screen that can be reached, including the ones folded into
+ * another entry. `e2e/f18-panel-responsive.spec.ts` walks this to check no page
+ * overflows horizontally on a phone — driving it off the sidebar alone would
+ * quietly stop covering everything the merges hid.
+ */
+export const PANEL_ROUTES: string[] = [
+  ...PANEL_NAVIGATION.map((item) => item.href),
+  ...PANEL_NAVIGATION.flatMap((item) => item.covers ?? []),
+  "/mi-cuenta/perfil",
+  "/mi-cuenta/seguridad",
+  "/mi-cuenta/turnos",
+  "/mi-cuenta/notificaciones",
+  "/mi-cuenta/referidos",
+  "/mi-cuenta/negocios",
+];
+
+/**
+ * The phone's bottom bar. Five slots, and the middle one is the "+" button
+ * rather than a destination — so it is described here as a hole the component
+ * fills, not as a route.
+ */
+export const MOBILE_NAV: (PanelNavItem | "action")[] = [
+  { name: "Hoy", href: "/panel", icon: LayoutDashboard },
+  { name: "Calendario", href: "/panel/calendario", icon: CalendarDays },
+  "action",
+  { name: "Clientes", href: "/panel/clientes", icon: UserCircle },
+  // Settings has its own slot on purpose: on a phone it is the screen owners
+  // reach for most after the agenda, and burying it behind a drawer was why
+  // nobody changed their deposit percentage from the shop floor.
+  { name: "Ajustes", href: "/panel/configuracion", icon: Settings },
+];
+
+/** Whether `pathname` is inside the screen this entry owns. */
+export function isNavItemActive(item: PanelNavItem, pathname: string): boolean {
+  const owns = [item.href, ...(item.covers ?? [])];
+  return owns.some(
+    (href) => pathname === href || (href !== "/panel" && pathname.startsWith(`${href}/`))
+  );
+}

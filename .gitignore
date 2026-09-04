@@ -53,3 +53,6 @@ next-env.d.ts
 
 # Claude Code: configuración local, puede contener tokens
 .claude/settings.local.json
+
+# Material de referencia del rediseño (handoff de Claude Design)
+/design/

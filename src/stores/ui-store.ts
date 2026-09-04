@@ -1,23 +1,19 @@
 import { create } from "zustand";
 
+/**
+ * What is left of the UI store after the redesign.
+ *
+ * `sidebarOpen` / `toggleSidebar` were never read anywhere; `sidebarCollapsed`
+ * went with the collapse toggle, which the 212px sidebar no longer needs; and
+ * `mobileNavOpen` drove the panel's left drawer, replaced by a bottom bar. Only
+ * the admin shell still opens a sheet.
+ */
 interface UIStore {
-  sidebarOpen: boolean;
-  sidebarCollapsed: boolean;
-  mobileNavOpen: boolean;
   adminMobileNavOpen: boolean;
-  toggleSidebar: () => void;
-  toggleSidebarCollapsed: () => void;
-  setMobileNavOpen: (open: boolean) => void;
   setAdminMobileNavOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
-  sidebarOpen: true,
-  sidebarCollapsed: false,
-  mobileNavOpen: false,
   adminMobileNavOpen: false,
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-  setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
   setAdminMobileNavOpen: (open) => set({ adminMobileNavOpen: open }),
 }));

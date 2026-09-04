@@ -21,7 +21,7 @@ test("el dashboard muestra sus números sin esperar al fetch del cliente", async
 
   await expect(page.getByText("Turnos hoy")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Ingresos del mes")).toBeVisible();
-  await expect(page.getByText("Tasa de ocupación")).toBeVisible();
+  await expect(page.getByText("Ocupación")).toBeVisible();
 
   // Y con un valor de verdad, no un guion de relleno.
   const occupancy = page.getByText(/^\d+%$/).first();

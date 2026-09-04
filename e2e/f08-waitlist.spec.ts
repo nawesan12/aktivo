@@ -35,6 +35,6 @@ test.describe("F8 — Waitlist UX Improvements", () => {
     await page.goto(`/${SEED.business.slug}/reservar`);
     await page.waitForLoadState("networkidle");
     // Service selection loads
-    await expect(page.getByText(/Elegir servicio/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Elegí tu servicio/i })).toBeVisible();
   });
 });

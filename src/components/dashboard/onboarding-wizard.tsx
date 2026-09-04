@@ -1,328 +1,491 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import gsap from "@/lib/animations/gsap";
-import { Loader2, Check, ArrowRight, SkipForward } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+import { JikuLogo } from "@/components/brand/jiku-logo";
 import { errorMessage, messageOf } from "@/lib/api-message";
+import { cn } from "@/lib/utils";
 
 interface OnboardingWizardProps {
   businessName: string;
   businessId: string;
 }
 
-const steps = [
-  { title: "Perfil del negocio", desc: "Contanos sobre tu negocio" },
-  { title: "Primer servicio", desc: "Agrega un servicio que ofrezcas" },
-  { title: "Tu equipo", desc: "Agrega al menos un profesional" },
-  { title: "Listo!", desc: "Tu negocio esta configurado" },
+const STEPS = [
+  { id: "negocio", label: "Tu negocio" },
+  { id: "servicios", label: "Servicios" },
+  { id: "horarios", label: "Horarios" },
+  { id: "link", label: "Tu link" },
 ];
 
+/** The three bands a shop actually thinks in, not seven separate days. */
+const BANDS = [
+  { id: "weekdays", label: "Lun a Vie", days: [1, 2, 3, 4, 5], from: "09:00", to: "20:00" },
+  { id: "saturday", label: "Sábado", days: [6], from: "10:00", to: "18:00" },
+  { id: "sunday", label: "Domingo", days: [0], from: "10:00", to: "14:00" },
+];
+
+const ILLUSTRATIONS = [
+  "/illus/booking.svg",
+  "/illus/gift.svg",
+  "/illus/calendar.svg",
+  "/illus/confirmed.svg",
+];
+
+/**
+ * Four steps, and the third one is new.
+ *
+ * The wizard used to be profile → service → professional → done, with no hours
+ * anywhere. So it created a professional with an empty agenda, the completion
+ * check said the business was set up, and the public page offered not one free
+ * slot — the shop was live and unbookable. Hours are the step that makes the
+ * rest of it mean anything.
+ */
 export function OnboardingWizard({ businessName, businessId }: OnboardingWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
 
-  // Step 1: Profile
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
-  const [savingProfile, setSavingProfile] = useState(false);
 
-  // Step 2: Service
   const [serviceName, setServiceName] = useState("");
   const [duration, setDuration] = useState(30);
   const [price, setPrice] = useState(0);
-  const [savingService, setSavingService] = useState(false);
   const [createdServiceId, setCreatedServiceId] = useState<string | null>(null);
 
-  // Step 3: Staff
   const [staffName, setStaffName] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [staffPhone, setStaffPhone] = useState("");
-  const [savingStaff, setSavingStaff] = useState(false);
+  const [createdStaffId, setCreatedStaffId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (contentRef.current) {
-      gsap.fromTo(
-        contentRef.current,
-        { opacity: 0, x: 40 },
-        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
-      );
-    }
-  }, [step]);
+  const [hours, setHours] = useState(
+    BANDS.map((band) => ({ id: band.id, open: band.id !== "sunday", from: band.from, to: band.to }))
+  );
+
+  const [slug, setSlug] = useState<string | null>(null);
 
   function markSeen() {
-    try { localStorage.setItem(`jiku_onboarding_${businessId}`, "1"); } catch {}
+    try {
+      localStorage.setItem(`jiku_onboarding_${businessId}`, "1");
+    } catch {
+      // Private browsing. The server-side check still redirects once the
+      // business is complete, so this is only a shortcut.
+    }
   }
 
   async function saveProfile() {
-    setSavingProfile(true);
+    setSaving(true);
     try {
       const res = await fetch("/api/panel/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business: { description, phone } }),
+        body: JSON.stringify({ business: { description, phone: phone || undefined } }),
       });
       if (!res.ok) throw new Error(await errorMessage(res));
-      toast.success("Perfil guardado");
       setStep(1);
     } catch (error) {
-      toast.error(messageOf(error, "Error al guardar el perfil"));
+      toast.error(messageOf(error, "No pudimos guardar los datos"));
     } finally {
-      setSavingProfile(false);
+      setSaving(false);
     }
   }
 
   async function saveService() {
-    if (!serviceName.trim()) { toast.error("Nombre del servicio requerido"); return; }
-    setSavingService(true);
+    setSaving(true);
     try {
       const res = await fetch("/api/panel/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: serviceName, duration, price, isActive: true }),
+        body: JSON.stringify({ name: serviceName, duration, price }),
       });
       if (!res.ok) throw new Error(await errorMessage(res));
-      const data = await res.json();
-      setCreatedServiceId(data.id);
-      toast.success("Servicio creado");
-      setStep(2);
-    } catch (error) {
-      toast.error(messageOf(error, "Error al crear el servicio"));
-    } finally {
-      setSavingService(false);
-    }
-  }
+      const created = await res.json();
+      setCreatedServiceId(created.id);
 
-  async function saveStaff() {
-    if (!staffName.trim()) { toast.error("Nombre del profesional requerido"); return; }
-    setSavingStaff(true);
-    try {
-      const res = await fetch("/api/panel/staff", {
+      // The professional goes in with the service already assigned: a
+      // professional who does nothing cannot be booked either.
+      const staffRes = await fetch("/api/panel/staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: staffName,
-          specialty,
-          phone: staffPhone,
-          serviceIds: createdServiceId ? [createdServiceId] : [],
+          name: staffName.trim() || businessName,
+          serviceIds: [created.id],
         }),
       });
-      if (!res.ok) throw new Error(await errorMessage(res));
-      toast.success("Profesional creado");
-      markSeen();
-      setStep(3);
+      if (!staffRes.ok) throw new Error(await errorMessage(staffRes));
+      setCreatedStaffId((await staffRes.json()).id);
+
+      setStep(2);
     } catch (error) {
-      toast.error(messageOf(error, "Error al crear el profesional"));
+      toast.error(messageOf(error, "No pudimos guardar el servicio"));
     } finally {
-      setSavingStaff(false);
+      setSaving(false);
     }
   }
 
-  const progress = ((step) / (steps.length - 1)) * 100;
+  async function saveHours() {
+    if (!createdStaffId) return setStep(3);
+    setSaving(true);
+    try {
+      const workingHours = BANDS.flatMap((band) => {
+        const state = hours.find((entry) => entry.id === band.id)!;
+        return band.days.map((dayOfWeek) => ({
+          dayOfWeek,
+          startTime: state.from,
+          endTime: state.to,
+          isActive: state.open,
+        }));
+      });
+
+      const res = await fetch(`/api/panel/staff/${createdStaffId}/schedule`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workingHours }),
+      });
+      if (!res.ok) throw new Error(await errorMessage(res));
+
+      const settings = await fetch("/api/panel/settings").then((r) => r.json());
+      setSlug(settings?.business?.slug ?? null);
+      setStep(3);
+    } catch (error) {
+      toast.error(messageOf(error, "No pudimos guardar los horarios"));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-heading font-bold">
-          Bienvenido a <span className="brand-text">Jiku</span>
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Configuremos {businessName} en unos pasos
-        </p>
-      </div>
+    <div className="bg-dots -m-4 min-h-screen px-6 py-8 lg:-m-7 lg:px-11 lg:py-9">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <JikuLogo size="md" />
 
-      {/* Progress bar */}
-      <div className="mb-8">
-        <div className="flex justify-between mb-2">
-          {steps.map((s, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                i < step ? "brand-gradient text-white" :
-                i === step ? "border-2 border-primary text-primary" :
-                "border border-border text-muted-foreground"
-              }`}>
-                {i < step ? <Check className="w-3 h-3" /> : i + 1}
-              </div>
-            </div>
+        <ol className="flex flex-wrap items-center gap-2 text-[11px] text-faint">
+          {STEPS.map((entry, index) => (
+            <li key={entry.id} className="flex items-center gap-2">
+              <span
+                className={cn(
+                  index === step && "rounded-full border border-jade-link/30 bg-jade-fill px-3 py-1.5 font-bold text-jade-label",
+                  index < step && "font-semibold text-jade-label"
+                )}
+              >
+                {index + 1} {entry.label}
+              </span>
+              {index < STEPS.length - 1 && (
+                <span
+                  className={cn("h-px w-[22px]", index < step ? "bg-primary" : "bg-border")}
+                  aria-hidden
+                />
+              )}
+            </li>
           ))}
+        </ol>
+
+        <button
+          type="button"
+          onClick={() => {
+            markSeen();
+            router.push("/panel");
+          }}
+          className="text-[11px] text-faint hover:text-foreground"
+        >
+          Saltar por ahora
+        </button>
+      </header>
+
+      <div className="grid items-center gap-11 lg:grid-cols-[1fr_380px]">
+        <div>
+          {step === 0 && (
+            <Pane
+              title={`Contanos de ${businessName}`}
+              hint="Esto es lo que van a leer tus clientes cuando abran tu link."
+              footer={
+                <Continue onClick={saveProfile} saving={saving} step={1} disabled={!description.trim()} />
+              }
+            >
+              <Field label="¿Qué hacen?">
+                <textarea
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Barbería clásica con toque moderno. Café mientras esperás."
+                  className={field}
+                />
+              </Field>
+              <Field label="Teléfono o WhatsApp">
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+54 9 223 555 5555"
+                  inputMode="tel"
+                  className={field}
+                />
+              </Field>
+            </Pane>
+          )}
+
+          {step === 1 && (
+            <Pane
+              title="Tu primer servicio"
+              hint="Con uno alcanza para arrancar. Después cargás el resto en dos minutos."
+              footer={
+                <Continue
+                  onClick={saveService}
+                  saving={saving}
+                  step={2}
+                  disabled={!serviceName.trim() || price <= 0}
+                />
+              }
+            >
+              <Field label="Servicio">
+                <input
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                  placeholder="Corte + Barba"
+                  className={field}
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Cuánto dura">
+                  <input
+                    type="number"
+                    min={5}
+                    step={5}
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value) || 30)}
+                    className={field}
+                  />
+                </Field>
+                <Field label="Cuánto sale">
+                  <input
+                    type="number"
+                    min={0}
+                    step={100}
+                    value={price}
+                    onChange={(e) => setPrice(Number(e.target.value) || 0)}
+                    className={field}
+                  />
+                </Field>
+              </div>
+              <Field label="¿Quién lo hace?">
+                <input
+                  value={staffName}
+                  onChange={(e) => setStaffName(e.target.value)}
+                  placeholder={businessName}
+                  className={field}
+                />
+              </Field>
+            </Pane>
+          )}
+
+          {step === 2 && (
+            <Pane
+              title={`¿Cuándo abre ${businessName}?`}
+              hint="Tus clientes sólo van a ver horarios dentro de estas franjas. Lo cambiás cuando quieras."
+              footer={<Continue onClick={saveHours} saving={saving} step={3} />}
+            >
+              <div className="flex flex-col gap-[7px]">
+                {BANDS.map((band) => {
+                  const state = hours.find((entry) => entry.id === band.id)!;
+                  return (
+                    <div
+                      key={band.id}
+                      className={cn(
+                        "flex flex-wrap items-center gap-3 rounded-[11px] bg-card px-3.5 py-[11px]",
+                        state.open ? "border-2 border-primary" : "border border-border opacity-65"
+                      )}
+                    >
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={state.open}
+                        aria-label={`Abrir ${band.label}`}
+                        onClick={() =>
+                          setHours((prev) =>
+                            prev.map((entry) =>
+                              entry.id === band.id ? { ...entry, open: !entry.open } : entry
+                            )
+                          )
+                        }
+                        className={cn(
+                          "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+                          state.open ? "bg-primary" : "bg-border"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "absolute top-0.5 size-4 rounded-full transition-all",
+                            state.open ? "right-0.5 bg-white" : "left-0.5 bg-faint"
+                          )}
+                        />
+                      </button>
+
+                      <span className="w-[78px] text-[12.5px] font-semibold">{band.label}</span>
+
+                      {state.open ? (
+                        <>
+                          <input
+                            type="time"
+                            aria-label={`${band.label} desde`}
+                            value={state.from}
+                            onChange={(e) =>
+                              setHours((prev) =>
+                                prev.map((entry) =>
+                                  entry.id === band.id ? { ...entry, from: e.target.value } : entry
+                                )
+                              )
+                            }
+                            className="rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11.5px]"
+                          />
+                          <span className="text-[11px] text-faint">a</span>
+                          <input
+                            type="time"
+                            aria-label={`${band.label} hasta`}
+                            value={state.to}
+                            onChange={(e) =>
+                              setHours((prev) =>
+                                prev.map((entry) =>
+                                  entry.id === band.id ? { ...entry, to: e.target.value } : entry
+                                )
+                              )
+                            }
+                            className="rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11.5px]"
+                          />
+                        </>
+                      ) : (
+                        <span className="text-[11.5px] text-faint">Cerrado</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Pane>
+          )}
+
+          {step === 3 && (
+            <Pane
+              title="Listo, tu agenda está abierta"
+              hint="Pasá este link por Instagram, por WhatsApp o pegalo en un QR sobre el mostrador."
+              footer={
+                <button
+                  type="button"
+                  onClick={() => {
+                    markSeen();
+                    router.push("/panel");
+                  }}
+                  className="flex items-center gap-2 rounded-[10px] bg-primary px-7 py-3 text-[13px] font-bold text-primary-foreground shadow-cta transition-colors hover:bg-[#22c55e]"
+                >
+                  <Check className="size-4" /> Ir a mi panel
+                </button>
+              }
+            >
+              {slug && (
+                <p className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-3.5 py-3 font-mono text-[13px]">
+                  <span className="text-faint">jikuapp.com/</span>
+                  <span className="font-semibold">{slug}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://jikuapp.com/${slug}`);
+                      toast.success("Link copiado");
+                    }}
+                    className="ml-auto text-[10px] font-semibold text-jade-link"
+                  >
+                    Copiar
+                  </button>
+                </p>
+              )}
+              {createdServiceId && (
+                <p className="text-[12.5px] text-muted-foreground">
+                  Cargaste tu primer servicio y tus horarios. Todo lo demás — más servicios, más
+                  gente, las señas — lo agregás desde el panel cuando quieras.
+                </p>
+              )}
+            </Pane>
+          )}
         </div>
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full brand-gradient rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
+
+        <div className="hidden text-center lg:block">
+          <Image
+            src={ILLUSTRATIONS[step]}
+            alt=""
+            width={340}
+            height={260}
+            priority
+            className="mx-auto w-full max-w-[340px]"
           />
+          <p className="mt-3 font-serif text-sm italic text-muted-foreground">
+            <span className="text-jade-link">軸</span> Tu agenda empieza a girar en cuanto
+            termines.
+          </p>
         </div>
-      </div>
-
-      <div ref={contentRef} className="glass rounded-2xl p-8">
-        <h2 className="text-lg font-heading font-semibold mb-1">{steps[step].title}</h2>
-        <p className="text-muted-foreground text-sm mb-6">{steps[step].desc}</p>
-
-        {step === 0 && (
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="descripcion-del-negocio" className="text-sm font-medium mb-1.5 block">Descripción del negocio</label>
-              <textarea
-                id="descripcion-del-negocio"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                placeholder="Ej: Barberia premium en Palermo, especializada en cortes modernos y barba..."
-                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="telefono" className="text-sm font-medium mb-1.5 block">Teléfono</label>
-              <input
-                id="telefono"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+54 11 1234-5678"
-                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={saveProfile}
-                disabled={savingProfile}
-                className="flex-1 h-10 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                Continuar
-              </button>
-              <button onClick={() => setStep(1)} className="h-10 px-4 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted flex items-center gap-1">
-                <SkipForward className="w-3 h-3" /> Saltar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="nombre-del-servicio" className="text-sm font-medium mb-1.5 block">Nombre del servicio</label>
-              <input
-                id="nombre-del-servicio"
-                value={serviceName}
-                onChange={(e) => setServiceName(e.target.value)}
-                placeholder="Ej: Corte de pelo"
-                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="duracion-min" className="text-sm font-medium mb-1.5 block">Duración (min)</label>
-                <input
-                  id="duracion-min"
-                  type="number"
-                  value={duration}
-                  onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
-                  min={5}
-                  className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label htmlFor="precio" className="text-sm font-medium mb-1.5 block">Precio ($)</label>
-                <input
-                  id="precio"
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
-                  min={0}
-                  step={100}
-                  className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={saveService}
-                disabled={savingService}
-                className="flex-1 h-10 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {savingService ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                Continuar
-              </button>
-              <button onClick={() => setStep(2)} className="h-10 px-4 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted flex items-center gap-1">
-                <SkipForward className="w-3 h-3" /> Saltar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="nombre" className="text-sm font-medium mb-1.5 block">Nombre</label>
-              <input
-                id="nombre"
-                value={staffName}
-                onChange={(e) => setStaffName(e.target.value)}
-                placeholder="Ej: Juan Perez"
-                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="especialidad" className="text-sm font-medium mb-1.5 block">Especialidad</label>
-                <input
-                  id="especialidad"
-                  value={specialty}
-                  onChange={(e) => setSpecialty(e.target.value)}
-                  placeholder="Ej: Barbero"
-                  className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label htmlFor="telefono-2" className="text-sm font-medium mb-1.5 block">Teléfono</label>
-                <input
-                  id="telefono-2"
-                  value={staffPhone}
-                  onChange={(e) => setStaffPhone(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={saveStaff}
-                disabled={savingStaff}
-                className="flex-1 h-10 rounded-lg brand-gradient text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {savingStaff ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                Finalizar
-              </button>
-              <button onClick={() => { markSeen(); setStep(3); }} className="h-10 px-4 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted flex items-center gap-1">
-                <SkipForward className="w-3 h-3" /> Saltar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="text-center space-y-6">
-            <div className="w-16 h-16 rounded-full brand-gradient flex items-center justify-center mx-auto">
-              <Check className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <p className="text-lg font-heading font-bold">Tu negocio esta listo!</p>
-              <p className="text-muted-foreground text-sm mt-1">
-                Ya podés empezar a recibir reservas y gestionar tu equipo.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => router.push("/panel")}
-                className="h-10 px-6 rounded-lg brand-gradient text-white font-medium text-sm flex items-center justify-center gap-2"
-              >
-                Ir al panel <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
+  );
+}
+
+const field =
+  "w-full rounded-[10px] border border-border bg-card px-3.5 py-2.5 text-[13px] outline-none transition-colors focus:border-primary";
+
+function Pane({
+  title,
+  hint,
+  children,
+  footer,
+}: {
+  title: string;
+  hint: string;
+  children: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h1 className="mb-1.5 text-[24px] font-extrabold leading-[1.15] tracking-[-0.035em] lg:text-[27px]">
+        {title}
+      </h1>
+      <p className="mb-[22px] text-[12.5px] text-muted-foreground">{hint}</p>
+      <div className="flex flex-col gap-3">{children}</div>
+      <div className="mt-6 flex flex-wrap items-center gap-3">{footer}</div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11.5px] font-semibold">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function Continue({
+  onClick,
+  saving,
+  step,
+  disabled,
+}: {
+  onClick: () => void;
+  saving: boolean;
+  step: number;
+  disabled?: boolean;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={saving || disabled}
+        className="flex items-center gap-2 rounded-[10px] bg-primary px-7 py-3 text-[13px] font-bold text-primary-foreground shadow-cta transition-colors hover:bg-[#22c55e] disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+        Continuar
+      </button>
+      <span className="text-[11px] text-faint">
+        Paso {step} de 4 · te quedan ~{4 - step} minutos
+      </span>
+    </>
   );
 }

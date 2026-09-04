@@ -17,6 +17,7 @@ export async function GET() {
             staff: true,
           },
         },
+        staff: { select: { _count: { select: { workingHours: true } } } },
       },
     });
 
@@ -24,13 +25,19 @@ export async function GET() {
       return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
     }
 
+    /*
+      Hours are a step. Without them a shop can tick every other box and still
+      offer no slots at all, because availability is computed from a
+      professional's working hours and there are none.
+    */
     const steps = {
       profile: !!business.description,
       services: business._count.services > 0,
       staff: business._count.staff > 0,
+      hours: business.staff.some((member) => member._count.workingHours > 0),
     };
 
-    const isComplete = steps.profile && steps.services && steps.staff;
+    const isComplete = steps.profile && steps.services && steps.staff && steps.hours;
 
     return NextResponse.json({ isComplete, steps });
   } catch (error) {

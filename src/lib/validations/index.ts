@@ -187,19 +187,6 @@ export const paymentConfigSchema = z.object({
   depositFixedAmount: z.number().min(0).optional(),
 });
 
-// ── Campaigns ───────────────────────────
-
-export const campaignSchema = z.object({
-  name: z.string().min(1, "Nombre requerido").max(100),
-  type: z.enum(["BIRTHDAY", "REBOOKING", "INACTIVITY", "CUSTOM"]),
-  messageSubject: z.string().max(200).optional().nullable(),
-  messageBody: z.string().min(1, "Mensaje requerido").max(5000),
-  /** Email is the only delivery channel the product has. */
-  channel: z.literal("EMAIL").default("EMAIL"),
-  targetTagIds: z.array(z.string()).default([]),
-  triggerConfig: z.record(z.string(), z.unknown()).optional().nullable(),
-});
-
 // ── Tags ────────────────────────────────
 
 export const tagSchema = z.object({
@@ -248,9 +235,6 @@ export const settingsSchema = z.object({
     noShowThreshold: z.number().min(1).optional(),
     noShowPenaltyDays: z.number().min(1).optional(),
     noShowAutoMark: z.boolean().optional(),
-    widgetEnabled: z.boolean().optional(),
-    widgetTheme: z.string().optional(),
-    widgetPosition: z.string().optional(),
   }).optional(),
 });
 
@@ -265,7 +249,6 @@ export type AppointmentInput = z.infer<typeof appointmentSchema>;
 export type GuestInfoInput = z.infer<typeof guestInfoSchema>;
 export type WorkingHoursInput = z.infer<typeof workingHoursSchema>;
 export type PaymentConfigInput = z.infer<typeof paymentConfigSchema>;
-export type CampaignInput = z.input<typeof campaignSchema>;
 export type TagInput = z.infer<typeof tagSchema>;
 export type NoteInput = z.infer<typeof noteSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;

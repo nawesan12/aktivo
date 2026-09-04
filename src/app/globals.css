@@ -17,6 +17,7 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
@@ -60,6 +61,38 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* The redesign works with three weights of divider rather than one: the card
+     outline, the hairline between stacked blocks inside a card, and the line
+     between rows of a table. Writing them as one --border made every table look
+     like a grid. */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-row: var(--border-row);
+
+  /* Two greys below --muted-foreground: labels and placeholders, then the
+     struck-through text of a slot that is already taken. */
+  --color-faint: var(--faint);
+  --color-disabled: var(--disabled);
+
+  /* Jade as *text* needs to be darker than jade as a fill — #4ADE80 on white is
+     2.1:1. These two are the readable versions, and --jade-fill is the wash
+     behind an active pill or icon. */
+  --color-jade-link: var(--jade-link);
+  --color-jade-label: var(--jade-label);
+  --color-jade-fill: var(--jade-fill);
+
+  --color-star: var(--star);
+  --color-staff-2: var(--staff-2);
+  --color-staff-2-strong: var(--staff-2-strong);
+  --color-staff-2-fill: var(--staff-2-fill);
+
+  /* Elevation. There was no scale at all before, so every card wrote its own
+     box-shadow inline and no two matched. */
+  --shadow-card: 0 8px 24px -12px rgba(9, 9, 11, 0.12);
+  --shadow-card-lift: 0 16px 40px -20px rgba(9, 9, 11, 0.25);
+  --shadow-jade: 0 12px 30px -16px rgba(74, 222, 128, 0.5);
+  --shadow-cta: 0 10px 26px -10px rgba(74, 222, 128, 0.6);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -67,84 +100,25 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ──────────────────────────────────────────
-   Dark mode as default (Jiku brand)
+   Light mode as default
+   ──────────────────────────────────────────
+
+   It used to be the other way round: dark in :root and a `.light` class for the
+   light theme. That inverted shadcn's convention, and the cost was invisible —
+   `@custom-variant dark` keys off a `.dark` class that nothing ever added, so
+   every `dark:` utility shadcn ships in button, badge, input and the rest was
+   dead code. Now :root is light, `.dark` is the override, and those utilities
+   mean what they say.
    ────────────────────────────────────────── */
 
 :root {
   --radius: 0.625rem;
 
-  /* Dark mode values as default */
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --card-foreground: #fafafa;
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
-  --primary: #4ADE80;
-  --primary-foreground: #09090b;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --accent: #22c55e;
-  --accent-foreground: #09090b;
-  --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #4ADE80;
-  /* Semantic states (dark) */
-  --success: #10b981;
-  --success-foreground: #34d399;
-  --success-muted: rgba(16, 185, 129, 0.1);
-  --warning: #eab308;
-  --warning-foreground: #facc15;
-  --warning-muted: rgba(234, 179, 8, 0.1);
-  --danger: #ef4444;
-  --danger-foreground: #f87171;
-  --danger-muted: rgba(239, 68, 68, 0.1);
-  --info: #3b82f6;
-  --info-foreground: #60a5fa;
-  --info-muted: rgba(59, 130, 246, 0.1);
-  --neutral: #71717a;
-  --neutral-foreground: #a1a1aa;
-  --neutral-muted: rgba(113, 113, 122, 0.1);
-
-
-  /* Charts */
-  --chart-1: #4ADE80;
-  --chart-2: #22c55e;
-  --chart-3: #a78bfa;
-  --chart-4: #34d399;
-  --chart-5: #f59e0b;
-
-  /* Sidebar */
-  --sidebar: #0f0f12;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #4ADE80;
-  --sidebar-primary-foreground: #09090b;
-  --sidebar-accent: #27272a;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #4ADE80;
-
-  /* The brand gradient, derived from the theme's own colours rather than
-     written out.
-
-     It was `linear-gradient(135deg, #4ADE80, #22c55e)` — Jiku's green, fixed.
-     On a business's public page the layout overrides `--primary` and `--accent`
-     with that shop's colours, so every `brand-gradient` element stayed Jiku
-     green next to text that had turned the shop's colour: the booking wizard's
-     step circles were green while their labels were the shop's blue. */
-  --brand-gradient: linear-gradient(135deg, var(--primary), var(--accent));
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.light {
   --background: #fafafa;
   --foreground: #09090b;
   --card: #ffffff;
@@ -152,34 +126,57 @@
   --popover: #ffffff;
   --popover-foreground: #09090b;
   --primary: #4ADE80;
-  --primary-foreground: #09090b;
+  /* Near-black green, not plain black: #09090b on #4ADE80 reads as a hole. */
+  --primary-foreground: #052e16;
   --secondary: #f4f4f5;
   --secondary-foreground: #09090b;
   --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #22c55e;
+  --muted-foreground: #52525b;
+
+  /* --accent is the *hover surface*, not a brand colour. It used to be #22c55e,
+     which is what `hover:bg-accent` resolves to in button (ghost/outline),
+     badge, dropdown-menu, command and select — so every quiet control in the
+     panel flashed saturated green on hover. The brand's second green lives in
+     --brand-accent now, where only the gradient reads it. */
+  --accent: #f4f4f5;
   --accent-foreground: #09090b;
-  --destructive: #ef4444;
+  --brand-accent: #22c55e;
+
+  --destructive: #dc2626;
   --border: #e4e4e7;
+  --border-subtle: #eeeef0;
+  --border-row: #f4f4f5;
   --input: #e4e4e7;
   --ring: #4ADE80;
-  /* Semantic states (light): darker text so contrast holds on a white surface */
+
+  --faint: #a1a1aa;
+  --disabled: #d4d4d8;
+
+  --jade-link: #059669;
+  --jade-label: #047857;
+  --jade-fill: rgba(74, 222, 128, 0.15);
+
+  --star: #b45309;
+  --staff-2: #a78bfa;
+  --staff-2-strong: #7c3aed;
+  --staff-2-fill: #ede9fe;
+
+  /* Semantic states: darker than the fill they sit on, so contrast holds. */
   --success: #059669;
   --success-foreground: #047857;
   --success-muted: rgba(5, 150, 105, 0.12);
   --warning: #ca8a04;
   --warning-foreground: #a16207;
-  --warning-muted: rgba(202, 138, 4, 0.12);
+  --warning-muted: rgba(202, 138, 4, 0.14);
   --danger: #dc2626;
   --danger-foreground: #b91c1c;
-  --danger-muted: rgba(220, 38, 38, 0.12);
+  --danger-muted: rgba(220, 38, 38, 0.1);
   --info: #2563eb;
   --info-foreground: #1d4ed8;
-  --info-muted: rgba(37, 99, 235, 0.12);
+  --info-muted: rgba(37, 99, 235, 0.1);
   --neutral: #52525b;
   --neutral-foreground: #3f3f46;
   --neutral-muted: rgba(82, 82, 91, 0.12);
-
 
   --chart-1: #4ADE80;
   --chart-2: #22c55e;
@@ -187,18 +184,109 @@
   --chart-4: #059669;
   --chart-5: #d97706;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #09090b;
+  /* The panel's sidebar stays dark in light mode on purpose — the contrast
+     against the pale content is what tells you where the chrome ends. */
+  --sidebar: #12151c;
+  --sidebar-gradient: linear-gradient(180deg, #12151c, #0d1015);
+  --sidebar-foreground: #e7e9ee;
+  --sidebar-muted: #9aa1af;
   --sidebar-primary: #4ADE80;
-  --sidebar-primary-foreground: #09090b;
-  --sidebar-accent: #f4f4f5;
-  --sidebar-accent-foreground: #09090b;
-  --sidebar-border: #e4e4e7;
+  --sidebar-primary-foreground: #052e16;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
   --sidebar-ring: #4ADE80;
 
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  /* Derived from the theme's own colours rather than written out: a business's
+     public page overrides --primary and --brand-accent with its colours, and
+     the gradient has to follow or the wizard's step circles stay Jiku green
+     next to labels that have turned the shop's blue. */
+  --brand-gradient: linear-gradient(135deg, var(--primary), var(--brand-accent));
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(9, 9, 11, 0.08);
+  --glass-shadow: 0 8px 32px rgba(9, 9, 11, 0.08);
+
+  /* The page texture. Kept as variables so .bg-dots can shrink the grid on a
+     phone without restating the gradient. */
+  --dot-colour: rgba(9, 9, 11, 0.045);
+  --dot-size: 22px;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --primary: #4ADE80;
+  --primary-foreground: #052e16;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --brand-accent: #22c55e;
+
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-row: rgba(255, 255, 255, 0.05);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #4ADE80;
+
+  --faint: #71717a;
+  --disabled: #3f3f46;
+
+  --jade-link: #4ADE80;
+  --jade-label: #86efac;
+  --jade-fill: rgba(74, 222, 128, 0.16);
+
+  --star: #fbbf24;
+  --staff-2: #a78bfa;
+  --staff-2-strong: #c4b5fd;
+  --staff-2-fill: rgba(167, 139, 250, 0.16);
+
+  --success: #10b981;
+  --success-foreground: #34d399;
+  --success-muted: rgba(16, 185, 129, 0.12);
+  --warning: #eab308;
+  --warning-foreground: #facc15;
+  --warning-muted: rgba(234, 179, 8, 0.12);
+  --danger: #ef4444;
+  --danger-foreground: #f87171;
+  --danger-muted: rgba(239, 68, 68, 0.12);
+  --info: #3b82f6;
+  --info-foreground: #60a5fa;
+  --info-muted: rgba(59, 130, 246, 0.12);
+  --neutral: #71717a;
+  --neutral-foreground: #a1a1aa;
+  --neutral-muted: rgba(113, 113, 122, 0.12);
+
+  --chart-1: #4ADE80;
+  --chart-2: #22c55e;
+  --chart-3: #a78bfa;
+  --chart-4: #34d399;
+  --chart-5: #f59e0b;
+
+  --sidebar: #0d1015;
+  --sidebar-gradient: linear-gradient(180deg, #0f1218, #0a0c10);
+  --sidebar-foreground: #e7e9ee;
+  --sidebar-muted: #9aa1af;
+  --sidebar-primary: #4ADE80;
+  --sidebar-primary-foreground: #052e16;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-ring: #4ADE80;
+
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  --dot-colour: rgba(255, 255, 255, 0.05);
+  --dot-size: 22px;
 }
 
 /* ──────────────────────────────────────────
@@ -214,6 +302,7 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    letter-spacing: -0.03em;
   }
 }
 
@@ -243,7 +332,24 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  /*
+    Was a frosted pane: a translucent white at 5% over a dark page, with a 24px
+    backdrop blur. It is the surface roughly a hundred call sites across the
+    panel and the account use, and on the light page it renders as almost
+    nothing — a barely-there rectangle on an almost-white ground.
+
+    The redesign's surface is an opaque white card with a hairline and a soft
+    shadow, so that is what this is now. The name stays because the call sites
+    do; `.glass-blur` is still here for the two places where something really
+    does sit over moving content.
+  */
   .glass {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass-blur {
     background: var(--glass-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -262,21 +368,30 @@
     background-clip: text;
   }
 
-  .glow-primary {
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3), 0 0 60px rgba(74, 222, 128, 0.1);
+  .sidebar-surface {
+    background: var(--sidebar-gradient);
+    color: var(--sidebar-foreground);
   }
 
-  .glow-accent {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 60px rgba(34, 197, 94, 0.1);
+  /* The dot grid the whole redesign sits on. 22px on desktop, 20px on a phone
+     so the texture keeps the same apparent density. */
+  .bg-dots {
+    background-image: radial-gradient(circle, var(--dot-colour) 1px, transparent 1px);
+    background-size: var(--dot-size) var(--dot-size);
   }
 
-  .bg-grid-pattern {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-    background-size: 24px 24px;
+  @media (max-width: 640px) {
+    .bg-dots {
+      --dot-size: 20px;
+    }
   }
 
-  .light .bg-grid-pattern {
-    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  /* The jade wash behind a hero or a final CTA, layered over .bg-dots. */
+  .bg-hero-jade {
+    background-image:
+      radial-gradient(900px 420px at 12% -4%, rgba(74, 222, 128, 0.1), transparent 60%),
+      radial-gradient(circle, var(--dot-colour) 1px, transparent 1px);
+    background-size: auto, var(--dot-size) var(--dot-size);
   }
 
   .line-clamp-2 {
@@ -300,17 +415,18 @@
   background: transparent;
 }
 
+/* Was hardcoded white at 15%, which is invisible on a light page. */
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--foreground) 20%, transparent);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--foreground) 35%, transparent);
 }
 
 /* ──────────────────────────────────────────
-   Shimmer animation (landing page badge)
+   Motion
    ────────────────────────────────────────── */
 
 @keyframes shimmer {
@@ -319,7 +435,51 @@
 }
 
 .shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   background-size: 200% 100%;
   animation: shimmer 3s infinite;
+}
+
+/*
+  Placeholders. Slower than Tailwind's `animate-pulse` and shallower at the
+  bottom of the cycle: a loading state should read as "not yet", not as a
+  warning light.
+*/
+@keyframes skeleton-pulse {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* The axis ring behind the philosophy section and the hero watermark. */
+@keyframes axis-spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* The live-bookings ticker in the landing's product window. */
+@keyframes ticker-move {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/*
+  Nothing in the project honoured this before, and the redesign adds a ring that
+  turns for 70 seconds straight, a ticker and staggered skeletons. Anyone who
+  asks the system for less movement gets the layout without the motion.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

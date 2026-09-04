@@ -2,128 +2,111 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import useSWR from "swr";
+
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
-import { PANEL_SECTIONS } from "./navigation";
-import { useUIStore } from "@/stores/ui-store";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { InstallPWAButton } from "@/components/dashboard/install-pwa-button";
+import { PANEL_NAV_GROUPS, isNavItemActive, type PanelNavItem } from "./navigation";
+import { LocationSwitcher } from "@/components/dashboard/location-switcher";
 
+interface Access {
+  trialDaysLeft: number;
+  hasSubscription: boolean;
+}
 
+/**
+ * The panel's spine: 212px, dark, one uninterrupted list.
+ *
+ * Dark on a light page is the point — it is the only thing that marks where the
+ * chrome ends and the business's own data begins. The previous sidebar was 256px
+ * with five section headings and twenty-four rows, which needed a scrollbar
+ * below about 900px of viewport; the two entries that fell under the fold were
+ * Configuración and Suscripción. This fits without scrolling, and the collapse
+ * toggle went with it — there is nothing left to reclaim.
+ */
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebarCollapsed } = useUIStore();
+  const { data: access } = useSWR<Access>("/api/panel/access");
+  // status=pending is the only count worth a badge: entries already notified or
+  // expired are not waiting on anyone.
+  const { data: waitlist } = useSWR<{ total: number }>(
+    "/api/panel/waitlist?status=pending&pageSize=1"
+  );
+
+  const counters = {
+    waitlist: waitlist?.total ?? 0,
+    trial: access && !access.hasSubscription ? access.trialDaysLeft : 0,
+  };
 
   return (
-    <aside
+    <aside className="sidebar-surface hidden w-[212px] shrink-0 flex-col lg:flex">
+      <div className="flex items-center gap-2 px-4 pb-[13px] pt-[15px]">
+        <Link href="/panel" aria-label="Ir al panel">
+          <JikuLogo size="sm" tone="jade" />
+        </Link>
+        <span className="ml-auto font-serif text-[14px] text-primary/40" aria-hidden>
+          軸
+        </span>
+      </div>
+
+      <nav className="flex flex-1 flex-col px-[10px] pt-1 text-xs">
+        {PANEL_NAV_GROUPS.map((group, index) => (
+          <div key={index} className="contents">
+            {index > 0 && (
+              <div className="mx-[10px] my-[7px] h-px bg-sidebar-border" role="separator" />
+            )}
+            {group.map((item) => (
+              <NavRow
+                key={item.href}
+                item={item}
+                active={isNavItemActive(item, pathname)}
+                counters={counters}
+              />
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className="border-t border-sidebar-border px-4 py-3">
+        <LocationSwitcher />
+      </div>
+    </aside>
+  );
+}
+
+function NavRow({
+  item,
+  active,
+  counters,
+}: {
+  item: PanelNavItem;
+  active: boolean;
+  counters: { waitlist: number; trial: number };
+}) {
+  const count = item.badge ? counters[item.badge] : 0;
+
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "hidden lg:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
-        sidebarCollapsed ? "w-[68px]" : "w-64"
+        "flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors",
+        active
+          ? "bg-jade-fill font-semibold text-primary"
+          : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       )}
     >
-      {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-        {!sidebarCollapsed && (
-          <Link href="/panel" className="flex items-center gap-2">
-            <JikuLogo size="sm" />
-          </Link>
-        )}
-        {sidebarCollapsed && (
-          <div className="mx-auto">
-            <JikuLogo size="sm" iconOnly />
-          </div>
-        )}
-        <button
-          onClick={toggleSidebarCollapsed}
-          aria-label="Contraer el menú lateral"
-          aria-expanded={!sidebarCollapsed}
-          className={cn(
-            "p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground transition-colors",
-            sidebarCollapsed && "hidden"
-          )}
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Navigation */}
-      <ScrollArea className="flex-1 py-4">
-        <nav className="px-2">
-          {PANEL_SECTIONS.map((section) => (
-            <div key={section.title} className="mb-4 last:mb-0">
-              {/* The heading disappears when the rail is collapsed to icons,
-                  where there is no room for it and the grouping is carried by
-                  the gaps instead. */}
-              {!sidebarCollapsed && (
-                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  {section.title}
-                </p>
-              )}
-              <div className="space-y-1">
-          {section.items.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/panel" && pathname.startsWith(item.href));
-
-            const link = (
-              <Link
-                key={item.name}
-                href={item.href}
-                // The colour alone says "you are here" to people who can see it.
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                  sidebarCollapsed && "justify-center px-2"
-                )}
-              >
-                <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-primary")} />
-                {!sidebarCollapsed && <span>{item.name}</span>}
-                {isActive && !sidebarCollapsed && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </Link>
-            );
-
-            if (sidebarCollapsed) {
-              return (
-                <Tooltip key={item.name} delayDuration={0}>
-                  <TooltipTrigger asChild>{link}</TooltipTrigger>
-                  <TooltipContent side="right">{item.name}</TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return link;
-          })}
-              </div>
-            </div>
-          ))}
-        </nav>
-      </ScrollArea>
-
-      {/* Install PWA */}
-      <div className="px-2 pb-2">
-        <InstallPWAButton collapsed={sidebarCollapsed} />
-      </div>
-
-      {/* Expand button */}
-      {sidebarCollapsed && (
-        <div className="p-2 border-t border-sidebar-border">
-          <button
-            onClick={toggleSidebarCollapsed}
-            aria-label="Expandir el menú lateral"
-            aria-expanded={!sidebarCollapsed}
-            className="w-full p-2 rounded-md hover:bg-sidebar-accent text-muted-foreground transition-colors flex items-center justify-center"
-          >
-            <ChevronLeft className="w-4 h-4 rotate-180" />
-          </button>
-        </div>
+      <span>{item.name}</span>
+      {item.badge === "waitlist" && count > 0 && (
+        <span className="rounded-full bg-warning/15 px-1.5 py-px text-[9px] font-bold text-warning">
+          {count}
+        </span>
       )}
-    </aside>
+      {item.badge === "trial" && count > 0 && (
+        <span className="rounded-full bg-primary/15 px-[7px] py-px text-[8.5px] font-bold text-primary">
+          {count === 1 ? "1 DÍA" : `${count} DÍAS`}
+        </span>
+      )}
+    </Link>
   );
 }

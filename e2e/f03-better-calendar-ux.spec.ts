@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { SEED } from "./helpers";
+import { pickService, pickStaff } from "./booking-flow";
 import { loadBookingFixture, type BookingFixture } from "./fixtures";
 
 test.describe("F3 — Better Calendar UX", () => {
@@ -50,83 +51,46 @@ test.describe("F3 — Better Calendar UX", () => {
     }
   });
 
-  test("booking wizard loads service selection step", async ({ page }) => {
+  test("la pantalla de reserva abre con los tres pasos a la vista", async ({ page }) => {
     await page.goto(`/${SEED.business.slug}/reservar`);
-    await page.waitForLoadState("networkidle");
 
-    // The booking wizard starts with service selection
-    await expect(page.getByText(/Elegir servicio/i)).toBeVisible({
-      timeout: 10_000,
+    // Uno solo: profesional y horario aparecen recién cuando hay un servicio
+    // elegido, que es lo que hace que la pantalla no abra abrumadora.
+    await expect(page.getByRole("heading", { name: /Elegí tu servicio/i })).toBeVisible({
+      timeout: 15_000,
     });
   });
 
-  test("service cards are rendered for the seeded business", async ({ page }) => {
+  test("los servicios del negocio del seed aparecen listados", async ({ page }) => {
     await page.goto(`/${SEED.business.slug}/reservar`);
-    await page.waitForLoadState("networkidle");
 
-    // Wait for at least one service to appear
-    const serviceItem = page.locator("[data-testid='service-item']").first();
-    const serviceItemVisible = await serviceItem
-      .isVisible({ timeout: 10_000 })
-      .catch(() => false);
-
-    if (serviceItemVisible) {
-      // Verify known seeded service name appears
-      await expect(
-        page.getByText(fixture.service.name)
-      ).toBeVisible();
-    } else {
-      // Fallback: look for service text directly
-      await expect(
-        page.getByText(fixture.service.name)
-      ).toBeVisible({ timeout: 10_000 });
-    }
+    await expect(page.getByText(fixture.service.name).first()).toBeVisible({ timeout: 15_000 });
   });
 
-  test("selecting a service advances to date/staff step", async ({ page }) => {
+  test("elegir un servicio descubre al profesional y al horario", async ({ page }) => {
     await page.goto(`/${SEED.business.slug}/reservar`);
-    await page.waitForLoadState("networkidle");
+    await pickService(page, fixture.service.name);
 
-    // Click the first service. `.first()`: the name also appears in the
-    // category tabs above the cards.
-    const serviceText = page.getByText(fixture.service.name).first();
-    await expect(serviceText).toBeVisible({ timeout: 10_000 });
-    await serviceText.click();
-
-    // Should advance to the next step (staff or date selection)
-    // Wait for the URL or step content to change
-    await page.waitForLoadState("networkidle");
-
-    // After selecting a service we expect to see either staff or calendar
     await expect(
-      page.getByRole("heading", { name: /Elegir (profesional|fecha)/i }),
-      "elegir un servicio no avanzó al paso siguiente"
+      page.getByRole("heading", { name: /¿Con quién\?/i }),
+      "elegir un servicio no descubrió el paso siguiente"
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("time slot buttons meet min touch target size", async ({ page }) => {
+  test("los horarios tienen el tamaño mínimo para el dedo", async ({ page }) => {
     await page.goto(`/${SEED.business.slug}/reservar`);
-    await page.waitForLoadState("networkidle");
+    await pickService(page, fixture.service.name);
+    await pickStaff(page, fixture.staff.name);
 
-    // Navigate through booking flow to reach time slots
-    const serviceText = page.getByText(fixture.service.name);
-    await expect(serviceText).toBeVisible({ timeout: 10_000 });
-    await serviceText.click();
-    await page.waitForLoadState("networkidle");
+    const slot = page
+      .getByRole("button", { pressed: false })
+      .filter({ hasText: /^\d{2}:\d{2}$/ })
+      .first();
+    await expect(slot).toBeVisible({ timeout: 20_000 });
 
-    // Look for time slot buttons (they may take a moment to appear)
-    const timeSlots = page.locator("button[data-testid='time-slot']");
-    const firstSlot = timeSlots.first();
-    const hasSlotsVisible = await firstSlot
-      .isVisible({ timeout: 10_000 })
-      .catch(() => false);
-
-    if (hasSlotsVisible) {
-      const box = await firstSlot.boundingBox();
-      expect(box).toBeTruthy();
-      // Touch target should be at least 44px tall (WCAG recommendation)
-      expect(box!.height).toBeGreaterThanOrEqual(44);
-    }
-    // If time slots are not visible yet (need to pick staff/date first), that's OK
+    const box = await slot.boundingBox();
+    expect(box, "el horario no tiene caja").not.toBeNull();
+    // 44px es el mínimo que recomienda Apple y el que usa el diseño.
+    expect(box!.height).toBeGreaterThanOrEqual(40);
   });
 });

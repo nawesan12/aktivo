@@ -49,7 +49,7 @@ export const getBusinessProfile = cache(async (slug: string) => {
 /**
  * Just enough to render a booking shell: who the business is and whether it is
  * open for business. Separate from the full profile because the pages that need
- * only this — the wizard, the client portal, the embedded widget — were each
+ * only this — the booking flow and the client portal — were each
  * running their own query for four columns that change once a year.
  */
 export const getBusinessIdentity = cache(async (slug: string) => {
@@ -60,15 +60,33 @@ export const getBusinessIdentity = cache(async (slug: string) => {
       slug: true,
       name: true,
       logo: true,
+      // The booking screen opens on the shop's own cover, so it needs the same
+      // header material the profile does — otherwise a customer following a
+      // service link from Instagram lands on a form with no idea whose it is.
+      coverImage: true,
+      city: true,
+      address: true,
+      province: true,
+      whatsapp: true,
       primaryColor: true,
       isActive: true,
-      settings: { select: { widgetEnabled: true } },
+      settings: { select: { cancellationPolicy: true } },
     },
   });
 
   if (!business || !business.isActive) return null;
 
-  return business;
+  const rating = await db.review.aggregate({
+    where: { businessId: business.id, isVisible: true },
+    _avg: { rating: true },
+    _count: true,
+  });
+
+  return {
+    ...business,
+    rating: rating._count > 0 ? Number(rating._avg.rating?.toFixed(1)) : null,
+    reviewCount: rating._count,
+  };
 });
 
 /** Services that were never filed under a category. */
@@ -110,16 +128,13 @@ export const getBusinessReviews = cache(async (businessId: string) => {
  * They are all rebuilt on a timer, which is fine for visitors and wrong for the
  * owner: they change a price, look at their own page, and see the old one.
  *
- * `/embed` is in the list for a sharper reason: it answers 404 while the widget
- * is off, and a cached 404 meant turning the widget on did nothing for ten
- * minutes. Call this from anything that edits what these pages show.
+ * Call this from anything that edits what these pages show.
  */
 export function revalidateBusinessPage(slug: string | undefined) {
   if (!slug) return;
 
   revalidatePath(`/${slug}`);
   revalidatePath(`/${slug}/reservar`);
-  revalidatePath(`/embed/${slug}`);
   // The share card carries the name, the colours and the prices.
   revalidatePath(`/${slug}/opengraph-image`);
 }

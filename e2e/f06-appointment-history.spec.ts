@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loadBookingFixture } from "./fixtures";
 import { SEED, loginAsOwner } from "./helpers";
 
 test.describe("F6 — Appointment History Improvements", () => {
@@ -70,17 +71,28 @@ test.describe("F6 — Appointment History Improvements", () => {
     }
   });
 
-  test("booking page with serviceId URL param loads correctly", async ({
-    page,
-  }) => {
-    // Navigate to booking with a serviceId param
+  test("un serviceId inexistente no rompe la pantalla de reserva", async ({ page }) => {
     await page.goto(`/${SEED.business.slug}/reservar?serviceId=nonexistent`);
-    await page.waitForLoadState("networkidle");
 
-    // Should still show service selection (unknown service ID is ignored)
-    await expect(page.getByText(/Elegir servicio/i)).toBeVisible({
-      timeout: 10_000,
+    // Sigue pidiendo que elijas: un id que no existe se ignora.
+    await expect(page.getByRole("heading", { name: /Elegí tu servicio/i })).toBeVisible({
+      timeout: 15_000,
     });
+  });
+
+  test("un serviceId real llega con el servicio ya elegido", async ({ page, request }) => {
+    const fixture = await loadBookingFixture(request);
+
+    // Es el link que arma cada fila de servicios de la web pública.
+    await page.goto(`/${fixture.slug}/reservar?serviceId=${fixture.service.id}`);
+
+    const card = page.getByRole("button", { name: new RegExp(fixture.service.name, "i") }).first();
+    await expect(card, "el servicio del link no quedó elegido").toHaveAttribute(
+      "aria-pressed",
+      "true",
+      { timeout: 15_000 }
+    );
+    await expect(page.getByRole("heading", { name: /¿Con quién\?/i })).toBeVisible();
   });
 
   test("mi-cuenta/turnos pagination works", async ({ page }) => {

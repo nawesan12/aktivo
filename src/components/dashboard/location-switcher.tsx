@@ -2,23 +2,37 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { MapPin, ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
 
+import { cn } from "@/lib/utils";
 
+interface BusinessSummary {
+  id: string;
+  name: string;
+  slug: string;
+  city?: string | null;
+}
+
+/**
+ * The sidebar's foot: who you are working on right now.
+ *
+ * It used to live in the topbar and render nothing at all unless the account had
+ * a group of branches — so most owners never saw which business the panel was
+ * pointed at. Now the name is always there and the dropdown only appears when
+ * there is somewhere else to go.
+ */
 export function LocationSwitcher() {
-  const { data } = useSWR("/api/panel/group");
-  const { update: updateSession } = useSession();
+  const { data: settings } = useSWR<{ business: BusinessSummary }>("/api/panel/settings");
+  const { data: groupData } = useSWR<{ group?: { name: string; businesses: BusinessSummary[] } }>(
+    "/api/panel/group"
+  );
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
-  if (!data?.group) return null;
-
-  const group = data.group;
-  const locations = group.businesses || [];
-
-  if (locations.length <= 1) return null;
+  const business = settings?.business;
+  const locations = groupData?.group?.businesses ?? [];
+  const canSwitch = locations.length > 1;
 
   async function switchBusiness(businessId: string) {
     setSwitching(true);
@@ -31,52 +45,75 @@ export function LocationSwitcher() {
 
       if (!res.ok) throw new Error((await res.json()).error);
 
-      // Rewrite the session token before reloading. Without this the reload
-      // came back on whatever business the JWT already had, so the switch
-      // looked like it did nothing. The id is re-checked server-side against
-      // the user's memberships.
-      await updateSession({ businessId });
-
-      toast.success("Sucursal cambiada");
+      // A full reload, not a session update: every panel screen holds SWR data
+      // scoped to the old business, and reloading is the only thing that clears
+      // all of it at once. The id is re-checked server-side against the user's
+      // memberships before the cookie is rewritten.
       window.location.reload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al cambiar");
-    } finally {
       setSwitching(false);
     }
   }
 
+  if (!business) {
+    return <div className="h-[34px] animate-pulse rounded-lg bg-white/5" aria-hidden />;
+  }
+
+  const initials = business.name
+    .split(" ")
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(!open)}
-        disabled={switching}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border hover:bg-accent text-sm transition-colors"
-      >
-        {switching ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <MapPin className="w-4 h-4 text-primary" />
+        type="button"
+        onClick={() => canSwitch && setOpen(!open)}
+        disabled={switching || !canSwitch}
+        aria-expanded={canSwitch ? open : undefined}
+        className={cn(
+          "flex w-full items-center gap-[9px] rounded-lg text-left transition-colors",
+          canSwitch && "hover:bg-sidebar-accent"
         )}
-        <span className="max-w-[120px] truncate">{group.name}</span>
-        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+      >
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-[9.5px] font-bold text-primary-foreground">
+          {switching ? <Loader2 className="size-3 animate-spin" /> : initials}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[11px] font-semibold text-sidebar-foreground">
+            {business.name}
+          </span>
+          <span className="flex items-center gap-0.5 text-[9px] text-sidebar-muted">
+            <span className="truncate">{business.city ?? "Sucursal única"}</span>
+            {canSwitch && <ChevronDown className="size-2.5 shrink-0" aria-hidden />}
+          </span>
+        </span>
       </button>
 
-      {open && (
+      {open && canSwitch && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg min-w-[200px] py-1">
-            <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="absolute bottom-full left-0 z-50 mb-2 w-full min-w-[190px] rounded-xl border border-border bg-popover py-1 shadow-card-lift">
+            <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">
               Sucursales
             </p>
-            {locations.map((loc: { id: string; name: string; slug: string }) => (
+            {locations.map((location) => (
               <button
-                key={loc.id}
-                onClick={() => { switchBusiness(loc.id); setOpen(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left transition-colors"
+                key={location.id}
+                type="button"
+                onClick={() => {
+                  switchBusiness(location.id);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition-colors hover:bg-accent",
+                  location.id === business.id && "font-semibold text-jade-label"
+                )}
               >
-                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="flex-1 truncate">{loc.name}</span>
+                <span className="flex-1 truncate">{location.name}</span>
               </button>
             ))}
           </div>

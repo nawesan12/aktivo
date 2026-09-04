@@ -6,7 +6,6 @@ import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
-  Plus,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -80,7 +79,12 @@ export function AppointmentsTable({
   const [dateTo, setDateTo] = useState("");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  /*
+    The phone's bottom bar sends its "+" here as /panel/turnos?nuevo=1 — the
+    dialog needs a URL, not a button, because the bar lives in the layout and
+    the dialog's data belongs to this screen.
+  */
+  const [creating, setCreating] = useState(searchParams.get("nuevo") === "1");
 
   // Debounced: one request per keystroke otherwise.
   const debouncedSearch = useDebounced(search);
@@ -181,21 +185,6 @@ export function AppointmentsTable({
 
   return (
     <>
-      {/* The agenda could only be looked at: every turno had to come in through
-          the public page, so a shop taking a phone call had no way to write it
-          down here. */}
-      <div className="flex justify-end mb-4">
-        <PermissionGate permission="appointments:create">
-          <button
-            onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg brand-gradient text-white text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Cargar un turno
-          </button>
-        </PermissionGate>
-      </div>
-
       {/* Filters */}
       <div className="glass rounded-xl p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">

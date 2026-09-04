@@ -1,20 +1,9 @@
-import type { Metadata } from "next";
-import { ScheduleEditor } from "@/components/dashboard/schedule-editor";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Horarios",
-};
-
+/**
+ * Absorbed into /panel/equipo as its second tab. The route stays because links
+ * to it are out in the world — in the onboarding, in bookmarks, in old emails.
+ */
 export default function HorariosPage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Horarios</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Configura los horarios de atención de tu equipo
-        </p>
-      </div>
-      <ScheduleEditor />
-    </div>
-  );
+  redirect("/panel/equipo?tab=horarios");
 }

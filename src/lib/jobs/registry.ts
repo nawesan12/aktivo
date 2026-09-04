@@ -3,7 +3,6 @@ import { sendDueReminders } from "@/lib/reminders/send";
 import { autoMarkNoShows } from "@/lib/no-show";
 import { redeliverFailedNotifications } from "@/lib/notifications/redelivery";
 import { sendPendingReviewRequests } from "@/lib/reviews/requests";
-import { runScheduledCampaigns } from "@/lib/campaigns/run";
 import { renewMercadoPagoLinks } from "@/lib/mercadopago-renewal";
 
 export interface Job {
@@ -26,6 +25,12 @@ export interface Job {
  * the app: real requests trigger the work through `after()`, and a single daily
  * cron is the floor underneath. See `tick.ts`.
  */
+/*
+  Every job here is opportunistic on purpose: there is no Vercel cron declared
+  in vercel.json, so real traffic through `maybeTick()` is what runs them. A job
+  added with `opportunistic: false` would never run at all until a cron is
+  scheduled again — see src/app/api/cron/daily/route.ts.
+*/
 export const JOBS: Job[] = [
   {
     // Second line of defence. The booking paths already release holds inline,
@@ -67,14 +72,5 @@ export const JOBS: Job[] = [
     intervalSeconds: 3600,
     opportunistic: true,
     run: renewMercadoPagoLinks,
-  },
-  {
-    // Daily cron only. A birthday greeting has to go out on the day; if it
-    // waited for traffic and that day was quiet, it would be lost for good and
-    // in silence.
-    name: "campaigns",
-    intervalSeconds: 43200,
-    opportunistic: false,
-    run: runScheduledCampaigns,
   },
 ];

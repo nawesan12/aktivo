@@ -80,7 +80,7 @@ function InvitationContent() {
   }, [token]);
 
   return (
-    <div className="glass rounded-2xl p-8">
+    <div className="rounded-2xl border border-border bg-card shadow-card p-8">
       {status === "loading" && (
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -173,7 +173,7 @@ function InvitationContent() {
 
 export default function InvitationPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="bg-dots flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md text-center">
         <div className="mb-8">
           <Link href="/" className="inline-flex">
@@ -183,7 +183,7 @@ export default function InvitationPage() {
 
         <Suspense
           fallback={
-            <div className="glass rounded-2xl p-8 flex flex-col items-center gap-4">
+            <div className="rounded-2xl border border-border bg-card shadow-card p-8 flex flex-col items-center gap-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-muted-foreground">Cargando...</p>
             </div>

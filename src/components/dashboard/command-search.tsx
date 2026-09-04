@@ -59,6 +59,13 @@ export function CommandSearch() {
   // Global keyboard shortcut
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      // ⌘K / Ctrl+K is what the button says, and it works from inside a field.
+      // "/" stays as a second way in, but only when nothing is focused.
+      if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
       if (e.key === "/" && !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) {
         e.preventDefault();
         setOpen(true);
@@ -94,19 +101,19 @@ export function CommandSearch() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Buscar"
-        className="md:hidden w-9 h-9 rounded-lg bg-muted/50 hover:bg-muted/70 flex items-center justify-center transition-colors"
+        className="flex size-[34px] items-center justify-center rounded-[10px] border border-border bg-card text-muted-foreground transition-colors hover:bg-accent md:hidden"
       >
-        <Search className="w-4 h-4 text-muted-foreground" />
+        <Search className="size-[15px]" />
       </button>
 
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 w-64 hover:bg-muted/70 transition-colors"
+        className="hidden w-[300px] items-center gap-2.5 rounded-[10px] border border-border bg-background px-3.5 py-[9px] text-xs text-faint transition-colors hover:border-faint md:flex"
       >
-        <Search className="w-4 h-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground flex-1 text-left">Buscar...</span>
-        <kbd className="text-[10px] text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-border">
-          /
+        <Search className="size-3.5" />
+        <span className="flex-1 text-left">Buscar</span>
+        <kbd className="rounded-[5px] border border-border bg-card px-1.5 py-px font-mono text-[10px]">
+          ⌘K
         </kbd>
       </button>
 

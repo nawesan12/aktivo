@@ -1,37 +1,37 @@
 /**
- * The numbers under the product.
+ * Four figures, every one of them verifiable.
  *
- * These used to be "73% menos ausencias", "2.4x más reservas", "15h ahorradas
- * por semana" and "4.9★ de calificación promedio" — for a product that had
- * never had a customer. Made-up outcome metrics are the easiest thing on a
- * landing page to write and the hardest to defend when somebody asks where
- * they come from.
- *
- * What is here instead is checkable against the product itself.
+ * "100%" is the one that changed meaning: it used to read "1% de comisión sobre
+ * lo que cobrás", and the platform no longer takes a cut — the MercadoPago
+ * preference is created without a marketplace_fee, so the whole deposit lands in
+ * the business's own account.
  */
+const STATS = [
+  { value: "24/7", label: "Tu agenda toma turnos" },
+  { value: "100%", label: "De lo que cobrás va directo a tu Mercado Pago" },
+  { value: "5 min", label: "De la cuenta al primer turno" },
+  { value: "$0", label: "Hasta que decidas seguir" },
+];
+
 export function Stats() {
   return (
-    <section className="stats">
-      <div className="container">
-        <div className="stats-grid">
-          <div className="stat-card jiku-reveal">
-            <div className="stat-num">24/7</div>
-            <div className="stat-label">Tu agenda toma turnos</div>
-          </div>
-          <div className="stat-card jiku-reveal rd1">
-            <div className="stat-num">1%</div>
-            <div className="stat-label">De comisión sobre lo que cobrás</div>
-          </div>
-          <div className="stat-card jiku-reveal rd2">
-            <div className="stat-num">5 min</div>
-            <div className="stat-label">De la cuenta al primer turno</div>
-          </div>
-          <div className="stat-card jiku-reveal rd3">
-            <div className="stat-num">$0</div>
-            <div className="stat-label">Hasta que decidas seguir</div>
-          </div>
+    <div className="bg-dots grid grid-cols-2 border-t border-border-subtle lg:grid-cols-4">
+      {STATS.map((stat, index) => (
+        <div
+          key={stat.value}
+          className={[
+            "px-5 py-9 text-center lg:py-11",
+            index % 2 === 0 ? "border-r border-border-subtle" : "",
+            index < 2 ? "border-b border-border-subtle lg:border-b-0" : "",
+            index === 2 ? "lg:border-r lg:border-border-subtle" : "",
+          ].join(" ")}
+        >
+          <p className="text-[34px] font-extrabold leading-none tracking-[-0.05em] text-jade-link sm:text-[42px]">
+            {stat.value}
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">{stat.label}</p>
         </div>
-      </div>
-    </section>
+      ))}
+    </div>
   );
 }

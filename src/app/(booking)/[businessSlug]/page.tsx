@@ -249,6 +249,12 @@ export default async function BusinessProfilePage({ params }: Props) {
         logoUrl: safeImageUrl(business.logo),
         coverUrl: safeImageUrl(business.coverImage),
         cancellationPolicy: business.settings?.cancellationPolicy ?? null,
+        // The deposit is on every service row now, so the visitor knows what
+        // "Reservar" is going to charge before they press it.
+        depositRate:
+          business.settings?.paymentMode === "PERCENTAGE"
+            ? (business.settings.depositPercentage ?? 0) / 100
+            : null,
         primaryColor: business.primaryColor,
         accentColor: business.accentColor,
       }}

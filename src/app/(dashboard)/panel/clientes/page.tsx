@@ -5,16 +5,11 @@ export const metadata: Metadata = {
   title: "Clientes",
 };
 
+/**
+ * The heading lives inside the list, not here: the design's subtitle is a live
+ * count ("312 activos · 38 en riesgo"), and the search box sits on the same row
+ * as the title. Both need the data.
+ */
 export default function ClientesPage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Clientes</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Base de datos de clientes y CRM
-        </p>
-      </div>
-      <ClientsList />
-    </div>
-  );
+  return <ClientsList />;
 }

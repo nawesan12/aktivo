@@ -5,8 +5,6 @@ export interface PlanLimits {
   maxAppointmentsPerMonth: number | null;
   mpPayments: boolean;
   crm: boolean;
-  campaigns: boolean;
-  widget: boolean;
   advancedReports: boolean;
   multiLocation: boolean;
   whiteLabel: boolean;
@@ -21,8 +19,6 @@ export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
     memberships: false,
     mpPayments: false,
     crm: false,
-    campaigns: false,
-    widget: false,
     advancedReports: false,
     multiLocation: false,
     whiteLabel: false,
@@ -42,8 +38,6 @@ export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
     maxAppointmentsPerMonth: 300,
     mpPayments: true,
     crm: true,
-    campaigns: false,
-    widget: true,
     advancedReports: false,
     multiLocation: false,
     whiteLabel: false,
@@ -52,16 +46,14 @@ export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
   /**
    * The plan a shop moves to because it makes them money, not because they ran
    * out of seats: memberships turn a good month into a predictable one, and
-   * campaigns bring people back. Those are the reasons to pay more; a head
-   * count is a tax, not a benefit.
+   * multi-sucursal and white label are what a shop that grew actually needs.
+   * Those are the reasons to pay more; a head count is a tax, not a benefit.
    */
   ENTERPRISE: {
     maxStaff: null,
     maxAppointmentsPerMonth: null,
     mpPayments: true,
     crm: true,
-    campaigns: true,
-    widget: true,
     advancedReports: true,
     multiLocation: true,
     whiteLabel: true,

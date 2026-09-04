@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -16,6 +16,7 @@ import {
   Ban,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { errorMessage, messageOf } from "@/lib/api-message";
 import { useDebounced } from "@/hooks/use-debounced";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
@@ -53,27 +54,104 @@ interface Member {
  * "¿por qué le quedan dos?" always has an answer.
  */
 export function MembershipsManager() {
-  const [tab, setTab] = useState<"socios" | "planes">("socios");
+  /*
+    Plans and members on one screen, not behind two tabs.
+
+    The question this page answers is "how much of next month is already sold",
+    and that needs both halves at once: the plans on offer and who is on them.
+    With the tabs, the number was on neither.
+  */
+  const { data: plansData } = useSWR<{ data: Plan[] }>("/api/panel/membresias/planes");
+  const { data: membersData } = useSWR<{ data: Member[] }>(
+    "/api/panel/membresias/socios?status=ACTIVE"
+  );
+
+  const plans = useMemo(() => plansData?.data ?? [], [plansData]);
+  const members = useMemo(() => membersData?.data ?? [], [membersData]);
+
+  const priceByPlan = new Map(plans.map((plan) => [plan.name, plan.price]));
+  const monthly = members.reduce((sum, member) => sum + (priceByPlan.get(member.planName) ?? 0), 0);
+
+  /*
+    The clock is read after the render, not during it: `Date.now()` in the body
+    makes the same props produce two different counts, which is exactly what
+    React's purity rule is about. Null until the effect runs, so the tile shows
+    a dash for one frame rather than a number that then changes.
+  */
+  const [renewals, setRenewals] = useState<number | null>(null);
+  useEffect(() => {
+    const now = Date.now();
+    const weekAhead = now + 7 * 86_400_000;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRenewals(
+      members.filter((member) => {
+        const ends = new Date(member.endDate).getTime();
+        return ends >= now && ends <= weekAhead;
+      }).length
+    );
+  }, [members]);
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        {(["socios", "planes"] as const).map((value) => (
-          <button
-            key={value}
-            onClick={() => setTab(value)}
-            className={`h-9 px-4 rounded-lg text-sm font-medium border transition-colors ${
-              tab === value
-                ? "bg-primary/10 border-primary/30 text-primary"
-                : "bg-muted/30 border-border hover:bg-muted/50"
-            }`}
-          >
-            {value === "socios" ? "Socios" : "Planes"}
-          </button>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MembershipKpi
+          featured
+          label="Ingreso mensual asegurado"
+          value={formatCurrency(monthly)}
+          note={`${members.length} ${members.length === 1 ? "socio activo" : "socios activos"}`}
+        />
+        <MembershipKpi
+          label="Planes en venta"
+          value={String(plans.filter((plan) => plan.isActive).length)}
+          note={plans.length > 0 ? `${plans.length} creados en total` : "todavía no creaste ninguno"}
+        />
+        <MembershipKpi
+          label="Renovaciones esta semana"
+          value={renewals === null ? "—" : String(renewals)}
+          note="cobro automático por Mercado Pago"
+          tone={renewals !== null && renewals > 0 ? "warning" : undefined}
+        />
       </div>
 
-      {tab === "socios" ? <MembersTab /> : <PlansTab />}
+      <PlansTab />
+      <MembersTab />
+    </div>
+  );
+}
+
+function MembershipKpi({
+  label,
+  value,
+  note,
+  featured,
+  tone,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  featured?: boolean;
+  tone?: "warning";
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl bg-card p-[18px]",
+        featured ? "border-2 border-primary shadow-jade" : "border border-border"
+      )}
+    >
+      <p className="mb-2 text-[11px] text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          "text-[26px] font-extrabold tracking-[-0.03em]",
+          featured && "text-jade-label",
+          tone === "warning" && "text-warning-foreground"
+        )}
+      >
+        {value}
+      </p>
+      <p className={cn("mt-1.5 text-[10.5px]", featured ? "text-jade-label" : "text-muted-foreground")}>
+        {note}
+      </p>
     </div>
   );
 }

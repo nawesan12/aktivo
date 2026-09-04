@@ -1,55 +1,64 @@
 "use client";
 
-import { useState } from "react";
-import { StaffManager } from "@/components/dashboard/staff-manager";
-import { TeamManager } from "@/components/dashboard/team-manager";
-import { PermissionGate } from "@/components/auth/permission-gate";
-import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-const tabs = [
-  { id: "staff", label: "Profesionales" },
-  { id: "access", label: "Acceso al panel" },
+import { StaffManager } from "@/components/dashboard/staff-manager";
+import { ScheduleEditor } from "@/components/dashboard/schedule-editor";
+import { TeamManager } from "@/components/dashboard/team-manager";
+import { PanelHeader } from "@/components/dashboard/panel-header";
+import { PanelTabs } from "@/components/dashboard/panel-tabs";
+import { PermissionGate } from "@/components/auth/permission-gate";
+
+const TABS = [
+  { id: "profesionales", label: "Profesionales" },
+  { id: "horarios", label: "Horarios" },
+  { id: "acceso", label: "Acceso al panel" },
 ];
 
-export default function EquipoPage() {
-  const [activeTab, setActiveTab] = useState("staff");
+/**
+ * Who works here and when.
+ *
+ * Horarios used to be its own sidebar entry, two rows away — so setting up a
+ * new professional meant creating them on one screen and then hunting for
+ * another to give them an agenda. They are the same job, and a professional
+ * without hours cannot take a single booking.
+ */
+function EquipoTabs() {
+  const searchParams = useSearchParams();
+  const requested = searchParams.get("tab");
+  const active = TABS.some((tab) => tab.id === requested) ? requested! : TABS[0].id;
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Equipo</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Administra tu equipo de profesionales y acceso al panel
-        </p>
-      </div>
+    <>
+      <PanelHeader
+        title="Equipo y horarios"
+        subtitle="Tus profesionales, las horas en que atienden y quién entra al panel"
+      />
+      <PanelTabs tabs={TABS} active={active} />
 
-      <div className="flex gap-1 border-b border-border">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
-              activeTab === tab.id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "staff" && <StaffManager />}
-      {activeTab === "access" && (
-        <PermissionGate permission="team:read" fallback={
-          <div className="glass rounded-xl p-8 text-center text-sm text-muted-foreground">
-            No tenes permisos para ver esta seccion
-          </div>
-        }>
+      {active === "profesionales" && <StaffManager />}
+      {active === "horarios" && <ScheduleEditor />}
+      {active === "acceso" && (
+        <PermissionGate
+          permission="team:read"
+          fallback={
+            <div className="glass rounded-xl p-8 text-center text-sm text-muted-foreground">
+              No tenés permisos para ver esta sección.
+            </div>
+          }
+        >
           <TeamManager />
         </PermissionGate>
       )}
-    </div>
+    </>
+  );
+}
+
+export default function EquipoPage() {
+  return (
+    <Suspense fallback={null}>
+      <EquipoTabs />
+    </Suspense>
   );
 }

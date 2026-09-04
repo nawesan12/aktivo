@@ -1,20 +1,9 @@
-import { LocationsManager } from "@/components/dashboard/locations-manager";
-import { PlanGate } from "@/components/dashboard/plan-gate";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Sucursales",
-};
-
-export default function SucursalesPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sucursales</h1>
-        <p className="text-muted-foreground">Gestiona tus ubicaciones y visualiza métricas cross-location</p>
-      </div>
-      <PlanGate feature="Multi-sucursal" requiredPlan="ENTERPRISE">
-        <LocationsManager />
-      </PlanGate>
-    </div>
-  );
+/**
+ * Absorbed into Configuración. The route stays because links to it are out in
+ * the world — in the sidebar people remember, in bookmarks, in old emails.
+ */
+export default function Page() {
+  redirect("/panel/configuracion?s=sucursales");
 }

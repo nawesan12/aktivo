@@ -18,6 +18,16 @@ const owner = {
 test("un negocio se registra, configura y recibe una reserva", async ({ page }) => {
   test.setTimeout(180_000);
 
+  const fallas: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") fallas.push("CONSOLA " + m.text().slice(0, 300));
+  });
+  page.on("pageerror", (e) => fallas.push("PAGEERROR " + e.message.slice(0, 300)));
+  page.on("requestfailed", (r) => fallas.push("REQFAIL " + r.url().slice(0, 120) + " " + (r.failure()?.errorText ?? "")));
+  page.on("response", (r) => {
+    if (r.status() >= 400 && r.url().includes("upload")) fallas.push("HTTP " + r.status() + " " + r.url().slice(0, 120));
+  });
+
   // ── Registro ────────────────────────────────────────────────────────────
   await page.goto("/registrarse");
   await page.locator("#name").fill(owner.name);
@@ -25,13 +35,13 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
   await page.locator("#email").fill(owner.email);
   await page.locator("#password").fill(owner.password);
   await page.locator("#confirmPassword").fill(owner.password);
-  await page.getByRole("button", { name: /crear cuenta|registrar/i }).click();
+  await page.getByRole("button", { name: /crear mi cuenta|crear cuenta|registrar/i }).click();
 
   await page.waitForURL(/panel/, { timeout: 60_000 });
 
   // El onboarding arranca solo para un negocio nuevo.
   await expect(
-    page.getByText(/bienvenido a jiku/i).first(),
+    page.getByText("1 Tu negocio").first(),
     "el negocio nuevo no cayó en el onboarding"
   ).toBeVisible({ timeout: 30_000 });
   console.log("OK registro:", owner.email);
@@ -72,6 +82,63 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
   ).toBeVisible({ timeout: 30_000 });
   console.log("OK profesional creado");
 
+  // ── Subir el logo ───────────────────────────────────────────────────────
+  //
+  // El archivo se comprime en el navegador y va derecho al store, sin pasar por
+  // una función nuestra. Se prueba acá porque es lo único de todo el flujo que
+  // depende de un servicio externo configurado a mano: sin el store, el botón
+  // falla y no hay nada en el código que lo delate.
+  await page.goto("/panel/mi-web");
+  await expect(page.getByRole("heading", { name: "Mi web" })).toBeVisible({ timeout: 30_000 });
+  // El encabezado es de la página; el subidor lo trae el componente, que
+  // arranca con un skeleton mientras pide la configuración.
+  await page.waitForSelector('input[type="file"]', { state: "attached", timeout: 30_000 });
+
+  // Un PNG generado acá mismo, con el peso de una exportación real: 1024px y
+  // varios megas antes de comprimir.
+  const originalBytes = await page.evaluate(async () => {
+    const c = document.createElement("canvas");
+    c.width = 1024;
+    c.height = 1024;
+    const x = c.getContext("2d")!;
+    const g = x.createLinearGradient(0, 0, 1024, 1024);
+    g.addColorStop(0, "#0d1b2a");
+    g.addColorStop(1, "#c8a24a");
+    x.fillStyle = g;
+    x.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 8000; i++) {
+      x.fillStyle = `rgba(${(i * 37) % 255},${(i * 91) % 255},${(i * 53) % 255},0.4)`;
+      x.fillRect((i * 131) % 1024, (i * 197) % 1024, 4, 4);
+    }
+    const blob: Blob = await new Promise((r) => c.toBlob((v) => r(v!), "image/png"));
+    const file = new File([blob], "logo-prueba.png", { type: "image/png" });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    input.files = transfer.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return blob.size;
+  });
+
+  // El resultado, no el aviso: la imagen tiene que quedar apuntando al store.
+  const imagenSubida = page.locator('img[src*="blob.vercel-storage.com"]').first();
+  await imagenSubida.waitFor({ state: "attached", timeout: 60_000 }).catch(() => {
+    throw new Error("el logo no llegó al store. Registrado:\n  " + fallas.join("\n  "));
+  });
+  const logoUrl = await imagenSubida.getAttribute("src");
+
+  const stored = await page.request.get(logoUrl!);
+  const storedBytes = Number(stored.headers()["content-length"] ?? 0);
+  expect(stored.status(), "el logo subido no se puede descargar").toBe(200);
+  expect(stored.headers()["content-type"]).toContain("webp");
+  expect(
+    storedBytes,
+    `el logo pesa ${storedBytes} bytes, más de lo que debería tras comprimir`
+  ).toBeLessThan(80_000);
+  console.log(
+    `OK logo subido: ${Math.round(originalBytes / 1000)} KB → ${Math.round(storedBytes / 1000)} KB (webp)`
+  );
+
   // ── La página pública ya tiene que servir ───────────────────────────────
   const slug = await page.evaluate(async () => {
     const res = await fetch("/api/panel/settings");
@@ -101,25 +168,9 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
   }
   console.log("OK todas las páginas públicas del negocio responden 200");
 
-  // ── El widget embebible ─────────────────────────────────────────────────
-  // Apagado por defecto: el iframe tiene que dar 404, no servirse igual.
-  const embedOff = await page.request.get(`/embed/${slug}`);
-  expect(embedOff.status(), "el widget se sirve estando apagado").toBe(404);
-
-  const enabled = await page.request.patch("/api/panel/widget", {
-    data: { widgetEnabled: true },
-  });
-  expect(enabled.status(), "no se pudo habilitar el widget").toBe(200);
-
-  // Con reintento: la página del embed se regenera al habilitar el widget, y
-  // durante un instante la red todavía sirve el 404 anterior. Para un iframe en
-  // el sitio de otro eso es aceptable; para el test, no esperarlo sería
-  // convertir una carrera en un fallo.
-  let embedStatus = 0;
-  for (let attempt = 0; attempt < 8 && embedStatus !== 200; attempt++) {
-    if (attempt > 0) await page.waitForTimeout(3000);
-    embedStatus = (await page.request.get(`/embed/${slug}`)).status();
-  }
-  expect(embedStatus, `el widget habilitado respondió ${embedStatus}`).toBe(200);
-  console.log("OK widget: 404 apagado, 200 encendido");
+  // El widget embebible se sacó del producto: /embed ya no existe y la ruta
+  // tiene que responder 404 para todos, no sólo para quien lo tenía apagado.
+  const embed = await page.request.get(`/embed/${slug}`);
+  expect(embed.status(), "quedó sirviéndose el widget que se dio de baja").toBe(404);
+  console.log("OK el widget ya no se sirve");
 });

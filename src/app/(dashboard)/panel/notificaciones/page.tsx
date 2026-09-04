@@ -1,20 +1,9 @@
-import type { Metadata } from "next";
-import { NotificationsLog } from "@/components/dashboard/notifications-log";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Notificaciones",
-};
-
-export default function NotificacionesPage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Notificaciones</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Historial y configuración de notificaciones
-        </p>
-      </div>
-      <NotificationsLog />
-    </div>
-  );
+/**
+ * Absorbed into Configuración. The route stays because links to it are out in
+ * the world — in the sidebar people remember, in bookmarks, in old emails.
+ */
+export default function Page() {
+  redirect("/panel/configuracion?s=avisos");
 }

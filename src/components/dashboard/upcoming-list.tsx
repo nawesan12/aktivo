@@ -1,10 +1,12 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, isToday, isTomorrow } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
-import { Clock, User } from "lucide-react";
-import { StatusBadge } from "./status-badge";
+import { Clock } from "lucide-react";
+
+import { statusStyle } from "@/lib/appointment-status";
+import { cn } from "@/lib/utils";
 
 interface UpcomingAppointment {
   id: string;
@@ -15,50 +17,62 @@ interface UpcomingAppointment {
   status: string;
 }
 
-interface UpcomingListProps {
+/**
+ * The next few turnos, as the design draws them: the hour first, a coloured
+ * spine carrying the status, then who and what.
+ *
+ * The status used to be a pill at the end of every row, which put six words of
+ * chrome next to three words of content on a 340px column. The 3px bar says the
+ * same thing without competing with the name.
+ */
+export function UpcomingList({
+  appointments,
+  limit = 3,
+}: {
   appointments: UpcomingAppointment[];
-}
-
-export function UpcomingList({ appointments }: UpcomingListProps) {
+  limit?: number;
+}) {
   if (appointments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <Clock className="w-8 h-8 mb-2 opacity-50" />
-        <p className="text-sm">No hay turnos próximos</p>
+      <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+        <Clock className="size-7 opacity-40" aria-hidden />
+        <p className="text-[12.5px]">No hay turnos próximos</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {appointments.map((apt) => (
-        // The rows already lit up on hover and did nothing when clicked. They
-        // lead to the turno now, filtered by the client's name.
-        <Link
-          key={apt.id}
-          href={`/panel/turnos?search=${encodeURIComponent(apt.clientName)}`}
-          className="flex items-center gap-4 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <User className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{apt.clientName}</p>
-            {/* The time is the thing you scan this list for, so it never gets
-                truncated away: on a phone the whole line had about 100px and
-                ended in an ellipsis before reaching the hour. */}
-            <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">
-                {format(new Date(apt.dateTime), "HH:mm", { locale: es })}
-              </span>{" "}
-              <span className="truncate inline-block max-w-full align-bottom">
+    <div className="flex flex-col gap-[7px]">
+      {appointments.slice(0, limit).map((apt) => {
+        const when = new Date(apt.dateTime);
+        return (
+          // The rows already lit up on hover and did nothing when clicked. They
+          // lead to the turno now, filtered by the client's name.
+          <Link
+            key={apt.id}
+            href={`/panel/turnos?search=${encodeURIComponent(apt.clientName)}`}
+            className="flex items-center gap-[11px] rounded-[9px] border border-border-subtle bg-background px-3 py-[9px] transition-colors hover:border-faint"
+          >
+            <span className="min-w-[38px] shrink-0 text-[11.5px] font-bold tabular-nums">
+              {format(when, "HH:mm")}
+            </span>
+            <span
+              className={cn("h-[26px] w-[3px] shrink-0 rounded", statusStyle(apt.status).dot)}
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-semibold">{apt.clientName}</span>
+              <span className="block truncate text-[10px] text-muted-foreground">
+                {/* The day only matters once the list runs past today. */}
+                {!isToday(when) && (
+                  <>{isTomorrow(when) ? "Mañana" : format(when, "EEE d", { locale: es })} · </>
+                )}
                 {apt.serviceName} · {apt.staffName}
               </span>
-            </p>
-          </div>
-          <StatusBadge status={apt.status} />
-        </Link>
-      ))}
+            </span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

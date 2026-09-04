@@ -459,7 +459,7 @@ export default function PresentacionPage() {
           <div className="cover-kanji serif">&#36600;</div>
           <div className="cover-content">
             <div className="deck-jiku-logo">
-              <JikuLogo size="xl" animated />
+              <JikuLogo size="xl" />
             </div>
             <h1>
               El <em className="serif jade">eje</em> de

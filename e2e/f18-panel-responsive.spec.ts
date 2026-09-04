@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { SEED, loginAs } from "./helpers";
-import { PANEL_NAVIGATION } from "../src/components/layout/navigation";
+import { PANEL_ROUTES } from "../src/components/layout/navigation";
 import { findOverflows } from "./overflow-audit";
 
 /**
@@ -28,8 +28,12 @@ test.describe("F18 — el panel entra en la pantalla", () => {
 
       const broken: string[] = [];
 
-      for (const item of PANEL_NAVIGATION) {
-        await page.goto(item.href);
+      for (const href of PANEL_ROUTES) {
+        await page.goto(href);
+        await page.waitForLoadState("networkidle");
+        // /panel/horarios y /panel/cupones son redirects a la pestaña que las
+        // absorbió, así que la página puede navegar por debajo. Sin esta
+        // segunda espera el evaluate corre sobre un contexto ya destruido.
         await page.waitForLoadState("networkidle");
 
         const overflow = await page.evaluate(() => ({
@@ -40,7 +44,7 @@ test.describe("F18 — el panel entra en la pantalla", () => {
         // One pixel of slack: sub-pixel rounding on borders is not a bug.
         if (overflow.scrollWidth > overflow.clientWidth + 1) {
           broken.push(
-            `${item.href} — ${overflow.scrollWidth}px de contenido en ${overflow.clientWidth}px`
+            `${href} — ${overflow.scrollWidth}px de contenido en ${overflow.clientWidth}px`
           );
         }
 
@@ -50,7 +54,7 @@ test.describe("F18 — el panel entra en la pantalla", () => {
         // of every phone.
         for (const clipped of await findOverflows(page)) {
           broken.push(
-            `${item.href} — ${clipped.selector} recorta ${clipped.scrollWidth}px en ${clipped.clientWidth}px`
+            `${href} — ${clipped.selector} recorta ${clipped.scrollWidth}px en ${clipped.clientWidth}px`
           );
         }
       }

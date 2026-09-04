@@ -1,126 +1,63 @@
 import Link from "next/link";
+
+import { Eyebrow, Kanji } from "@/components/brand/kanji";
 import { TRIAL_DAYS } from "@/lib/subscription/access";
 
-/**
- * Above-the-fold pitch. Server-rendered, so the headline is in the HTML.
- */
+import { ProductWindow } from "./product-window";
+
 export function Hero() {
   return (
-    <section className="hero">
-      <div className="hero-axis" />
-      <div className="hero-glow" />
-      <div className="container">
-        <div className="hero-content">
-          <div className="hero-left">
-            <div className="hero-kanji serif">軸 · EL EJE DE TU NEGOCIO</div>
-            <h1>
-              Tu agenda
-              <br />
-              <span className="line-2 serif">se mueve sola</span>
-            </h1>
-            <p className="hero-desc">
-              Reservas 24/7. Confirmación al instante. Cobros integrados. CRM
-              inteligente. Todo girando alrededor de un solo <span className="jade">eje</span>: Jiku.
-            </p>
-            <div className="hero-ctas">
-              <Link href="/registrarse" className="btn btn-jade">
-                Probar {TRIAL_DAYS} días gratis →
-              </Link>
-              <a
-                href="#features"
-                className="btn btn-ghost"
-              >
-                Ver demo en vivo
-              </a>
-            </div>
-            {/* These were "12,400+ negocios activos", "2.8M turnos / mes" and
-                "-73% ausencias", on a product that has never had a customer.
-                Three fabricated numbers in the first screen anybody sees, and
-                the kind of claim that is trivially checkable — a prospect who
-                asks which twelve thousand businesses stops believing the rest
-                of the page too.
+    <>
+      <section className="bg-hero-jade relative overflow-hidden px-[22px] pb-14 pt-16 text-center sm:px-10 lg:px-16 lg:pb-[60px] lg:pt-[84px]">
+        <Kanji size={360} className="hidden lg:block" />
+        <Kanji size={200} className="lg:hidden" />
 
-                What replaces them is what we can actually promise today. */}
-            <div className="hero-metrics">
-              <div>
-                <div className="hero-metric-num">7 días</div>
-                <div className="hero-metric-label">Gratis, sin tarjeta</div>
-              </div>
-              <div>
-                <div className="hero-metric-num">5 min</div>
-                <div className="hero-metric-label">Y tu link está andando</div>
-              </div>
-              <div>
-                <div className="hero-metric-num">24/7</div>
-                <div className="hero-metric-label">Tu agenda toma turnos</div>
-              </div>
-            </div>
-          </div>
+        <Eyebrow />
 
-          {/* PHONE */}
-          <div className="hero-right">
-            <div className="phone">
-              <div className="phone-notch" />
-              <div className="phone-screen">
-                <div className="ps-header">
-                  <div>
-                    <div className="ps-greeting">Buenos días 👋</div>
-                    <div className="ps-name">Studio Martín</div>
-                  </div>
-                  <div className="ps-avatar">SM</div>
-                </div>
-                <div className="ps-stats">
-                  <div className="ps-stat">
-                    <div className="ps-stat-val green">18</div>
-                    <div className="ps-stat-lbl">Turnos hoy</div>
-                  </div>
-                  <div className="ps-stat">
-                    <div className="ps-stat-val gold">$284k</div>
-                    <div className="ps-stat-lbl">Facturado / mes</div>
-                  </div>
-                </div>
-                <div className="ps-section">Próximos turnos</div>
-                <div className="ps-appt">
-                  <div className="ps-time">
-                    <div className="ps-time-h">10:00</div>
-                    <div className="ps-time-p">AM</div>
-                  </div>
-                  <div className="ps-bar g" />
-                  <div className="ps-info">
-                    <div className="ps-client">Lucía Fernández</div>
-                    <div className="ps-service">Corte + Color</div>
-                  </div>
-                  <span className="ps-badge badge-ok">✓ OK</span>
-                </div>
-                <div className="ps-appt">
-                  <div className="ps-time">
-                    <div className="ps-time-h">11:30</div>
-                    <div className="ps-time-p">AM</div>
-                  </div>
-                  <div className="ps-bar y" />
-                  <div className="ps-info">
-                    <div className="ps-client">Matías López</div>
-                    <div className="ps-service">Barba + Degradé</div>
-                  </div>
-                  <span className="ps-badge badge-wait">Espera</span>
-                </div>
-                <div className="ps-appt">
-                  <div className="ps-time">
-                    <div className="ps-time-h">12:15</div>
-                    <div className="ps-time-p">PM</div>
-                  </div>
-                  <div className="ps-bar p" />
-                  <div className="ps-info">
-                    <div className="ps-client">Camila Ruiz</div>
-                    <div className="ps-service">Alisado definitivo</div>
-                  </div>
-                  <span className="ps-badge badge-paid">$ Pagado</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <h1 className="relative mt-5 text-[42px] font-extrabold leading-[1.02] tracking-[-0.048em] sm:text-[56px] lg:text-[68px]">
+          Tu agenda se mueve
+          <br />
+          {/*
+            The one word the whole page is built around, so it is the one word
+            set in the serif. Slightly larger than the line it sits on because
+            Cormorant's x-height is smaller than Sora's at the same size.
+          */}
+          <span className="font-serif text-[1.12em] italic text-jade-link">sola.</span>
+        </h1>
+
+        <p className="relative mx-auto mb-8 mt-[22px] max-w-[520px] text-[15px] leading-[1.7] text-muted-foreground sm:text-[17px]">
+          Reservas online 24/7, señas por Mercado Pago y confirmación automática. Para barberías,
+          salones y estética en Argentina.
+        </p>
+
+        <div className="relative mb-3.5 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href="/registrarse"
+            className="rounded-xl bg-primary px-[34px] py-[15px] text-[15px] font-bold text-primary-foreground shadow-[0_8px_24px_-8px_rgba(74,222,128,0.5)] transition-colors hover:bg-[#22c55e]"
+          >
+            Probar {TRIAL_DAYS} días gratis
+          </Link>
+          {/*
+            "Ver demo" in the mockup. There is no demo video, but there is a real
+            business page with real availability — which is a better answer to
+            the same question.
+          */}
+          <Link
+            href="/explorar"
+            className="rounded-xl border border-border bg-card px-[30px] py-[15px] text-[15px] font-semibold transition-colors hover:border-faint"
+          >
+            Ver una agenda real
+          </Link>
         </div>
+
+        <p className="relative text-xs text-faint">
+          Sin tarjeta · Setup en 5 minutos · Cancelás cuando quieras
+        </p>
+      </section>
+
+      <div className="bg-dots px-[22px] pb-[30px] sm:px-10 lg:px-16">
+        <ProductWindow />
       </div>
-    </section>
+    </>
   );
 }

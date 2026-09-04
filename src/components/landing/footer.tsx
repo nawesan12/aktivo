@@ -1,54 +1,76 @@
 import Link from "next/link";
+
 import { JikuLogo } from "@/components/brand/jiku-logo";
 
 /**
- * Site footer and legal line.
+ * Three columns, not the mockup's four.
+ *
+ * The design's "Recursos" and "Empresa" columns list ten destinations — API,
+ * Blog, Guías, Status, Nosotros, Términos — and none of them exist. They were
+ * `href="#"` on the old footer, which is a link that lies; rendering them as
+ * plain grey words instead would be a menu of things you cannot click. Every
+ * entry here goes somewhere real.
  */
+const COLUMNS = [
+  {
+    title: "Producto",
+    links: [
+      { label: "Funciones", href: "/#funciones" },
+      { label: "Cómo funciona", href: "/#como-funciona" },
+      { label: "Planes", href: "/#planes" },
+    ],
+  },
+  {
+    title: "Reservar",
+    links: [
+      { label: "Explorar negocios", href: "/explorar" },
+      { label: "Mis turnos", href: "/mi-cuenta/turnos" },
+    ],
+  },
+  {
+    title: "Tu cuenta",
+    links: [
+      { label: "Crear una cuenta", href: "/registrarse" },
+      { label: "Iniciar sesión", href: "/iniciar-sesion" },
+    ],
+  },
+];
+
 export function Footer() {
   return (
-    <footer className="jiku-footer">
-      <div className="container">
-        <div className="footer-grid">
-          <div>
-            <Link href="/" className="nav-logo" style={{ marginBottom: 4 }}>
-              <JikuLogo size="md" />
-            </Link>
-            <p className="footer-brand-desc">
-              El <span className="jade">eje</span> de tu negocio. Más que turnos, crecimiento.
+    <footer className="safe-bottom border-t border-border-subtle bg-card px-[22px] pb-7 pt-14 sm:px-10 lg:px-16 lg:pt-[52px]">
+      <div className="mb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-11">
+        <div>
+          <JikuLogo size="md" />
+          <p className="mt-2.5 max-w-[240px] text-[12.5px] leading-[1.6] text-muted-foreground">
+            El <span className="text-jade-link">eje</span> de tu negocio. Más que turnos,
+            crecimiento.
+          </p>
+        </div>
+
+        {COLUMNS.map((column) => (
+          <div key={column.title}>
+            <p className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.12em] text-faint">
+              {column.title}
             </p>
+            <ul className="flex flex-col gap-2 text-[13px] text-muted-foreground">
+              {column.links.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="transition-colors hover:text-foreground">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="footer-col">
-            <h4>Producto</h4>
-            <a href="#features">
-              Funciones
-            </a>
-            <a href="#pricing">
-              Planes
-            </a>
-            <a href="#">Integraciones</a>
-            <a href="#">API</a>
-          </div>
-          <div className="footer-col">
-            <h4>Recursos</h4>
-            <a href="#">Centro de ayuda</a>
-            <a href="#">Blog</a>
-            <a href="#">Guías</a>
-            <a href="#">Status</a>
-          </div>
-          <div className="footer-col">
-            <h4>Empresa</h4>
-            <a href="#">Nosotros</a>
-            <a href="#">Contacto</a>
-            <a href="#">Términos</a>
-            <a href="#">Privacidad</a>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <span>© 2026 Jiku. Todos los derechos reservados.</span>
-          <span className="serif" style={{ fontStyle: "italic", fontSize: "0.85rem" }}>
-            <span className="jade">軸</span> — El <span className="jade">eje</span> de tu negocio
-          </span>
-        </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-border-subtle pt-5 text-xs text-faint sm:flex-row sm:justify-between">
+        <span>© {new Date().getFullYear()} Jiku. Todos los derechos reservados.</span>
+        <span className="font-serif text-[13px] italic">
+          <span className="text-jade-link">軸</span> — El eje de tu negocio
+        </span>
       </div>
     </footer>
   );

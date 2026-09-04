@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PanelHeader } from "@/components/dashboard/panel-header";
 
 /**
  * Presentation only. Prices, names and limits come from the API — this file
@@ -176,10 +177,7 @@ export default function SubscriptionPage() {
         onConfirm={handleCancel}
       />
 
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Suscripción</h1>
-        <p className="text-muted-foreground text-sm mt-1">Administrá tu plan y facturación</p>
-      </div>
+      <PanelHeader title="Suscripción" subtitle="Administrá tu plan y facturación" />
 
       {blocked && (
         <div

@@ -24,6 +24,8 @@ export interface DirectoryBusiness {
   averageRating: number | null;
   reviewCount: number;
   topServices: string[];
+  coverImage: string | null;
+  fromPrice: number | null;
 }
 
 export interface DirectoryPage {
@@ -96,13 +98,17 @@ export async function searchBusinesses({
         slug: true,
         description: true,
         logo: true,
+        // The card leads with a photo of the place now, not with a logo on a
+        // coloured square: a directory of shops that all look like initials in
+        // a box gives a visitor nothing to choose between.
+        coverImage: true,
         city: true,
         province: true,
         services: {
           where: { isActive: true },
           take: 3,
           orderBy: { name: "asc" },
-          select: { name: true },
+          select: { name: true, price: true },
         },
       },
     }),
@@ -135,11 +141,17 @@ export async function searchBusinesses({
       slug: biz.slug,
       description: biz.description,
       logo: safeImageUrl(biz.logo),
+      coverImage: safeImageUrl(biz.coverImage),
       city: biz.city,
       province: biz.province,
       averageRating,
       reviewCount,
       topServices: biz.services.map((s) => s.name),
+      // "desde $X". Only the three services already loaded for the chips, which
+      // is enough for a listing and costs nothing extra.
+      fromPrice: biz.services.length
+        ? Math.min(...biz.services.map((service) => Number(service.price)))
+        : null,
     };
   });
 

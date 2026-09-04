@@ -2,39 +2,24 @@
 
 import Link from "next/link";
 import useSWR from "swr";
-import {
-  Calendar,
-  DollarSign,
-  Users,
-  TrendingUp,
-  Plus,
-} from "lucide-react";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
+import { Sparkles } from "lucide-react";
+
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { AppointmentsBarChart } from "@/components/dashboard/appointments-bar-chart";
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
-import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { Card } from "@/components/ui/card";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { formatCurrency } from "@/lib/format";
 import type { DashboardStats } from "@/lib/panel/dashboard-stats";
-import dynamic from "next/dynamic";
 
-/**
- * Recharts is the heaviest thing the panel loads and only this screen uses it,
- * below the fold. Deferring it lets the KPIs paint first.
- */
-const chartFallback = <div className="h-full w-full animate-pulse rounded-lg bg-muted/30" />;
-
-const AppointmentsPerDayChart = dynamic(
-  () => import("@/components/dashboard/charts/dashboard-charts").then((m) => m.AppointmentsPerDayChart),
-  { ssr: false, loading: () => chartFallback }
-);
-
-const MonthlyRevenueChart = dynamic(
-  () => import("@/components/dashboard/charts/dashboard-charts").then((m) => m.MonthlyRevenueChart),
-  { ssr: false, loading: () => chartFallback }
-);
-
+function greeting(now: Date) {
+  const hour = now.getHours();
+  if (hour < 13) return "Buen día";
+  if (hour < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
 
 /**
  * Renders the numbers the server already resolved, and keeps them fresh.
@@ -43,10 +28,16 @@ const MonthlyRevenueChart = dynamic(
  * arrives with its data": the first paint has the KPIs, and SWR only takes over
  * for the minute-by-minute refresh.
  */
-export function DashboardContent({ initialStats }: { initialStats: DashboardStats }) {
+export function DashboardContent({
+  initialStats,
+  ownerName,
+}: {
+  initialStats: DashboardStats;
+  ownerName: string;
+}) {
   const { data } = useSWR<DashboardStats>("/api/panel/stats", {
     fallbackData: initialStats,
-    // Each tick is 12 queries. Five minutes is plenty for a KPI panel, and
+    // Each tick is a dozen queries. Five minutes is plenty for a KPI panel, and
     // coming back to the tab refreshes it anyway.
     refreshInterval: 300000,
     revalidateOnFocus: true,
@@ -56,43 +47,41 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
   // `isLoading` here would put the skeleton back over data we already have.
   if (!data) return <DashboardSkeleton />;
 
-  const { kpis, charts, upcoming, recentActivity } = data;
+  const { kpis, charts, upcoming, waitlistInsight } = data;
+  const now = new Date();
 
-  const chartDays = (charts?.last7Days || []).map((d: { date: string; count: number }) => ({
-    name: format(new Date(d.date), "EEE", { locale: es }),
-    turnos: d.count,
-  }));
-
-  const chartMonths = (charts?.last6Months || []).map((m: { month: string; revenue: number }) => ({
-    name: format(new Date(m.month), "MMM", { locale: es }),
-    ingresos: m.revenue,
-  }));
+  const days = (charts?.last7Days ?? []).map((day) => {
+    const date = new Date(day.date);
+    const today = isToday(date);
+    return {
+      label: today ? "Hoy" : format(date, "EEE", { locale: es }).replace(/^\w/, (c) => c.toUpperCase()),
+      count: day.count,
+      today,
+    };
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-heading font-bold">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">Resumen de tu negocio</p>
-        </div>
-        {/* The most common thing an owner does at the panel, reachable from the
-            first screen instead of two navigations away. */}
-        <Link
-          href="/panel/turnos"
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-lg brand-gradient text-white text-sm font-medium shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Cargar un turno
-        </Link>
-      </div>
+    <div className="space-y-4">
+      {/*
+        The screen opens with a sentence, not a title. "Dashboard / Resumen de tu
+        negocio" told the owner where they were, which they knew — this tells
+        them how the day is going, which is what they opened the panel for.
+      */}
+      <header className="mb-[22px]">
+        <h1 className="text-[21px] font-bold tracking-[-0.025em]">
+          {greeting(now)}, {ownerName}
+        </h1>
+        <p className="mt-[3px] text-[12.5px] text-muted-foreground">
+          {format(now, "EEEE d 'de' MMMM", { locale: es }).replace(/^\w/, (c) => c.toUpperCase())} ·
+          tu agenda está al <b className="text-jade-label">{kpis.occupancy}%</b> este mes
+        </p>
+      </header>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Turnos hoy"
           value={String(kpis.todayAppointments)}
           change={`${kpis.todayChange >= 0 ? "+" : ""}${kpis.todayChange} vs ayer`}
-          icon={Calendar}
           trend={kpis.todayChange >= 0 ? "up" : "down"}
           // The calendar opens on today, so "turnos hoy" lands exactly on them
           // without this screen having to work out what "today" means in the
@@ -103,7 +92,6 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
           label="Ingresos del mes"
           value={formatCurrency(kpis.monthRevenue)}
           change={`${kpis.revenueChange >= 0 ? "+" : ""}${kpis.revenueChange}% vs mes anterior`}
-          icon={DollarSign}
           trend={kpis.revenueChange >= 0 ? "up" : "down"}
           href="/panel/reportes"
         />
@@ -111,59 +99,62 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
           label="Clientes activos"
           value={String(kpis.activeClients)}
           change={`${kpis.clientChange >= 0 ? "+" : ""}${kpis.clientChange} este mes`}
-          icon={Users}
           trend={kpis.clientChange >= 0 ? "up" : "down"}
           href="/panel/clientes"
         />
         <KpiCard
-          label="Tasa de ocupación"
+          label="Ocupación"
           value={`${kpis.occupancy}%`}
           change="del mes actual"
-          icon={TrendingUp}
-          trend={kpis.occupancy > 50 ? "up" : "down"}
-          href="/panel/analytics"
+          trend="neutral"
+          href="/panel/reportes"
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="glass rounded-xl p-6">
-          <h3 className="font-heading font-semibold mb-4">Turnos por día</h3>
-          <div className="h-56">
-            <AppointmentsPerDayChart data={chartDays} />
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.15fr_0.85fr]">
+        <Card className="p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-[13px] font-bold">Turnos por día</h2>
+            <span className="text-[11px] text-muted-foreground">últimos 7 días</span>
           </div>
-        </div>
+          <AppointmentsBarChart days={days} className="flex-1" />
+        </Card>
 
-        <div className="glass rounded-xl p-6">
-          <h3 className="font-heading font-semibold mb-4">Ingresos mensuales</h3>
-          <div className="h-56">
-            <MonthlyRevenueChart data={chartMonths} />
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="glass rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-heading font-semibold">Próximos turnos</h3>
-            <Link href="/panel/turnos" className="text-xs text-primary hover:underline">
+        <Card className="p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[13px] font-bold">Próximos turnos</h2>
+            <Link href="/panel/turnos" className="text-[11px] text-jade-link hover:underline">
               Ver todos
             </Link>
           </div>
-          <UpcomingList appointments={upcoming || []} />
-        </div>
-
-        <div className="glass rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-heading font-semibold">Actividad reciente</h3>
-            <Link href="/panel/audit" className="text-xs text-primary hover:underline">
-              Ver todo
-            </Link>
-          </div>
-          <ActivityFeed activities={recentActivity || []} />
-        </div>
+          <UpcomingList appointments={upcoming ?? []} />
+        </Card>
       </div>
+
+      {waitlistInsight && (
+        <Card className="flex flex-row items-center gap-3 px-[18px] py-3.5">
+          <span
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-jade-fill text-jade-label"
+            aria-hidden
+          >
+            <Sparkles className="size-3.5" />
+          </span>
+          <p className="flex-1 text-[12.5px] text-muted-foreground">
+            {waitlistInsight.people === 1 ? "Hay 1 persona" : `Hay ${waitlistInsight.people} personas`}{" "}
+            esperando un lugar para el{" "}
+            <b className="text-foreground">
+              {format(new Date(waitlistInsight.date), "EEEE d", { locale: es })}
+            </b>
+            .
+          </p>
+          <Link
+            href="/panel/lista-espera"
+            className="shrink-0 rounded-lg bg-primary px-4 py-2 text-[11.5px] font-bold text-primary-foreground transition-colors hover:bg-[#22c55e]"
+          >
+            Ofrecer el hueco
+          </Link>
+        </Card>
+      )}
     </div>
   );
 }

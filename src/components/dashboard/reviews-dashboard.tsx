@@ -159,8 +159,11 @@ export function ReviewsDashboard() {
         {reviews.map((review) => (
           <div key={review.id} className="glass rounded-xl p-4">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-1">
+              {/* min-w-0: a flex child's default minimum is its content, so the
+                  meta row below refused to shrink and pushed the card 8px past
+                  a 375px screen. */}
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <StarRating rating={review.rating} />
                   <span className="text-sm font-medium">
                     {review.user?.name || review.guestClient?.name || "Anónimo"}
@@ -172,7 +175,7 @@ export function ReviewsDashboard() {
                 {review.comment && (
                   <p className="text-sm text-muted-foreground mb-2">{review.comment}</p>
                 )}
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   <span>{review.appointment.service.name}</span>
                   <span>·</span>
                   <span>{review.appointment.staff.name}</span>

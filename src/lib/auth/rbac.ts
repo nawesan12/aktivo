@@ -41,8 +41,6 @@ export type Permission =
   | "reviews:read"
   | "reviews:manage"
   // Sprint 8
-  | "campaigns:read"
-  | "campaigns:manage"
   | "noshow:read"
   | "noshow:manage"
   // Sprint 9
@@ -50,8 +48,6 @@ export type Permission =
   | "group:manage"
   | "group:reports"
   // Sprint 10
-  | "analytics:read"
-  | "widget:manage"
   // Client UX
   | "coupons:read"
   | "coupons:manage"
@@ -74,9 +70,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "audit:read",
     "admin:access",
     "clients:tags", "reviews:read", "reviews:manage",
-    "campaigns:read", "campaigns:manage", "noshow:read", "noshow:manage",
+    "noshow:read", "noshow:manage",
     "group:read", "group:manage", "group:reports",
-    "analytics:read", "widget:manage",
     "coupons:read", "coupons:manage", "referrals:read", "referrals:manage",
   ],
   BUSINESS_OWNER: [
@@ -93,9 +88,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "billing:read", "billing:manage",
     "audit:read",
     "clients:tags", "reviews:read", "reviews:manage",
-    "campaigns:read", "campaigns:manage", "noshow:read", "noshow:manage",
+    "noshow:read", "noshow:manage",
     "group:read", "group:manage", "group:reports",
-    "analytics:read", "widget:manage",
     "coupons:read", "coupons:manage", "referrals:read", "referrals:manage",
   ],
   BUSINESS_MANAGER: [
@@ -111,9 +105,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "team:read",
     "audit:read",
     "clients:tags", "reviews:read",
-    "campaigns:read", "noshow:read",
+    "noshow:read",
     "group:read",
-    "analytics:read",
     "coupons:read", "coupons:manage", "referrals:read",
   ],
   STAFF_MEMBER: [
@@ -176,11 +169,9 @@ const READ_ONLY_PERMISSIONS = new Set<Permission>([
   "billing:manage",
   "audit:read",
   "reviews:read",
-  "campaigns:read",
   "noshow:read",
   "group:read",
   "group:reports",
-  "analytics:read",
   "coupons:read",
   "referrals:read",
 ]);

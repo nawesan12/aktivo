@@ -1,20 +1,9 @@
-import type { Metadata } from "next";
-import { AuditLog } from "@/components/dashboard/audit-log";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Audit Log",
-};
-
-export default function AuditPage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Audit Log</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Registro de actividad y cambios
-        </p>
-      </div>
-      <AuditLog />
-    </div>
-  );
+/**
+ * Absorbed into Configuración. The route stays because links to it are out in
+ * the world — in the sidebar people remember, in bookmarks, in old emails.
+ */
+export default function Page() {
+  redirect("/panel/configuracion?s=historial");
 }

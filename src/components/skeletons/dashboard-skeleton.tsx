@@ -10,15 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
  * broken, on every screen, every time anything loaded.
  */
 
-export function KPICardSkeleton() {
+export function KPICardSkeleton({ delay = 0 }: { delay?: number }) {
   return (
-    <div className="glass rounded-xl p-6 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <Skeleton className="h-4 w-24 max-w-full" />
-        <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
-      </div>
-      <Skeleton className="h-8 w-20 max-w-full" />
-      <Skeleton className="h-3 w-32 max-w-full" />
+    <div className="glass rounded-xl p-[18px] space-y-2.5">
+      <Skeleton className="h-3 w-24 max-w-full" style={{ animationDelay: `${delay}s` }} />
+      <Skeleton className="h-7 w-20 max-w-full" style={{ animationDelay: `${delay + 0.08}s` }} />
+      <Skeleton className="h-3 w-32 max-w-full" style={{ animationDelay: `${delay + 0.16}s` }} />
     </div>
   );
 }
@@ -59,9 +56,10 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 export function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Staggered: the row ripples across instead of blinking as one block. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <KPICardSkeleton key={i} />
+          <KPICardSkeleton key={i} delay={i * 0.12} />
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

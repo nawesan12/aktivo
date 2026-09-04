@@ -17,7 +17,7 @@ function RecoverContent() {
 
 export default function RecoverPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="bg-dots flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
@@ -26,7 +26,7 @@ export default function RecoverPasswordPage() {
         </div>
         <Suspense
           fallback={
-            <div className="glass rounded-2xl p-8 flex items-center justify-center">
+            <div className="rounded-2xl border border-border bg-card shadow-card p-8 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           }
@@ -69,7 +69,7 @@ function ForgotForm() {
 
   if (sent) {
     return (
-      <div className="glass rounded-2xl p-8 text-center">
+      <div className="rounded-2xl border border-border bg-card shadow-card p-8 text-center">
         <CheckCircle className="w-12 h-12 text-success-foreground mx-auto mb-4" />
         <h1 className="text-xl font-heading font-bold mb-2">Email enviado</h1>
         <p className="text-muted-foreground text-sm mb-6">
@@ -86,7 +86,7 @@ function ForgotForm() {
   }
 
   return (
-    <div className="glass rounded-2xl p-8 space-y-6">
+    <div className="rounded-2xl border border-border bg-card shadow-card p-8 space-y-6">
       <div>
         <h1 className="text-xl font-heading font-bold">Recuperar contraseña</h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -167,7 +167,7 @@ function ResetForm({ token }: { token: string }) {
   }
 
   return (
-    <div className="glass rounded-2xl p-8 space-y-6">
+    <div className="rounded-2xl border border-border bg-card shadow-card p-8 space-y-6">
       <div>
         <h1 className="text-xl font-heading font-bold">Nueva contraseña</h1>
         <p className="text-muted-foreground text-sm mt-1">

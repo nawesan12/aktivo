@@ -150,6 +150,19 @@ export default function RootLayout({
         no business running there. Each route group brings its own, and
         `(widget)` deliberately brings almost none.
       */}
+      <head>
+        {/*
+          Applies the stored theme before the first paint. The provider can only
+          read localStorage after hydration, so without this every visitor who
+          picked dark got a full light render first and watched it flip.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{if(localStorage.getItem("jiku-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}',
+          }}
+        />
+      </head>
       <body className="min-h-screen">
         {/*
           Keyboard users would otherwise tab through the whole navigation on
@@ -157,7 +170,7 @@ export default function RootLayout({
         */}
         <a
           href="#contenido"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
         >
           Saltar al contenido
         </a>

@@ -68,8 +68,6 @@ export async function GET() {
       features: {
         mpPayments: limits.mpPayments,
         crm: limits.crm,
-        campaigns: limits.campaigns,
-        widget: limits.widget,
         advancedReports: limits.advancedReports,
         multiLocation: limits.multiLocation,
         whiteLabel: limits.whiteLabel,

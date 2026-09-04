@@ -59,10 +59,17 @@ export async function GET(request: NextRequest) {
             select: { appointments: { where: { businessId: session.businessId } } },
           },
           appointments: {
-            where: { businessId: session.businessId },
+            // The last visit, not the next booking: "hace 12 días" is what the
+            // column says, and ordering by dateTime alone put a turno booked
+            // for next week in there and printed "hace -4 días".
+            where: { businessId: session.businessId, dateTime: { lte: new Date() } },
             orderBy: { dateTime: "desc" },
             take: 1,
             select: { dateTime: true },
+          },
+          tagAssignments: {
+            where: { tag: { businessId: session.businessId } },
+            select: { tag: { select: { id: true, name: true, color: true } } },
           },
         },
         orderBy: { name: "asc" },
@@ -73,9 +80,14 @@ export async function GET(request: NextRequest) {
         include: {
           _count: { select: { appointments: true } },
           appointments: {
+            where: { dateTime: { lte: new Date() } },
             orderBy: { dateTime: "desc" },
             take: 1,
             select: { dateTime: true },
+          },
+          tagAssignments: {
+            where: { tag: { businessId: session.businessId } },
+            select: { tag: { select: { id: true, name: true, color: true } } },
           },
         },
         orderBy: { name: "asc" },
@@ -84,6 +96,37 @@ export async function GET(request: NextRequest) {
       db.user.count({ where: userWhere }),
       db.guestClient.count({ where: guestWhere }),
     ]);
+
+    /*
+      "Gastado" per client, aggregated in one query for the whole page rather
+      than one per row. Same definition the client's own card uses: payments
+      that actually cleared, not prices of bookings that may never have been
+      paid for.
+    */
+    const spendRows = await db.payment.groupBy({
+      by: ["appointmentId"],
+      where: { businessId: session.businessId, status: "APPROVED" },
+      _sum: { amount: true },
+    });
+    const spentByAppointment = new Map(
+      spendRows.map((row) => [row.appointmentId, row._sum.amount ?? 0])
+    );
+    const owners = await db.appointment.findMany({
+      where: {
+        businessId: session.businessId,
+        id: { in: [...spentByAppointment.keys()] },
+      },
+      select: { id: true, userId: true, guestClientId: true },
+    });
+    const spentByClient = new Map<string, number>();
+    for (const appointment of owners) {
+      const clientId = appointment.userId ?? appointment.guestClientId;
+      if (!clientId) continue;
+      spentByClient.set(
+        clientId,
+        (spentByClient.get(clientId) ?? 0) + (spentByAppointment.get(appointment.id) ?? 0)
+      );
+    }
 
     // Merge and normalize
     const merged = [
@@ -95,6 +138,8 @@ export async function GET(request: NextRequest) {
         type: "registered" as const,
         totalAppointments: u._count.appointments,
         lastAppointment: u.appointments[0]?.dateTime || null,
+        totalSpent: spentByClient.get(u.id) ?? 0,
+        tags: u.tagAssignments.map((assignment) => assignment.tag),
         createdAt: u.createdAt,
       })),
       ...guests.map((g) => ({
@@ -105,6 +150,8 @@ export async function GET(request: NextRequest) {
         type: "guest" as const,
         totalAppointments: g._count.appointments,
         lastAppointment: g.appointments[0]?.dateTime || null,
+        totalSpent: spentByClient.get(g.id) ?? 0,
+        tags: g.tagAssignments.map((assignment) => assignment.tag),
         createdAt: g.createdAt,
       })),
     ].sort((a, b) => (a.name || "").localeCompare(b.name || ""));

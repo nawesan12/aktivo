@@ -4,6 +4,7 @@ import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { appointmentListKey, listAppointments } from "@/lib/panel/appointments";
 import { AppointmentsTable } from "@/components/dashboard/appointments-table";
+import { PanelHeader } from "@/components/dashboard/panel-header";
 
 export const metadata: Metadata = {
   title: "Gestión de Turnos",
@@ -21,12 +22,7 @@ export default async function TurnosPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Gestión de Turnos</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Administrá y gestioná todos los turnos de tu negocio
-        </p>
-      </div>
+      <PanelHeader title="Gestión de Turnos" subtitle="Administrá y gestioná todos los turnos de tu negocio" />
       {/* Required for the prerender: the table reads `?search=` so other
           screens can link straight to one turno, and that is only known at
           request time. The server-rendered rows still ship inside the boundary. */}

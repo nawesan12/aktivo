@@ -1,70 +1,78 @@
 "use client";
 
-import { Menu, Moon, Sun } from "lucide-react";
+import { useState } from "react";
+import { useSWRConfig } from "swr";
+import { Moon, Plus, Sun } from "lucide-react";
+
 import { CommandSearch } from "@/components/dashboard/command-search";
-import { LocationSwitcher } from "@/components/dashboard/location-switcher";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
-import { Button } from "@/components/ui/button";
+import { NewAppointmentDialog } from "@/components/dashboard/new-appointment-dialog";
 import { UserMenu } from "@/components/layout/user-menu";
-import { useUIStore } from "@/stores/ui-store";
+import { PermissionGate } from "@/components/auth/permission-gate";
 import { useTheme } from "@/components/providers/theme-provider";
 
 export function Topbar() {
-  const { setMobileNavOpen } = useUIStore();
   const { theme, toggleTheme } = useTheme();
+  const { mutate } = useSWRConfig();
+  const [newAppointment, setNewAppointment] = useState(false);
 
   return (
-    <header className="safe-top safe-x border-b border-border bg-background/80 backdrop-blur-xl px-4 lg:px-6">
-      <div className="h-16 flex items-center justify-between">
-      {/* Left */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          aria-label="Abrir el menú"
-          onClick={() => setMobileNavOpen(true)}
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
+    <header className="safe-top safe-x flex items-center gap-3.5 border-b border-border bg-card px-4 py-[13px] lg:px-7">
+      <CommandSearch />
 
-        <CommandSearch />
+      <div className="ml-auto flex items-center gap-2.5">
+        <NotificationBell />
 
-        {/*
-          Switching branches. The component was finished and never mounted
-          anywhere, so multi-location — the feature the top plan is sold on —
-          could be bought and not used: every business card in the account
-          linked to the same panel, and the active branch was whichever came
-          first alphabetically. It hides itself when there is no group.
-        */}
-        <LocationSwitcher />
-      </div>
-
-      {/* Right */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
           onClick={toggleTheme}
+          className="flex size-[34px] items-center justify-center rounded-[10px] border border-border bg-card text-muted-foreground transition-colors hover:bg-accent"
         >
-          {theme === "dark" ? (
-            <Sun className="w-4 h-4" />
-          ) : (
-            <Moon className="w-4 h-4" />
-          )}
-        </Button>
-
-        <NotificationBell />
+          {theme === "dark" ? <Sun className="size-[15px]" /> : <Moon className="size-[15px]" />}
+        </button>
 
         <UserMenu
           links={[
-            { label: "Mi cuenta", href: "/mi-cuenta" },
+            { label: "Mi perfil", href: "/mi-cuenta/perfil" },
+            { label: "Mis turnos", href: "/mi-cuenta/turnos" },
+            { label: "Mis avisos", href: "/mi-cuenta/notificaciones" },
+            { label: "Seguridad", href: "/mi-cuenta/seguridad" },
             { label: "Configuración", href: "/panel/configuracion" },
           ]}
         />
-        </div>
+
+        {/*
+          The one place this lives now. It used to be duplicated on the dashboard
+          and above the appointments table, which meant two buttons with the same
+          name on /panel/turnos and no trigger at all on any other screen — an
+          owner on the calendar had to navigate away to take a phone booking.
+        */}
+        <PermissionGate permission="appointments:create">
+          <button
+            type="button"
+            onClick={() => setNewAppointment(true)}
+            className="hidden items-center gap-1.5 rounded-[10px] bg-primary px-4 py-[9px] text-[12.5px] font-bold text-primary-foreground transition-colors hover:bg-[#22c55e] sm:inline-flex"
+          >
+            <Plus className="size-3.5" strokeWidth={3} />
+            Cargar un turno
+          </button>
+        </PermissionGate>
       </div>
+
+      <NewAppointmentDialog
+        open={newAppointment}
+        onClose={() => setNewAppointment(false)}
+        onCreated={() =>
+          mutate(
+            (key) =>
+              typeof key === "string" &&
+              (key.startsWith("/api/panel/appointments") || key.startsWith("/api/panel/stats")),
+            undefined,
+            { revalidate: true }
+          )
+        }
+      />
     </header>
   );
 }

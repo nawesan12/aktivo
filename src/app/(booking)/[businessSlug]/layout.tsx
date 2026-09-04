@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { getBusinessProfile } from "@/lib/booking/business-page";
-import { safeImageUrl } from "@/lib/images";
 import { notFound } from "next/navigation";
 import { contrastColor, isHexColor } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/subscription/config";
-import Image from "next/image";
 
 export default async function BookingLayout({
   children,
@@ -39,42 +36,21 @@ export default async function BookingLayout({
       "--primary-foreground": contrastColor(primary),
       "--ring": primary,
     }),
-    ...(accent && {
-      "--accent": accent,
-      "--accent-foreground": contrastColor(accent),
-    }),
+    // --brand-accent, not --accent: the latter is the neutral hover surface that
+    // every ghost button and dropdown row reads, and painting it with the shop's
+    // colour turned each of those hovers into a block of saturated brand colour.
+    // The gradient is the only thing that wants this second colour.
+    ...(accent && { "--brand-accent": accent }),
   } as React.CSSProperties;
 
   return (
-    <div style={brandStyle} className="min-h-screen flex flex-col">
-      {/* Minimal header */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass safe-top safe-x">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link
-            href={`/${business.slug}`}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {safeImageUrl(business.logo) ? (
-              <Image
-                src={safeImageUrl(business.logo)!}
-                alt={business.name}
-                width={28}
-                height={28}
-                className="w-7 h-7 rounded-lg object-cover"
-              />
-            ) : (
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                style={{ background: `linear-gradient(135deg, ${business.primaryColor || "#6366f1"}, ${business.accentColor || "#22d3ee"})` }}
-              >
-                {business.name.charAt(0)}
-              </div>
-            )}
-            <span className="font-heading font-semibold">{business.name}</span>
-          </Link>
-        </div>
-      </header>
-      <main id="contenido" className="flex-1 pt-[calc(3.5rem+env(safe-area-inset-top))]">
+    <div style={brandStyle} className="bg-dots flex min-h-screen flex-col">
+      {/*
+        No app header any more: every screen under this route opens on the
+        shop's own cover photo, and a 56px bar with a 28px logo above it was a
+        second, smaller identity competing with the real one.
+      */}
+      <main id="contenido" className="flex-1">
         {children}
       </main>
 

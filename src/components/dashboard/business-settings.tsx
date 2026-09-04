@@ -4,11 +4,20 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Loader2, Save, Building2, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import Link from "next/link";
 
 
-export function BusinessSettings() {
+/**
+ * Both halves of the settings form, with one save between them.
+ *
+ * The redesign splits Configuración into a left nav, so "Negocio" and "Reservas
+ * y señas" are separate destinations — but they are one PATCH and one piece of
+ * state, so the component stays whole and hides the half you are not on rather
+ * than being torn into two that could disagree about what is unsaved.
+ */
+export function BusinessSettings({ section = "todo" }: { section?: "todo" | "negocio" | "reservas" }) {
   const { data, isLoading, mutate } = useSWR("/api/panel/settings");
   const [saving, setSaving] = useState(false);
 
@@ -117,7 +126,7 @@ export function BusinessSettings() {
   return (
     <div className="space-y-6">
       {/* Business profile */}
-      <div className="glass rounded-xl p-6 space-y-4">
+      <div className={cn("glass rounded-xl p-6 space-y-4", section === "reservas" && "hidden")}>
         <h3 className="font-heading font-semibold flex items-center gap-2">
           <Building2 className="w-4 h-4" /> Perfil del negocio
         </h3>
@@ -248,7 +257,7 @@ export function BusinessSettings() {
       </div>
 
       {/* Booking settings */}
-      <div className="glass rounded-xl p-6 space-y-4">
+      <div className={cn("glass rounded-xl p-6 space-y-4", section === "negocio" && "hidden")}>
         <h3 className="font-heading font-semibold flex items-center gap-2">
           <Settings className="w-4 h-4" /> Configuración de turnos
         </h3>

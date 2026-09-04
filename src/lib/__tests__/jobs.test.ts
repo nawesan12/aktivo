@@ -12,13 +12,18 @@ vi.mock("@/lib/db", () => ({
 
 const expireHolds = vi.fn();
 const reminders = vi.fn();
-const campaigns = vi.fn();
+const dailyOnly = vi.fn();
 
+/*
+  A stand-in registry, not the real one: this file is about the runner, not
+  about which jobs exist. `daily-only` is the shape that matters — a job with
+  `opportunistic: false`, which the traffic-driven tick has to leave alone.
+*/
 vi.mock("@/lib/jobs/registry", () => ({
   JOBS: [
     { name: "expire-holds", intervalSeconds: 300, opportunistic: true, run: () => expireHolds() },
     { name: "reminders", intervalSeconds: 300, opportunistic: true, run: () => reminders() },
-    { name: "campaigns", intervalSeconds: 43200, opportunistic: false, run: () => campaigns() },
+    { name: "daily-only", intervalSeconds: 43200, opportunistic: false, run: () => dailyOnly() },
   ],
 }));
 
@@ -33,7 +38,7 @@ beforeEach(() => {
   jobRunUpdate.mockResolvedValue({});
   expireHolds.mockResolvedValue({ released: 0 });
   reminders.mockResolvedValue({ sent: 0 });
-  campaigns.mockResolvedValue([]);
+  dailyOnly.mockResolvedValue([]);
 });
 
 describe("tick oportunista", () => {
@@ -50,10 +55,10 @@ describe("tick oportunista", () => {
     const result = await runDueJobs();
 
     expect(reminders).toHaveBeenCalled();
-    // Un saludo de cumpleaños tiene que salir el día que es. Si dependiera del
-    // tráfico y ese día no hubo, se pierde para siempre y en silencio.
-    expect(campaigns).not.toHaveBeenCalled();
-    expect(result.ran).not.toHaveProperty("campaigns");
+    // Lo que tiene que salir un día puntual no puede depender de que ese día
+    // haya habido visitas: si no las hubo, se pierde para siempre y en silencio.
+    expect(dailyOnly).not.toHaveBeenCalled();
+    expect(result.ran).not.toHaveProperty("daily-only");
   });
 
   it("saltea el job que otra instancia ya reclamó, sin frenar los demás", async () => {
@@ -100,7 +105,7 @@ describe("corrida forzada del cron diario", () => {
     const result = await runDueJobs({ force: true });
 
     expect(expireHolds).toHaveBeenCalled();
-    expect(campaigns).toHaveBeenCalled();
+    expect(dailyOnly).toHaveBeenCalled();
     expect(result.skipped).toEqual([]);
   });
 
@@ -111,7 +116,7 @@ describe("corrida forzada del cron diario", () => {
 
     expect(jobRunUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { name: "campaigns" },
+        where: { name: "daily-only" },
         data: expect.objectContaining({ runs: { increment: 1 } }),
       })
     );

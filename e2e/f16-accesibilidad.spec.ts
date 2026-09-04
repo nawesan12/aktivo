@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { SEED, loginAsOwner } from "./helpers";
 import { loadBookingFixture } from "./fixtures";
+import { bookUpToSlot } from "./booking-flow";
 
 /**
  * Keyboard and screen-reader basics on the paths a customer walks.
@@ -32,17 +33,14 @@ test("el formulario de ingreso tiene sus campos etiquetados", async ({ page }) =
 test("los datos de la reserva se piden con campos etiquetados", async ({ page, request }) => {
   const fixture = await loadBookingFixture(request);
 
-  await page.goto(`/${fixture.slug}/reservar`);
-  await page.getByText(fixture.service.name, { exact: false }).first().click();
-  await page.getByText(fixture.staff.name, { exact: false }).first().click();
+  await bookUpToSlot(page, fixture);
 
-  const [year, month, day] = fixture.date.split("-").map(Number);
-  await page.locator(`button[data-day="${month}/${day}/${year}"]`).click();
-  await page.locator(".time-slot-pill:not([disabled])").first().click();
-  await page.getByRole("button", { name: /continuar|siguiente/i }).click();
-
-  await expect(page.getByLabel(/nombre/i).first()).toBeVisible();
-  await expect(page.getByLabel(/tel/i).first()).toBeVisible();
+  // Los labels son visualmente invisibles — el placeholder alcanza para leer el
+  // campo — pero tienen que existir y estar asociados, o con un lector de
+  // pantalla la reserva termina en tres cajas sin nombre.
+  await expect(page.getByLabel("Tu nombre", { exact: true }).first()).toBeVisible();
+  await expect(page.getByLabel("Tu teléfono", { exact: true }).first()).toBeVisible();
+  await expect(page.getByLabel("Tu email", { exact: true }).first()).toBeVisible();
 });
 
 test("los botones de ícono del panel se anuncian", async ({ page }) => {

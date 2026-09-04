@@ -25,6 +25,6 @@ test.describe("F11 — Smart Time Suggestions", () => {
   test("booking wizard loads without crashing when suggestions unavailable", async ({ page }) => {
     await page.goto(`/${SEED.business.slug}/reservar`);
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText(/Elegir servicio/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Elegí tu servicio/i })).toBeVisible();
   });
 });

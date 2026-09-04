@@ -1,29 +1,16 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-import Link from "next/link";
-import gsap from "@/lib/animations/gsap";
-import {
-  Phone,
-  MapPin,
-  MessageCircle,
-  Clock,
-  ArrowRight,
-  Sparkles,
-  ChevronDown,
-  Star,
-  CalendarCheck,
-  Mail,
-  Globe,
-  Share2,
-  Info,
-} from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { MagneticButton } from "@/components/premium/magnetic-button";
-import { formatCurrency } from "@/lib/format";
 import Image from "next/image";
+import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { normalisePhone } from "@/lib/phone";
+import { nowInArgentina } from "@/lib/timezone";
+import { cn } from "@/lib/utils";
+
+import { GalleryCollage, type Photo } from "./profile/gallery-collage";
+import { OpeningHours, openUntil, type DayHours } from "./profile/opening-hours";
+import { ServiceList } from "./profile/service-list";
+import { ShareButton } from "./profile/share-button";
 
 interface ReviewData {
   id: string;
@@ -57,8 +44,10 @@ interface BusinessProfileProps {
     accentColor: string | null;
     /** Shown to the visitor before they book, not hidden in the wizard. */
     cancellationPolicy: string | null;
+    /** 0.3 for a 30% deposit; null when the shop does not take one. */
+    depositRate: number | null;
   };
-  gallery: Array<{ id: string; url: string; caption: string | null }>;
+  gallery: Photo[];
   categories: Array<{
     id: string;
     name: string;
@@ -77,752 +66,345 @@ interface BusinessProfileProps {
     image: string | null;
     bio: string | null;
     specialty: string | null;
-    workingHours: Array<{
-      dayOfWeek: number;
-      startTime: string;
-      endTime: string;
-    }>;
+    workingHours: DayHours[];
   }>;
   reviews?: ReviewData[];
   averageRating?: number;
   reviewCount?: number;
 }
 
-const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
-function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m > 0 ? `${h} h ${m} min` : `${h} h`;
-}
-
-/** Kept as a local alias so the call sites read the same; the format lives in @/lib/format. */
-function formatPrice(price: number): string {
-  return formatCurrency(price);
-}
-
-function getInitials(name: string): string {
+function initials(name: string) {
   return name
     .split(" ")
-    .map((n) => n[0])
+    .slice(0, 2)
+    .map((word) => word[0])
     .join("")
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase();
 }
 
-function StarRating({ rating, color }: { rating: number; color: string }) {
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          className="w-4 h-4"
-          fill={i <= rating ? color : "transparent"}
-          stroke={i <= rating ? color : "currentColor"}
-          strokeWidth={1.5}
-        />
-      ))}
-    </div>
-  );
-}
-
-function formatRelativeDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Hoy";
-  if (diffDays === 1) return "Ayer";
-  if (diffDays < 7) return `Hace ${diffDays} días`;
-  if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
-  return `Hace ${Math.floor(diffDays / 30)} meses`;
-}
-
-export function BusinessProfile({ business, categories, staff, gallery = [], reviews = [], averageRating = 0, reviewCount = 0 }: BusinessProfileProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const servicesRef = useRef<HTMLDivElement>(null);
-  const staffRef = useRef<HTMLDivElement>(null);
-  const reviewsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const ctx = gsap.context(() => {
-      // Hero entrance sequence
-      const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      heroTl
-        .fromTo(".bp-hero-logo", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.7 })
-        .fromTo(".bp-hero-name", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.3")
-        .fromTo(".bp-hero-desc", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, "-=0.3")
-        .fromTo(".bp-hero-cta", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, "-=0.2")
-        .fromTo(".bp-hero-scroll", { opacity: 0 }, { opacity: 1, duration: 0.4 }, "-=0.1");
-
-      // Quick info slides up
-      gsap.fromTo(
-        ".bp-quickinfo",
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          scrollTrigger: { trigger: ".bp-quickinfo", start: "top 90%" },
-        }
-      );
-
-      // Service cards stagger
-      if (servicesRef.current) {
-        gsap.fromTo(
-          ".bp-service-card",
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            stagger: 0.08,
-            scrollTrigger: { trigger: servicesRef.current, start: "top 80%" },
-          }
-        );
-      }
-
-      // Staff cards stagger
-      if (staffRef.current) {
-        gsap.fromTo(
-          ".bp-staff-card",
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            stagger: 0.1,
-            scrollTrigger: { trigger: staffRef.current, start: "top 80%" },
-          }
-        );
-      }
-
-      // Hours fade in
-      gsap.fromTo(
-        ".bp-hours",
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          scrollTrigger: { trigger: ".bp-hours", start: "top 85%" },
-        }
-      );
-
-      // Reviews stagger
-      if (reviewsRef.current) {
-        gsap.fromTo(
-          ".bp-review-card",
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            stagger: 0.08,
-            scrollTrigger: { trigger: reviewsRef.current, start: "top 80%" },
-          }
-        );
-      }
-    }, containerRef.current);
-
-    return () => ctx.revert();
-  }, []);
-
-  /**
-   * When the shop is open: the union of everybody's hours, not one person's.
-   *
-   * It used to read `staff[0].workingHours` — the first professional
-   * alphabetically — and publish that as the opening hours of the business. A
-   * barbershop with three barbers advertised Ana's schedule, so the days Ana
-   * was off read "Cerrado" while the place was open.
-   */
-  const hoursByDay = new Map<number, { startTime: string; endTime: string }>();
-
-  for (const member of staff) {
-    for (const wh of member.workingHours) {
-      const current = hoursByDay.get(wh.dayOfWeek);
-
-      hoursByDay.set(wh.dayOfWeek, {
-        startTime: current && current.startTime < wh.startTime ? current.startTime : wh.startTime,
-        endTime: current && current.endTime > wh.endTime ? current.endTime : wh.endTime,
-      });
-    }
-  }
-
-  const hasPublishedHours = hoursByDay.size > 0;
-
-  const quickInfoItems = [
-    business.phone && {
-      icon: Phone,
-      label: business.phone,
-      href: `tel:${business.phone.replace(/\s/g, "")}`,
-    },
-    business.address && {
-      icon: MapPin,
-      label: [business.address, business.city, business.province].filter(Boolean).join(", "),
-      href: `https://maps.google.com/?q=${encodeURIComponent([business.address, business.city, business.province].filter(Boolean).join(", "))}`,
-    },
-    business.whatsapp && {
-      icon: MessageCircle,
-      label: "WhatsApp",
-      href: `https://wa.me/${business.whatsapp.replace(/\D/g, "")}`,
-    },
-    // Both of these were filled in by the owner in the panel and thrown away
-    // here: `email` arrived as a prop and was never read, `website` was not even
-    // passed. Somebody typing their data into a form expects it to show up.
-    business.email && {
-      icon: Mail,
-      label: business.email,
-      href: `mailto:${business.email}`,
-    },
-    business.website && {
-      icon: Globe,
-      label: "Sitio web",
-      href: business.website.startsWith("http")
-        ? business.website
-        : `https://${business.website}`,
-    },
-    {
-      icon: CalendarCheck,
-      label: "Mis turnos",
-      href: `/${business.slug}/mis-turnos`,
-    },
-  ].filter(Boolean) as Array<{ icon: typeof Phone; label: string; href: string }>;
-
-  const mapQuery = [business.address, business.city, business.province]
-    .filter(Boolean)
-    .join(", ");
-
-  const socials = [
-    business.instagram && {
-      label: "Instagram",
-      href: business.instagram.startsWith("http")
-        ? business.instagram
-        : `https://instagram.com/${business.instagram.replace(/^@/, "")}`,
-    },
-    business.facebook && {
-      label: "Facebook",
-      href: business.facebook.startsWith("http")
-        ? business.facebook
-        : `https://facebook.com/${business.facebook}`,
-    },
-    business.tiktok && {
-      label: "TikTok",
-      href: business.tiktok.startsWith("http")
-        ? business.tiktok
-        : `https://tiktok.com/@${business.tiktok.replace(/^@/, "")}`,
-    },
-  ].filter(Boolean) as Array<{ label: string; href: string }>;
-
-  const allServices = categories.flatMap((c) => c.services);
-
-  const primary = business.primaryColor || "#6366f1";
-  const accent = business.accentColor || "#22d3ee";
-  const gradientStyle = { background: `linear-gradient(135deg, ${primary}, ${accent})` };
-  const gradientTextStyle = {
-    background: `linear-gradient(135deg, ${primary}, ${accent})`,
-    WebkitBackgroundClip: "text" as const,
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
-  };
-  const glowStyle = { boxShadow: `0 0 30px ${primary}40, 0 0 60px ${primary}20` };
-
-  return (
-    <div ref={containerRef} className="min-h-screen pb-24 md:pb-8">
-      {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden">
-        {/* Background */}
-        {business.coverUrl ? (
-          <>
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${business.coverUrl})` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/80 to-background" />
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 opacity-[0.12]" style={gradientStyle} />
-            <div className="absolute inset-0 bg-grid-pattern" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
-          </>
-        )}
-
-        {/* Ambient orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div
-            className="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-20"
-            style={{
-              background: business.primaryColor || "#6366f1",
-              top: "10%",
-              left: "-10%",
-            }}
-          />
-          <div
-            className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-15"
-            style={{
-              background: business.accentColor || "#22d3ee",
-              bottom: "0%",
-              right: "-5%",
-            }}
-          />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-4 pt-24 pb-16 sm:pt-32 sm:pb-20 text-center">
-          {/* Logo / Avatar */}
-          <div className="bp-hero-logo opacity-0 mb-6 inline-block">
-            {business.logoUrl ? (
-              <Image
-                src={business.logoUrl}
-                alt={business.name}
-                width={96}
-                height={96}
-                priority
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-2 ring-white/10 shadow-2xl"
-              />
-            ) : (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-heading font-bold shadow-2xl ring-2 ring-white/10" style={gradientStyle}>
-                {getInitials(business.name)}
-              </div>
-            )}
-          </div>
-
-          <h1 className="bp-hero-name opacity-0 text-3xl sm:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-4">
-            {business.name}
-          </h1>
-
-          {business.description && (
-            <p className="bp-hero-desc opacity-0 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              {business.description}
-            </p>
-          )}
-
-          <div className="bp-hero-cta opacity-0">
-            <Link href={`/${business.slug}/reservar`}>
-              <MagneticButton className="text-white px-8 py-3.5 rounded-xl font-medium text-lg inline-flex items-center gap-2.5 cursor-pointer" style={{ ...gradientStyle, ...glowStyle }}>
-                <Sparkles className="w-5 h-5" />
-                Reservar turno
-                <ArrowRight className="w-5 h-5" />
-              </MagneticButton>
-            </Link>
-          </div>
-
-          {/* Scroll hint */}
-          <div className="bp-hero-scroll opacity-0 mt-12 flex flex-col items-center gap-1 text-muted-foreground/50">
-            <span className="text-xs">Conocé más</span>
-            <ChevronDown className="w-4 h-4 animate-bounce" />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Quick Info Bar ─── */}
-      {quickInfoItems.length > 0 && (
-        <div className="bp-quickinfo opacity-0 max-w-4xl mx-auto px-4 -mt-4 mb-12">
-          <div className="glass rounded-2xl p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-              {quickInfoItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  target={item.href.startsWith("http") ? "_blank" : undefined}
-                  rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <item.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="hidden sm:inline">{item.label}</span>
-                  <span className="sm:hidden">{item.label.length > 20 ? item.label.slice(0, 20) + "..." : item.label}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Services ─── */}
-      {allServices.length > 0 && (
-        <section ref={servicesRef} className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            <span style={gradientTextStyle}>Servicios</span>
-          </h2>
-
-          {categories
-            .filter((c) => c.services.length > 0)
-            .map((category) => (
-              <div key={category.id} className="mb-8 last:mb-0">
-                {categories.length > 1 && (
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full" style={gradientStyle} />
-                    {category.name}
-                  </h3>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {category.services.map((service) => (
-                    // Clicking a service starts the booking on that service.
-                    // The wizard already read `?serviceId=` and skipped its
-                    // first step; the cards just never linked anywhere, so the
-                    // most obvious click on the page did nothing.
-                    <Link
-                      key={service.id}
-                      href={`/${business.slug}/reservar?serviceId=${service.id}`}
-                      className="bp-service-card opacity-0 glass rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                      style={{ "--tw-shadow-color": `${primary}10` } as React.CSSProperties}
-                    >
-                      <div className="flex items-start gap-3 p-5">
-                        {service.image && (
-                          <Image
-                            src={service.image}
-                            alt={service.name}
-                            width={64}
-                            height={64}
-                            className="w-16 h-16 rounded-lg object-cover shrink-0 ring-1 ring-white/10"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-heading font-semibold text-base mb-1">
-                            {service.name}
-                          </h4>
-                          {service.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-3">
-                              {service.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-3">
-                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                              <Clock className="w-3.5 h-3.5" />
-                              {formatDuration(service.duration)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="text-lg font-heading font-bold" style={gradientTextStyle}>
-                            {formatPrice(service.price)}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-        </section>
-      )}
-
-      {/* ─── Staff / Equipo ─── */}
-      {staff.length > 0 && (
-        <section ref={staffRef} className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            <span style={gradientTextStyle}>Nuestro equipo</span>
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {staff.map((member) => (
-              <div
-                key={member.id}
-                className="bp-staff-card opacity-0 glass rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-                style={{ "--tw-shadow-color": `${primary}10` } as React.CSSProperties}
-              >
-                <div className="flex items-start gap-4">
-                  {member.image ? (
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      width={80}
-                      height={80}
-                      className="w-20 h-20 rounded-xl object-cover ring-1 ring-white/10 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-xl flex items-center justify-center text-white font-heading font-bold text-xl shrink-0 ring-1 ring-white/10" style={gradientStyle}>
-                      {getInitials(member.name)}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-heading font-semibold text-base">{member.name}</h4>
-                    {member.specialty && (
-                      <span
-                        className="inline-block mt-1 mb-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        style={{ backgroundColor: `${primary}15`, color: primary }}
-                      >
-                        {member.specialty}
-                      </span>
-                    )}
-                    {member.bio && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {member.bio}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── Horarios ─── */}
-      {hasPublishedHours && (
-        <section className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            <span style={gradientTextStyle}>Horarios</span>
-          </h2>
-
-          <div className="bp-hours opacity-0 glass rounded-xl p-5 sm:p-6 max-w-md">
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5, 6, 0].map((day) => {
-                const wh = hoursByDay.get(day);
-                const isToday = new Date().getDay() === day;
-                return (
-                  <div
-                    key={day}
-                    className={cn(
-                      "flex items-center justify-between py-1.5 text-sm",
-                      isToday && "text-primary font-medium"
-                    )}
-                  >
-                    <span className={cn(!isToday && "text-muted-foreground")}>
-                      {DAY_NAMES[day]}
-                      {isToday && (
-                        <span className="ml-2 text-[10px] uppercase tracking-wider opacity-70">hoy</span>
-                      )}
-                    </span>
-                    <span className={cn(!wh && "text-muted-foreground/50")}>
-                      {wh ? `${wh.startTime} - ${wh.endTime}` : "Cerrado"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ─── Reviews ─── */}
-      {reviews.length > 0 && (
-        <section ref={reviewsRef} className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-2">
-            <span style={gradientTextStyle}>Reseñas</span>
-          </h2>
-
-          <div className="flex items-center gap-3 mb-8">
-            <div className="flex items-center gap-1.5">
-              <StarRating rating={Math.round(averageRating)} color={primary} />
-              <span className="text-lg font-heading font-bold" style={gradientTextStyle}>
-                {averageRating.toFixed(1)}
-              </span>
-            </div>
-            <span className="text-sm text-muted-foreground">
-              ({reviewCount} {reviewCount === 1 ? "reseña" : "reseñas"})
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="bp-review-card opacity-0 glass rounded-xl p-5 transition-all duration-300 hover:scale-[1.02]"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                      style={gradientStyle}
-                    >
-                      {review.clientName.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{review.clientName}</p>
-                      <p className="text-xs text-muted-foreground">{formatRelativeDate(review.createdAt)}</p>
-                    </div>
-                  </div>
-                  <StarRating rating={review.rating} color={primary} />
-                </div>
-                {review.comment && (
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                    {review.comment}
-                  </p>
-                )}
-                {review.response && (
-                  <div className="mt-3 pl-3 border-l-2 border-primary/30">
-                    <p className="text-[10px] uppercase tracking-wider text-primary/70 mb-1">Respuesta del negocio</p>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                      {review.response}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── Sobre nosotros ─── */}
-      {business.about && (
-        <section className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-6">
-            <span style={gradientTextStyle}>Sobre nosotros</span>
-          </h2>
-          <p className="text-muted-foreground leading-relaxed whitespace-pre-line max-w-2xl">
-            {business.about}
-          </p>
-        </section>
-      )}
-
-      {/* ─── Galería ─── */}
-      {/*
-        A place people are deciding whether to walk into. One cover image cannot
-        show the shop, the chairs and a couple of haircuts.
-      */}
-      {gallery.length > 0 && (
-        <section className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
-            <span style={gradientTextStyle}>El lugar</span>
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {gallery.map((photo) => (
-              <figure
-                key={photo.id}
-                className="relative aspect-square rounded-xl overflow-hidden glass"
-              >
-                <Image
-                  src={photo.url}
-                  alt={photo.caption || `Foto de ${business.name}`}
-                  fill
-                  sizes="(max-width: 640px) 50vw, 33vw"
-                  className="object-cover"
-                />
-                {photo.caption && (
-                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-xs text-white">
-                    {photo.caption}
-                  </figcaption>
-                )}
-              </figure>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── Dónde estamos ─── */}
-      {/*
-        An embedded map, not a link that throws the visitor onto another site
-        mid-decision. No API key: the plain Maps embed takes a query string.
-      */}
-      {mapQuery && (
-        <section className="max-w-4xl mx-auto px-4 mb-16">
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-6">
-            <span style={gradientTextStyle}>Dónde estamos</span>
-          </h2>
-          <p className="text-muted-foreground mb-4">{mapQuery}</p>
-          <div className="rounded-xl overflow-hidden glass aspect-[16/9]">
-            <iframe
-              title={`Ubicación de ${business.name}`}
-              src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-full border-0"
-            />
-          </div>
-        </section>
-      )}
-
-      {/* ─── Política de cancelación ─── */}
-      {/*
-        Stored since the beginning and never rendered anywhere. It is exactly
-        what a person wants to read *before* booking — whether they can cancel,
-        and until when — not after the fact.
-      */}
-      {business.cancellationPolicy && (
-        <section className="max-w-4xl mx-auto px-4 mb-16">
-          <div className="glass rounded-xl p-5 sm:p-6">
-            <h2 className="flex items-center gap-2 font-heading font-semibold mb-2">
-              <Info className="w-4 h-4 text-primary shrink-0" />
-              Cancelaciones
-            </h2>
-            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-              {business.cancellationPolicy}
-            </p>
-          </div>
-        </section>
-      )}
-
-      {/* ─── Footer ─── */}
-      <footer className="max-w-4xl mx-auto px-4 pb-28 md:pb-16">
-        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground text-center sm:text-left">
-            {business.name}
-            {business.city ? ` · ${business.city}` : ""}
-          </p>
-          <div className="flex items-center gap-4">
-            {socials.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {social.label}
-              </a>
-            ))}
-            <ShareButton name={business.name} />
-          </div>
-        </div>
-      </footer>
-
-      {/* ─── Floating Mobile CTA ─── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
-        <Link
-          href={`/${business.slug}/reservar`}
-          className="block w-full text-white text-center py-3.5 rounded-xl font-medium text-base"
-          style={{ ...gradientStyle, ...glowStyle }}
-        >
-          Reservar turno
-        </Link>
-      </div>
-    </div>
-  );
+function relativeDate(iso: string, now: Date) {
+  const minutes = Math.round((now.getTime() - new Date(iso).getTime()) / 60000);
+  if (minutes < 60) return `hace ${Math.max(minutes, 1)} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return "ayer";
+  if (days < 30) return `hace ${days} días`;
+  return new Date(iso).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 }
 
 /**
- * Sharing the page.
+ * The shop's page.
  *
- * The whole point of a business having a link is passing it around, and there
- * was no way to do it from the page. Uses the native share sheet where there is
- * one — which on a phone is what people expect — and falls back to copying.
+ * It used to be one 828-line client component whose every section started at
+ * `opacity-0` and was faded in by a GSAP timeline — so with JavaScript blocked,
+ * or before it ran, the page was blank. It is a server component now; only the
+ * gallery, the category filter and the share sheet need the browser, and each
+ * of those is its own island.
+ *
+ * The order follows the design: the photos, then who this is and the one button
+ * that matters, then the services — everything a visitor came for above the
+ * fold — with hours, the map and the cancellation policy in a column beside it.
  */
-function ShareButton({ name }: { name: string }) {
-  async function share() {
-    const url = window.location.href;
+export function BusinessProfile({
+  business,
+  gallery,
+  categories,
+  staff,
+  reviews = [],
+  averageRating = 0,
+  reviewCount = 0,
+}: BusinessProfileProps) {
+  const now = nowInArgentina();
 
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: name, url });
-        return;
-      } catch {
-        // The person dismissed the sheet. Nothing to report.
-        return;
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
-    } catch {
-      toast.error("No pudimos copiar el link");
-    }
+  // No table of business hours exists: the shop is open when somebody is
+  // working, so these are the union of every professional's hours.
+  const hours: DayHours[] = [];
+  for (let day = 0; day < 7; day++) {
+    const forDay = staff.flatMap((member) =>
+      member.workingHours.filter((entry) => entry.dayOfWeek === day)
+    );
+    if (forDay.length === 0) continue;
+    hours.push({
+      dayOfWeek: day,
+      startTime: forDay.reduce((min, e) => (e.startTime < min ? e.startTime : min), "23:59"),
+      endTime: forDay.reduce((max, e) => (e.endTime > max ? e.endTime : max), "00:00"),
+    });
   }
 
+  const closesAt = openUntil(hours, now);
+  const whatsapp = business.whatsapp ? normalisePhone(business.whatsapp) : null;
+  const location = [business.address, business.city, business.province].filter(Boolean).join(", ");
+  const cover: Photo[] = business.coverUrl
+    ? [{ id: "cover", url: business.coverUrl, caption: null }, ...gallery]
+    : gallery;
+
   return (
-    <button
-      type="button"
-      onClick={share}
-      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-    >
-      <Share2 className="w-4 h-4" />
-      Compartir
-    </button>
+    <div>
+      <GalleryCollage photos={cover} alt={business.name} />
+
+      <div className="px-[18px] lg:px-14">
+        <div className="relative z-[2] my-5 flex flex-col gap-4 rounded-[18px] border border-border bg-card p-5 shadow-[0_16px_40px_-22px_rgba(9,9,11,0.25)] lg:my-7 lg:flex-row lg:items-center lg:gap-[22px] lg:p-[26px_28px]">
+          {business.logoUrl ? (
+            <Image
+              src={business.logoUrl}
+              alt=""
+              width={76}
+              height={76}
+              className="size-[60px] shrink-0 rounded-[18px] object-cover lg:size-[76px]"
+            />
+          ) : (
+            <span
+              className="flex size-[60px] shrink-0 items-center justify-center rounded-[18px] bg-primary text-[22px] font-extrabold text-primary-foreground lg:size-[76px] lg:text-[26px]"
+              aria-hidden
+            >
+              {initials(business.name)}
+            </span>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
+              <h1 className="text-[22px] font-extrabold tracking-[-0.035em] lg:text-[26px]">
+                {business.name}
+              </h1>
+              {closesAt && <Badge variant="jade">ABIERTO HASTA LAS {closesAt}</Badge>}
+            </div>
+
+            <p className="mb-2 text-[12.5px] text-muted-foreground">
+              {reviewCount > 0 && (
+                <>
+                  <span className="font-bold text-star">★ {averageRating.toFixed(1)}</span> ·{" "}
+                  {reviewCount} {reviewCount === 1 ? "reseña" : "reseñas"} ·{" "}
+                </>
+              )}
+              {location || business.city}
+            </p>
+
+            {business.description && (
+              <p className="max-w-[560px] text-[12.5px] leading-[1.6] text-muted-foreground">
+                {business.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex shrink-0 flex-col gap-2">
+            <Link
+              href={`/${business.slug}/reservar`}
+              className="rounded-[11px] bg-primary px-[30px] py-3.5 text-center text-[13.5px] font-bold text-primary-foreground shadow-cta transition-colors hover:bg-[#22c55e]"
+            >
+              Reservar turno
+            </Link>
+            <div className="flex gap-2">
+              {whatsapp && (
+                <a
+                  href={`https://wa.me/${whatsapp}`}
+                  target="_blank"
+                  rel="noopener"
+                  className={secondary}
+                >
+                  <MessageCircle className="size-3.5" aria-hidden />
+                  WhatsApp
+                </a>
+              )}
+              <ShareButton name={business.name} className={secondary} />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 pb-12 lg:grid-cols-[1fr_340px]">
+          {/* min-w-0: a grid item's minimum is its content, so one row that
+              refuses to shrink drags the whole column past the viewport. */}
+          <div className="min-w-0">
+            <ServiceList
+              categories={categories}
+              slug={business.slug}
+              depositRate={business.depositRate}
+            />
+
+            {staff.length > 0 && (
+              <section className="mb-7">
+                <h2 className="mb-3 text-[17px] font-extrabold tracking-[-0.02em]">
+                  Nuestro equipo
+                </h2>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {staff.map((member, index) => (
+                    <article
+                      key={member.id}
+                      className="flex gap-3 rounded-[13px] border border-border bg-card p-3.5"
+                    >
+                      {member.image ? (
+                        <Image
+                          src={member.image}
+                          alt=""
+                          width={54}
+                          height={54}
+                          className="size-[54px] shrink-0 rounded-[14px] object-cover"
+                        />
+                      ) : (
+                        <span
+                          className={cn(
+                            "flex size-[54px] shrink-0 items-center justify-center rounded-[14px] text-base font-extrabold",
+                            // The design alternates jade and violet so a row of
+                            // professionals does not read as one block of green.
+                            index % 2 === 0
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-staff-2-fill text-staff-2-strong"
+                          )}
+                          aria-hidden
+                        >
+                          {initials(member.name)}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="text-[13px] font-bold">{member.name}</h3>
+                        {member.specialty && (
+                          <span
+                            className={cn(
+                              "my-1 inline-block rounded-full px-2.5 py-0.5 text-[9.5px] font-semibold",
+                              index % 2 === 0
+                                ? "bg-jade-fill text-jade-label"
+                                : "bg-staff-2-fill text-staff-2-strong"
+                            )}
+                          >
+                            {member.specialty}
+                          </span>
+                        )}
+                        {member.bio && (
+                          <p className="text-[10.5px] leading-[1.5] text-muted-foreground">
+                            {member.bio}
+                          </p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {reviews.length > 0 && (
+              <section>
+                <div className="mb-3 flex flex-wrap items-baseline gap-2.5">
+                  <h2 className="text-[17px] font-extrabold tracking-[-0.02em]">Reseñas</h2>
+                  <span className="text-xs font-bold text-star">★ {averageRating.toFixed(1)}</span>
+                  <span className="text-[11px] text-faint">
+                    {reviewCount} {reviewCount === 1 ? "reseña verificada" : "reseñas verificadas"}
+                  </span>
+                </div>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {reviews.map((review) => (
+                    <article
+                      key={review.id}
+                      className="rounded-[13px] border border-border bg-card p-4"
+                    >
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="flex size-[26px] items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground"
+                            aria-hidden
+                          >
+                            {initials(review.clientName)}
+                          </span>
+                          <div>
+                            <p className="text-[11.5px] font-semibold">{review.clientName}</p>
+                            <p className="text-[9px] text-faint">
+                              {relativeDate(review.createdAt, now)}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          className="shrink-0 text-[10px] tracking-[1.5px] text-star"
+                          aria-label={`${review.rating} de 5`}
+                        >
+                          {"★".repeat(review.rating)}
+                          <span className="opacity-25">{"★".repeat(5 - review.rating)}</span>
+                        </span>
+                      </div>
+
+                      {review.comment && (
+                        <p className="text-[11.5px] leading-[1.6] text-muted-foreground">
+                          {review.comment}
+                        </p>
+                      )}
+
+                      {review.response && (
+                        <div className="mt-2 border-l-2 border-primary pl-2.5">
+                          <p className="mb-0.5 text-[8.5px] font-bold uppercase tracking-[0.08em] text-jade-label">
+                            Respuesta del negocio
+                          </p>
+                          <p className="text-[10.5px] text-muted-foreground">{review.response}</p>
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <aside className="flex flex-col gap-3">
+            {hours.length > 0 && <OpeningHours hours={hours} today={now.getDay()} />}
+
+            {location && (
+              <section className="overflow-hidden rounded-[14px] border border-border bg-card">
+                <iframe
+                  title={`Mapa de ${business.name}`}
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(location)}&output=embed`}
+                  loading="lazy"
+                  className="h-[130px] w-full border-0"
+                />
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <p className="min-w-0 text-[11.5px] font-semibold">{location}</p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="shrink-0 text-[10.5px] font-semibold text-jade-link"
+                  >
+                    Cómo llegar →
+                  </a>
+                </div>
+              </section>
+            )}
+
+            {business.cancellationPolicy && (
+              <section className="rounded-[14px] border border-border bg-card p-4">
+                <h2 className="mb-1.5 text-xs font-bold">Cancelaciones</h2>
+                <p className="text-[11px] leading-[1.6] text-muted-foreground">
+                  {business.cancellationPolicy}
+                </p>
+              </section>
+            )}
+
+            {business.about && (
+              <section className="rounded-[14px] border border-border bg-card p-4">
+                <h2 className="mb-1.5 text-xs font-bold">Sobre nosotros</h2>
+                <p className="whitespace-pre-line text-[11px] leading-[1.6] text-muted-foreground">
+                  {business.about}
+                </p>
+              </section>
+            )}
+
+            <p className="pt-1 text-center text-[10px] text-faint">
+              Agenda online por <span className="font-semibold text-jade-link">jiku</span>{" "}
+              <span className="font-serif text-jade-link">軸</span>
+            </p>
+          </aside>
+        </div>
+      </div>
+
+      {/* On a phone the one action worth having always in reach. */}
+      <div className="safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-[18px] py-3 backdrop-blur-xl lg:hidden">
+        <Link
+          href={`/${business.slug}/reservar`}
+          className="flex items-center justify-center rounded-[11px] bg-primary py-3.5 text-sm font-bold text-primary-foreground shadow-cta"
+        >
+          Reservar turno{closesAt && ` · hoy hasta las ${closesAt}`}
+        </Link>
+      </div>
+      <div className="h-20 lg:hidden" aria-hidden />
+    </div>
   );
 }
+
+const secondary =
+  "flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-border bg-background px-4 py-2.5 text-[11.5px] text-muted-foreground transition-colors hover:border-faint";

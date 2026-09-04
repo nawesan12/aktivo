@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { downloadICS } from "@/lib/ics-generator";
 import { RescheduleModal } from "@/components/booking/reschedule-modal";
 import { APPOINTMENT_STATUS_OPTIONS } from "@/lib/appointment-status";
+import { NextAppointmentCard } from "@/components/account/next-appointment";
 
 interface Appointment {
   id: string;
@@ -46,12 +47,34 @@ export default function AppointmentsPage() {
   const pagination = data?.pagination;
   const now = new Date();
 
+  /*
+    The next one comes out of the list and goes above it. It was one row among
+    twenty, carrying the same weight as a haircut from eighteen months ago —
+    and it is the only thing anybody opens this screen for. Only when no filter
+    is on: with a filter applied the list is an answer to a question, and
+    pulling a row out of it would be lying about the result.
+  */
+  const filtering = Boolean(statusFilter || searchQuery || dateFrom || dateTo);
+  const upcoming = filtering
+    ? null
+    : appointments.find(
+        (appointment) =>
+          new Date(appointment.dateTime) > now &&
+          ["PENDING", "CONFIRMED", "PENDING_PAYMENT"].includes(appointment.status)
+      ) ?? null;
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-heading font-bold">Mis Turnos</h1>
-        <p className="text-muted-foreground text-sm mt-1">Historial de turnos en todos tus negocios</p>
+        <h1 className="text-[21px] font-bold tracking-[-0.025em]">Mis turnos</h1>
+        <p className="mt-[3px] text-[12.5px] text-muted-foreground">
+          {upcoming
+            ? "Tu próximo turno y el historial en todos tus negocios"
+            : "Historial de turnos en todos tus negocios"}
+        </p>
       </div>
+
+      {upcoming && <NextAppointmentCard appointment={upcoming} />}
 
       {/* Filters */}
       <div className="glass rounded-xl p-4 space-y-3">

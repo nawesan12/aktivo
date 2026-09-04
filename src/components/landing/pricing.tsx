@@ -1,126 +1,111 @@
 import Link from "next/link";
-import { PLAN_LIMITS, PLAN_PRICES } from "@/lib/subscription/config";
-import { TRIAL_DAYS } from "@/lib/subscription/access";
+import { Check } from "lucide-react";
 
-/**
- * Plans and prices. The section the whole page leads to.
- *
- * The figures come from the same place the panel and MercadoPago read, so the
- * landing cannot end up advertising a price nobody charges.
- */
-const price = (plan: "PROFESSIONAL" | "ENTERPRISE") =>
-  PLAN_PRICES[plan].amount.toLocaleString("es-AR");
+import { PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES } from "@/lib/subscription/config";
+import { TRIAL_DAYS } from "@/lib/subscription/access";
+import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+import { Section, SectionEyebrow, SectionTitle } from "./section";
 
 const inicial = PLAN_LIMITS.PROFESSIONAL;
 
+/**
+ * Two plans, priced from the same constants the checkout charges.
+ *
+ * The limits are interpolated rather than written out, so a change to
+ * PLAN_LIMITS cannot leave the landing advertising a ceiling the code no longer
+ * enforces — which is exactly what had happened to the FAQ structured data,
+ * still promising unlimited turnos on a plan capped at 300.
+ */
+const PLANS = [
+  {
+    key: "PROFESSIONAL" as const,
+    featured: true,
+    pitch: "Para un local que quiere dejar la libreta atrás.",
+    features: [
+      `Hasta ${inicial.maxStaff} profesionales`,
+      `${inicial.maxAppointmentsPerMonth} turnos por mes`,
+      "Cobros con Mercado Pago",
+      "Ficha de cada cliente",
+      "Reseñas de tus clientes",
+    ],
+  },
+  {
+    key: "ENTERPRISE" as const,
+    featured: false,
+    pitch: "Para el local que ya trabaja lleno y quiere un mes previsible.",
+    features: [
+      "Membresías: cobrales un abono mensual",
+      "Cupones y referidos para traerlos de vuelta",
+      "Turnos y profesionales sin tope",
+      "Reportes avanzados",
+      "Varias sucursales y marca blanca",
+    ],
+  },
+];
+
 export function Pricing() {
   return (
-    <section className="pricing" id="pricing">
-      <div className="container">
-        <div className="jiku-reveal" style={{ textAlign: "center" }}>
-          <div className="section-eyebrow">Planes</div>
-          <div className="section-title">
-            Simple. Transparente.
-            <br />
-            Sin letra chica.
-          </div>
-          <p className="pricing-trial">
-            {TRIAL_DAYS} días gratis, con todo desbloqueado y sin tarjeta.
-            Después elegís.
-          </p>
-        </div>
-        <div className="pricing-grid">
-          <div className="price-card featured jiku-reveal rd1">
-            <div className="price-tier">Inicial</div>
-            <div className="price-amount">
-              <span className="price-sign">$</span>
-              <span className="price-val">{price("PROFESSIONAL")}</span>
-              <span
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  marginLeft: 4,
-                }}
-              >
-                /mes
+    <Section id="planes" ground="card" className="py-14 text-center lg:py-[72px]">
+      <SectionEyebrow>Planes</SectionEyebrow>
+      <SectionTitle className="mb-2">Simple. Transparente. Sin letra chica.</SectionTitle>
+      <p className="mb-10 text-sm text-muted-foreground">
+        {TRIAL_DAYS} días gratis con todo desbloqueado y sin tarjeta. Después elegís.
+      </p>
+
+      <div className="mx-auto grid max-w-[720px] gap-3.5 text-left sm:grid-cols-2">
+        {PLANS.map((plan) => (
+          <div
+            key={plan.key}
+            className={cn(
+              "relative rounded-2xl bg-card p-8",
+              plan.featured
+                ? "border-2 border-primary shadow-[0_16px_40px_-16px_rgba(74,222,128,0.4)]"
+                : "border border-border"
+            )}
+          >
+            {plan.featured && (
+              <span className="absolute -top-[11px] left-6 rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-primary-foreground">
+                Recomendado
               </span>
-            </div>
-            <div className="price-period">ARS · Facturación mensual</div>
-            <p className="price-desc">
-              Para un local que quiere dejar la libreta atrás.
+            )}
+
+            <p className="mb-2.5 text-[13px] font-bold">{PLAN_NAMES[plan.key]}</p>
+            <p className="mb-1.5 flex items-baseline gap-1">
+              <span className="text-[40px] font-extrabold tracking-[-0.04em]">
+                {formatCurrency(PLAN_PRICES[plan.key].amount)}
+              </span>
+              <span className="text-xs text-muted-foreground">/mes</span>
             </p>
-            {/* Every line here is read straight off PLAN_LIMITS below, so the
-                page cannot promise a number the software does not enforce. */}
-            <ul className="price-list">
-              <li>
-                <span className="price-check">✓</span> Hasta {inicial.maxStaff}{" "}
-                profesionales
-              </li>
-              <li>
-                <span className="price-check">✓</span>{" "}
-                {inicial.maxAppointmentsPerMonth} turnos por mes
-              </li>
-              <li>
-                <span className="price-check">✓</span> Cobros con Mercado Pago
-              </li>
-              <li>
-                <span className="price-check">✓</span> Ficha de cada cliente
-              </li>
-              <li>
-                <span className="price-check">✓</span> Botón de reservas en tu web
-              </li>
+            <p className="mb-4 text-[11px] text-faint">
+              {PLAN_PRICES[plan.key].currency} · Facturación mensual
+            </p>
+            <p className="mb-[18px] text-[12.5px] text-muted-foreground">{plan.pitch}</p>
+
+            <ul className="mb-6 flex flex-col gap-[9px] text-[13px] text-muted-foreground">
+              {plan.features.map((feature) => (
+                <li key={feature} className="flex gap-2">
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-jade-label" strokeWidth={3} />
+                  {feature}
+                </li>
+              ))}
             </ul>
-            <Link href="/registrarse" className="btn btn-jade">
-              Probar gratis →
+
+            <Link
+              href="/registrarse"
+              className={cn(
+                "block rounded-[10px] py-[13px] text-center text-[13.5px] transition-colors",
+                plan.featured
+                  ? "bg-primary font-bold text-primary-foreground hover:bg-[#22c55e]"
+                  : "border border-border font-semibold hover:border-faint"
+              )}
+            >
+              Probar gratis
             </Link>
           </div>
-          <div className="price-card jiku-reveal rd2">
-            <div className="price-tier">Completo</div>
-            <div className="price-amount">
-              <span className="price-sign">$</span>
-              <span className="price-val">{price("ENTERPRISE")}</span>
-              <span
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  marginLeft: 4,
-                }}
-              >
-                /mes
-              </span>
-            </div>
-            <div className="price-period">ARS · Facturación mensual</div>
-            <p className="price-desc">
-              Para el local que ya trabaja lleno y quiere que el mes sea
-              previsible.
-            </p>
-            <ul className="price-list">
-              <li>
-                <span className="price-check">✓</span> Membresías: cobrales un
-                abono mensual
-              </li>
-              <li>
-                <span className="price-check">✓</span> Campañas para traerlos de
-                vuelta
-              </li>
-              <li>
-                <span className="price-check">✓</span> Turnos y profesionales
-                sin tope
-              </li>
-              <li>
-                <span className="price-check">✓</span> Reportes avanzados
-              </li>
-              <li>
-                <span className="price-check">✓</span> Varias sucursales y marca
-                blanca
-              </li>
-            </ul>
-            <Link href="/registrarse" className="btn btn-ghost">
-              Probar gratis →
-            </Link>
-          </div>
-        </div>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }
