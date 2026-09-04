@@ -159,7 +159,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              'try{if(localStorage.getItem("jiku-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}',
+              'try{if(localStorage.getItem("jiku-theme-2")==="dark")document.documentElement.classList.add("dark")}catch(e){}',
           }}
         />
       </head>

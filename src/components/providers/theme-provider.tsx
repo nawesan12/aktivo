@@ -12,7 +12,17 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const THEME_STORAGE_KEY = "jiku-theme";
+/*
+  Bumped from "jiku-theme".
+
+  The old provider wrote the theme to storage on every render, not only when
+  somebody chose one — and the old default was dark. So every person who ever
+  opened the app carries a stored "dark" that was never a decision, and after
+  the redesign flipped the default they would all land in the dark theme and
+  never see the light one. A new key ignores that artifact once; from here on
+  what is stored is only ever an actual choice.
+*/
+export const THEME_STORAGE_KEY = "jiku-theme-2";
 
 /**
  * The class the provider toggles is `dark`, not `light`.

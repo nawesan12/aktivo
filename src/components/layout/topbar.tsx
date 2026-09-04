@@ -5,6 +5,7 @@ import { useSWRConfig } from "swr";
 import { Moon, Plus, Sun } from "lucide-react";
 
 import { CommandSearch } from "@/components/dashboard/command-search";
+import { PanelMenu } from "@/components/layout/panel-menu";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { NewAppointmentDialog } from "@/components/dashboard/new-appointment-dialog";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -18,6 +19,8 @@ export function Topbar() {
 
   return (
     <header className="safe-top safe-x flex items-center gap-3.5 border-b border-border bg-card px-4 py-[13px] lg:px-7">
+      {/* Only on a phone: on a desktop the sidebar already lists everything. */}
+      <PanelMenu />
       <CommandSearch />
 
       <div className="ml-auto flex items-center gap-2.5">
