@@ -119,9 +119,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: appUrl(),
   },
-  verification: {
-    google: "YOUR_CODE",
-  },
   authors: [{ name: "Jiku" }],
   creator: "Jiku",
   publisher: "Jiku",
