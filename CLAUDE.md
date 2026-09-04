@@ -49,7 +49,10 @@ npx tsc --noEmit && npx eslint . && npx vitest run && npm run build
 npx playwright test        # requiere la app levantada y el seed cargado
 npx tsx scripts/e2e-cleanup.ts
 
-# Humo contra el sitio desplegado. Escribe en la base de producción.
+# Humo contra el sitio desplegado. Registra un negocio real en la base de
+# producción y lo borra al terminar (globalTeardown). Si la limpieza falla, el
+# negocio de prueba queda en el directorio público y en el sitemap: corré
+# `npx tsx scripts/prod-smoke-cleanup.ts` con DATABASE_URL apuntando a producción.
 npx playwright test --config playwright.prod.config.ts
 ```
 
