@@ -50,10 +50,9 @@ npx playwright test        # requiere la app levantada y el seed cargado
 npx tsx scripts/e2e-cleanup.ts
 
 # Humo contra el sitio desplegado. Registra un negocio real en la base de
-# producción y lo borra al terminar (globalTeardown). Si la limpieza falla, el
-# negocio de prueba queda en el directorio público y en el sitemap: corré
-# `npx tsx scripts/prod-smoke-cleanup.ts` con DATABASE_URL apuntando a producción.
-npx playwright test --config playwright.prod.config.ts
+# producción y lo borra al terminar. Sin PROD_DATABASE_URL no borra nada y el
+# negocio de prueba queda visible en el directorio público y en el sitemap.
+PROD_DATABASE_URL="$(...)" npx playwright test --config playwright.prod.config.ts
 ```
 
 El idioma del producto es español rioplatense (voseo), con acentos. Los

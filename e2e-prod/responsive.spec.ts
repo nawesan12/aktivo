@@ -13,6 +13,21 @@ const VIEWPORTS = [
 
 const PAGES = ["/", "/explorar", "/iniciar-sesion", "/registrarse"];
 
+/**
+ * Before anything about layout: is the page even there?
+ *
+ * These four passed for a deploy in which /iniciar-sesion and /registrarse
+ * answered 500 — an error page does not scroll sideways either. Nobody could
+ * log in or sign up, and the only thing that noticed was the full smoke run,
+ * after the deploy was already live.
+ */
+test("las páginas públicas responden 200", async ({ request }) => {
+  for (const path of PAGES) {
+    const response = await request.get(path);
+    expect(response.status(), `${path} respondió ${response.status()}`).toBe(200);
+  }
+});
+
 for (const vp of VIEWPORTS) {
   for (const path of PAGES) {
     test(`${vp.name} — ${path} no scrollea de costado`, async ({ page }) => {
