@@ -7,6 +7,7 @@ import { es } from "date-fns/locale";
 import { Star, Eye, EyeOff, Trash2, Loader2, MessageSquare, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 
 interface Review {
@@ -62,11 +63,11 @@ export function ReviewsDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isVisible: !isVisible }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success(isVisible ? "Reseña ocultada" : "Reseña visible");
       mutate();
-    } catch {
-      toast.error("Error al actualizar reseña");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al actualizar reseña"));
     }
   }
 
@@ -78,13 +79,13 @@ export function ReviewsDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ response: responseText }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Respuesta guardada");
       setRespondingTo(null);
       setResponseText("");
       mutate();
-    } catch {
-      toast.error("Error al guardar respuesta");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al guardar respuesta"));
     } finally {
       setRespondingLoading(false);
     }
@@ -93,11 +94,11 @@ export function ReviewsDashboard() {
   async function deleteReview(id: string) {
     try {
       const res = await fetch(`/api/panel/reviews/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Reseña eliminada");
       mutate();
-    } catch {
-      toast.error("Error al eliminar reseña");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al eliminar reseña"));
     }
   }
 

@@ -47,9 +47,18 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { widgetEnabled, widgetTheme, widgetPosition } = body;
 
-    const settings = await db.businessSettings.update({
+    // upsert, not update: a business without a settings row got "Record to
+    // update not found" turned into a generic 500. The screen loaded fine —
+    // the GET tolerates null — and only failed on save.
+    const settings = await db.businessSettings.upsert({
       where: { businessId: session.businessId },
-      data: {
+      create: {
+        businessId: session.businessId,
+        ...(widgetEnabled !== undefined && { widgetEnabled }),
+        ...(widgetTheme !== undefined && { widgetTheme }),
+        ...(widgetPosition !== undefined && { widgetPosition }),
+      },
+      update: {
         ...(widgetEnabled !== undefined && { widgetEnabled }),
         ...(widgetTheme && { widgetTheme }),
         ...(widgetPosition && { widgetPosition }),

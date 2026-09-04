@@ -67,10 +67,10 @@ export function StepStaff({ slug }: { slug: string }) {
               name="Cualquier profesional"
               image={null}
               specialty={null}
-              bio="Te asignamos al primer profesional disponible"
+              bio="Te asignamos al primero que tenga lugar"
               isAny
-              selected={staffId === staffList[0].id && staffId !== null}
-              onClick={() => handleSelect(staffList[0].id, staffList[0].name)}
+              selected={staffId === "any"}
+              onClick={() => handleSelect("any", "Cualquier profesional")}
             />
           </div>
         )}

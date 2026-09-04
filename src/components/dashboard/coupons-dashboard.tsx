@@ -7,6 +7,7 @@ import { es } from "date-fns/locale";
 import { Plus, Trash2, Loader2, Tag, TicketPercent } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 interface Coupon {
   id: string;
@@ -84,8 +85,8 @@ export function CouponsDashboard() {
       setForm(INITIAL_FORM);
       setShowForm(false);
       mutate();
-    } catch {
-      toast.error("Error de conexión");
+    } catch (error) {
+      toast.error(messageOf(error, "Error de conexión"));
     } finally {
       setSubmitting(false);
     }
@@ -98,11 +99,11 @@ export function CouponsDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !isActive }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success(isActive ? "Cupón desactivado" : "Cupón activado");
       mutate();
-    } catch {
-      toast.error("Error al actualizar el cupón");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al actualizar el cupón"));
     }
   };
 
@@ -116,11 +117,11 @@ export function CouponsDashboard() {
 
     try {
       const res = await fetch(`/api/panel/coupons/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Cupón eliminado");
       mutate();
-    } catch {
-      toast.error("Error al eliminar el cupón");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al eliminar el cupón"));
     } finally {
       setDeletingId(null);
     }

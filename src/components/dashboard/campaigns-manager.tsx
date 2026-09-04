@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { campaignSchema, type CampaignInput } from "@/lib/validations";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 interface Campaign {
   id: string;
@@ -114,11 +115,11 @@ export function CampaignsManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success(`Campaña ${newStatus === "ACTIVE" ? "activada" : "pausada"}`);
       mutate();
-    } catch {
-      toast.error("Error al actualizar");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al actualizar"));
     } finally {
       setTogglingId(null);
     }
@@ -143,11 +144,11 @@ export function CampaignsManager() {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/panel/campaigns/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Campaña eliminada");
       mutate();
-    } catch {
-      toast.error("Error al eliminar");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al eliminar"));
     } finally {
       setDeletingId(null);
     }

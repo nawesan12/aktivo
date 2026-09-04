@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Users, Gift, ToggleLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { messageOf } from "@/lib/api-message";
 
 interface Referral {
   id: string;
@@ -67,8 +68,8 @@ export function ReferralsDashboard() {
       await mutateConfig();
       setConfig(null);
       toast.success("Configuración de referidos guardada");
-    } catch {
-      toast.error("Error de conexión");
+    } catch (error) {
+      toast.error(messageOf(error, "Error de conexión"));
     } finally {
       setSaving(false);
     }

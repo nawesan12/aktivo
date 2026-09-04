@@ -58,7 +58,7 @@ export function StepDatetime({ slug }: { slug: string }) {
     staffId
       ? serviceId && serviceDuration
         ? `/api/businesses/${slug}/availability?staffId=${staffId}&serviceId=${serviceId}&duration=${serviceDuration}`
-        : `/api/businesses/${slug}/availability?staffId=${staffId}`
+        : `/api/businesses/${slug}/availability?staffId=${staffId}&serviceId=${serviceId ?? ""}`
       : null
   );
 

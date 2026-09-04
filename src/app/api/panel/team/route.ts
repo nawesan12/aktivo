@@ -70,17 +70,26 @@ export async function POST(request: Request) {
     }
 
     const token = crypto.randomBytes(32).toString("hex");
-    const identifier = `invite_${session.businessId}_${email.toLowerCase()}`;
 
-    await db.verificationToken.upsert({
-      where: { identifier_token: { identifier, token } },
-      create: {
+    // The role travels in the identifier. It used to be validated, written to
+    // the audit log, and then dropped: whoever accepted an invitation became a
+    // STAFF_MEMBER regardless of what was chosen, which made the role selector
+    // decorative.
+    const invitedRole = role || "STAFF_MEMBER";
+    const identifier = `invite_${session.businessId}_${invitedRole}_${email.toLowerCase()}`;
+
+    // Any earlier invitation for this business and email stops working. The
+    // upsert it replaces matched on a token that had just been generated, so it
+    // never found anything and every re-invite left another live token behind.
+    await db.verificationToken.deleteMany({
+      where: { identifier: { startsWith: `invite_${session.businessId}_` }, },
+    });
+
+    await db.verificationToken.create({
+      data: {
         identifier,
         token,
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-      update: {
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
 

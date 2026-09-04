@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { Bell, Trash2, Clock, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 type WaitlistStatus = "pending" | "notified" | "expired";
 
@@ -49,11 +50,11 @@ export function WaitlistManager() {
       const res = await fetch(`/api/panel/waitlist/${id}/notify`, {
         method: "POST",
       });
-      if (!res.ok) throw new Error("Error al notificar");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Cliente notificado exitosamente");
       mutate();
-    } catch {
-      toast.error("No se pudo notificar al cliente");
+    } catch (error) {
+      toast.error(messageOf(error, "No se pudo notificar al cliente"));
     }
   };
 
@@ -62,11 +63,11 @@ export function WaitlistManager() {
       const res = await fetch(`/api/panel/waitlist/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Error al descartar");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Entrada descartada");
       mutate();
-    } catch {
-      toast.error("No se pudo descartar la entrada");
+    } catch (error) {
+      toast.error(messageOf(error, "No se pudo descartar la entrada"));
     }
   };
 

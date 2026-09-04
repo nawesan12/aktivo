@@ -134,6 +134,51 @@ export const workingHoursSchema = z
     { message: "La hora de inicio debe ser anterior a la de fin" }
   );
 
+/**
+ * The whole schedule of one member of staff, as the panel saves it.
+ *
+ * `workingHoursSchema` existed with exactly the check that was missing —
+ * start before end — and nothing used it: the endpoint read `request.json()`
+ * and went straight to the database. A day saved as 18:00–09:00 was accepted,
+ * the panel said "horarios guardados", and the availability engine produced
+ * nothing for that day for ever after, with the public page reporting no times
+ * and no reason.
+ */
+export const scheduleSchema = z.object({
+  workingHours: z.array(workingHoursSchema).max(7).optional(),
+  blockedDates: z
+    .array(
+      z.object({
+        date: z.string().min(1),
+        type: z.enum(["FULL_DAY", "PARTIAL"]).default("FULL_DAY"),
+        startTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+        endTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+        reason: z.string().max(200).optional().nullable(),
+      })
+    )
+    .max(365)
+    .optional(),
+  recurringBlocks: z
+    .array(
+      z.object({
+        dayOfWeek: z.number().min(0).max(6),
+        time: z.string().regex(/^\d{2}:\d{2}$/, "Formato HH:mm"),
+      })
+    )
+    .max(100)
+    .optional(),
+  dateOverrides: z
+    .array(
+      z.object({
+        date: z.string().min(1),
+        time: z.string().regex(/^\d{2}:\d{2}$/, "Formato HH:mm"),
+        type: z.enum(["BLOCKED", "AVAILABLE"]).default("BLOCKED"),
+      })
+    )
+    .max(365)
+    .optional(),
+});
+
 // ── Payment Config ───────────────────────
 
 export const paymentConfigSchema = z.object({

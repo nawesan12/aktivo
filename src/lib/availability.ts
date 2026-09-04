@@ -76,6 +76,99 @@ export async function getAvailableSlots({
 }
 
 /**
+ * The times at least one member of staff can take, for a given service.
+ *
+ * "Cualquier profesional" used to mean "the first one alphabetically", which
+ * turned a busy barber into an empty agenda: the customer was told there were
+ * no times while somebody else was free all afternoon. A slot is offered here
+ * if anybody who performs the service is free at it.
+ */
+export async function getAnyStaffSlots({
+  businessId,
+  serviceId,
+  date,
+  ...options
+}: Omit<AvailabilityOptions, "staffId"> & { serviceId: string }): Promise<TimeSlot[]> {
+  const staff = await db.staffMember.findMany({
+    where: {
+      businessId,
+      isActive: true,
+      services: { some: { serviceId } },
+    },
+    select: { id: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  if (staff.length === 0) return [];
+
+  const perStaff = await Promise.all(
+    staff.map((member) =>
+      getAvailableSlots({ businessId, staffId: member.id, date, ...options })
+    )
+  );
+
+  // Union by instant: available for anyone means available.
+  const merged = new Map<number, TimeSlot>();
+
+  for (const slots of perStaff) {
+    for (const slot of slots) {
+      const key = slot.time.getTime();
+      const existing = merged.get(key);
+
+      if (!existing || (!existing.available && slot.available)) {
+        merged.set(key, slot);
+      }
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => a.time.getTime() - b.time.getTime());
+}
+
+/**
+ * Somebody who performs this service and is actually free at this instant.
+ *
+ * Used when the customer picked "cualquier profesional": the union of everyone's
+ * slots says the time is takeable, and this says by whom. Returns null when the
+ * time filled up between reading availability and booking it — the caller turns
+ * that into the same 409 as any other lost race.
+ */
+export async function findFreeStaff({
+  businessId,
+  serviceId,
+  instant,
+  options,
+}: {
+  businessId: string;
+  serviceId: string;
+  instant: Date;
+  options: Omit<AvailabilityOptions, "staffId">;
+}): Promise<{
+  id: string;
+  name: string;
+  userId: string | null;
+  googleCalendarEnabled: boolean;
+} | null> {
+  const candidates = await db.staffMember.findMany({
+    where: {
+      businessId,
+      isActive: true,
+      services: { some: { serviceId } },
+    },
+    select: { id: true, name: true, userId: true, googleCalendarEnabled: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  for (const candidate of candidates) {
+    const slots = await getAvailableSlots({ ...options, staffId: candidate.id });
+    const slot = slots.find((s) => s.time.getTime() === instant.getTime());
+
+    if (slot?.available) return candidate;
+  }
+
+  return null;
+}
+
+/**
  * Get availability for the next N days in a single batch of queries.
  *
  * When `serviceDuration` is provided, `hasSlots` reflects real occupancy — a day
@@ -137,3 +230,58 @@ export async function getAvailableDates({
   return dates;
 }
 
+/**
+ * Which days have room for a service, counting everybody who performs it.
+ *
+ * The counterpart of `getAnyStaffSlots` for the calendar. Without it, a
+ * customer who chose "cualquier profesional" saw the availability of one
+ * person: a month of grey days because the first barber is booked solid, while
+ * the rest of the team had space.
+ */
+export async function getAnyStaffDates({
+  businessId,
+  serviceId,
+  daysAhead = 30,
+  ...options
+}: {
+  businessId: string;
+  serviceId: string;
+  daysAhead?: number;
+} & Partial<SlotOptions>): Promise<
+  { date: Date; hasSlots: boolean; slotCount: number }[]
+> {
+  const staff = await db.staffMember.findMany({
+    where: { businessId, isActive: true, services: { some: { serviceId } } },
+    select: { id: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  if (staff.length === 0) return [];
+
+  const perStaff = await Promise.all(
+    staff.map((member) =>
+      getAvailableDates({ businessId, staffId: member.id, daysAhead, ...options })
+    )
+  );
+
+  // Merge by day: open if anybody is open, and the counts add up because they
+  // are different people's slots.
+  const merged = new Map<number, { date: Date; hasSlots: boolean; slotCount: number }>();
+
+  for (const days of perStaff) {
+    for (const day of days) {
+      const key = day.date.getTime();
+      const existing = merged.get(key);
+
+      if (!existing) {
+        merged.set(key, { ...day });
+        continue;
+      }
+
+      existing.hasSlots = existing.hasSlots || day.hasSlots;
+      existing.slotCount += day.slotCount;
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => a.date.getTime() - b.date.getTime());
+}

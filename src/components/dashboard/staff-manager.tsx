@@ -19,6 +19,7 @@ import { staffSchema, type StaffInput } from "@/lib/validations";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { ImageUploader } from "@/components/upload/image-uploader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { errorMessage } from "@/lib/api-message";
 import {
   Dialog,
   DialogContent,
@@ -131,7 +132,7 @@ export function StaffManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !member.isActive }),
       });
-      if (!res.ok) throw new Error("Error al actualizar");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success(member.isActive ? "Profesional desactivado" : "Profesional activado");
       mutate();
     } catch (error) {

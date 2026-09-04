@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
-import { handleApiError } from "@/lib/api-errors";
+import { handleApiError, ValidationError } from "@/lib/api-errors";
+import { scheduleSchema } from "@/lib/validations";
 
 export async function GET(
   request: NextRequest,
@@ -63,7 +64,12 @@ export async function PUT(
     await requireBusinessPermission(session, "schedule:update");
 
     const { id } = await params;
-    const body = await request.json();
+
+    const parsed = scheduleSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      throw new ValidationError(parsed.error.issues[0]?.message || "Horario inválido");
+    }
+    const body = parsed.data;
 
     const staff = await db.staffMember.findFirst({
       where: { id, businessId: session.businessId },
@@ -72,74 +78,75 @@ export async function PUT(
       return NextResponse.json({ error: "Profesional no encontrado" }, { status: 404 });
     }
 
-    // Update working hours
-    if (body.workingHours) {
-      for (const wh of body.workingHours) {
-        await db.workingHours.upsert({
-          where: {
-            staffId_dayOfWeek: { staffId: id, dayOfWeek: wh.dayOfWeek },
-          },
-          update: {
-            startTime: wh.startTime,
-            endTime: wh.endTime,
-            isActive: wh.isActive,
-          },
-          create: {
-            staffId: id,
-            dayOfWeek: wh.dayOfWeek,
-            startTime: wh.startTime,
-            endTime: wh.endTime,
-            isActive: wh.isActive,
-          },
-        });
+    // One transaction for the whole schedule. Each block below is a delete
+    // followed by a create, and without this a failure halfway through left the
+    // member of staff with their blocked dates gone and nothing in their place.
+    await db.$transaction(async (tx) => {
+      if (body.workingHours) {
+        for (const wh of body.workingHours) {
+          await tx.workingHours.upsert({
+            where: {
+              staffId_dayOfWeek: { staffId: id, dayOfWeek: wh.dayOfWeek },
+            },
+            update: {
+              startTime: wh.startTime,
+              endTime: wh.endTime,
+              isActive: wh.isActive,
+            },
+            create: {
+              staffId: id,
+              dayOfWeek: wh.dayOfWeek,
+              startTime: wh.startTime,
+              endTime: wh.endTime,
+              isActive: wh.isActive,
+            },
+          });
+        }
       }
-    }
 
-    // Replace blocked dates
-    if (body.blockedDates) {
-      await db.blockedDate.deleteMany({ where: { staffId: id } });
-      if (body.blockedDates.length > 0) {
-        await db.blockedDate.createMany({
-          data: body.blockedDates.map((bd: { date: string; type: string; startTime?: string; endTime?: string; reason?: string }) => ({
-            staffId: id,
-            date: new Date(bd.date),
-            type: bd.type || "FULL_DAY",
-            startTime: bd.startTime || null,
-            endTime: bd.endTime || null,
-            reason: bd.reason || null,
-          })),
-        });
+      if (body.blockedDates) {
+        await tx.blockedDate.deleteMany({ where: { staffId: id } });
+        if (body.blockedDates.length > 0) {
+          await tx.blockedDate.createMany({
+            data: body.blockedDates.map((bd) => ({
+              staffId: id,
+              date: new Date(bd.date),
+              type: bd.type,
+              startTime: bd.startTime || null,
+              endTime: bd.endTime || null,
+              reason: bd.reason || null,
+            })),
+          });
+        }
       }
-    }
 
-    // Replace recurring blocks
-    if (body.recurringBlocks) {
-      await db.recurringBlockedSlot.deleteMany({ where: { staffId: id } });
-      if (body.recurringBlocks.length > 0) {
-        await db.recurringBlockedSlot.createMany({
-          data: body.recurringBlocks.map((rb: { dayOfWeek: number; time: string }) => ({
-            staffId: id,
-            dayOfWeek: rb.dayOfWeek,
-            time: rb.time,
-          })),
-        });
+      if (body.recurringBlocks) {
+        await tx.recurringBlockedSlot.deleteMany({ where: { staffId: id } });
+        if (body.recurringBlocks.length > 0) {
+          await tx.recurringBlockedSlot.createMany({
+            data: body.recurringBlocks.map((rb) => ({
+              staffId: id,
+              dayOfWeek: rb.dayOfWeek,
+              time: rb.time,
+            })),
+          });
+        }
       }
-    }
 
-    // Replace date overrides
-    if (body.dateOverrides) {
-      await db.dateSlotOverride.deleteMany({ where: { staffId: id } });
-      if (body.dateOverrides.length > 0) {
-        await db.dateSlotOverride.createMany({
-          data: body.dateOverrides.map((dso: { date: string; time: string; type: string }) => ({
-            staffId: id,
-            date: new Date(dso.date),
-            time: dso.time,
-            type: dso.type || "BLOCKED",
-          })),
-        });
+      if (body.dateOverrides) {
+        await tx.dateSlotOverride.deleteMany({ where: { staffId: id } });
+        if (body.dateOverrides.length > 0) {
+          await tx.dateSlotOverride.createMany({
+            data: body.dateOverrides.map((dso) => ({
+              staffId: id,
+              date: new Date(dso.date),
+              time: dso.time,
+              type: dso.type,
+            })),
+          });
+        }
       }
-    }
+    });
 
     await logAction({
       businessId: session.businessId,

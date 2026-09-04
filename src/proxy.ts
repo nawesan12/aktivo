@@ -67,11 +67,14 @@ export default auth((request: NextRequest) => {
   }
 
   // Redirect authenticated users away from auth pages
+  // `/invitacion` is deliberately not here. It is the one page in this group a
+  // signed-in person needs to reach: someone who already has an account clicks
+  // the invitation in their mail, and bouncing them to /panel meant team
+  // invitations only ever worked for people without an account.
   const isOnAuth =
     pathname.startsWith("/iniciar-sesion") ||
     pathname.startsWith("/registrarse") ||
-    pathname.startsWith("/recuperar-contrasena") ||
-    pathname.startsWith("/invitacion");
+    pathname.startsWith("/recuperar-contrasena");
 
   if (isOnAuth && isAuthenticated) {
     const url = request.nextUrl.clone();
@@ -100,6 +103,5 @@ export const config = {
     "/iniciar-sesion",
     "/registrarse",
     "/recuperar-contrasena",
-    "/invitacion",
   ],
 };

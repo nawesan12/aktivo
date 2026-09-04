@@ -8,8 +8,8 @@ import { getMPClient, getBusinessMPConnection } from "@/lib/mercadopago";
 import { calculatePaymentAmount } from "@/lib/pricing";
 import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
 import { calculateCouponDiscount, applyDiscount } from "@/lib/pricing";
-import { handleApiError, SlotTakenError } from "@/lib/api-errors";
-import { getAvailableSlots } from "@/lib/availability";
+import { handleApiError, SlotTakenError, PlanLimitError } from "@/lib/api-errors";
+import { getAvailableSlots, getAnyStaffSlots, findFreeStaff } from "@/lib/availability";
 import { releaseExpiredHolds } from "@/lib/bookings/expiry";
 import { formatArgentinaDate, parseDateInArgentina } from "@/lib/timezone";
 import { addMinutes, addWeeks, addMonths } from "date-fns";
@@ -60,8 +60,27 @@ export async function POST(request: Request) {
     const business = service.business;
     const settings = business.settings;
 
-    // Check appointment limit for business plan
-    await checkAppointmentLimit(business.id);
+    // The monthly cap belongs to the business's plan, and the person hitting it
+    // here is a customer trying to book — not the owner. Telling them "mejorá tu
+    // plan" is showing somebody else's invoice to a stranger.
+    try {
+      await checkAppointmentLimit(business.id);
+    } catch (error) {
+      if (!(error instanceof PlanLimitError)) throw error;
+
+      log.warn("booking refused: the business is at its monthly cap", {
+        businessId: business.id,
+      });
+
+      return NextResponse.json(
+        {
+          error:
+            "Este negocio no está tomando más turnos por ahora. Probá comunicarte con ellos directamente.",
+          code: "BUSINESS_AT_CAPACITY",
+        },
+        { status: 409 }
+      );
+    }
 
     // Check auth session
     const session = await auth();
@@ -109,13 +128,21 @@ export async function POST(request: Request) {
       guestClientId = guestClient.id;
     }
 
-    // Verify staff exists and belongs to this business
-    const staff = await db.staffMember.findFirst({
-      where: { id: staffId, businessId: business.id, isActive: true },
-      select: { id: true, name: true, userId: true, googleCalendarEnabled: true },
-    });
+    // Verify staff exists and belongs to this business.
+    //
+    // `any` means the customer did not choose: whoever is free takes it. The
+    // one who is free is resolved further down, once the requested time is
+    // known — picking here would land on the first name alphabetically again.
+    const wantsAnyStaff = staffId === "any";
 
-    if (!staff) {
+    const staff = wantsAnyStaff
+      ? null
+      : await db.staffMember.findFirst({
+          where: { id: staffId, businessId: business.id, isActive: true },
+          select: { id: true, name: true, userId: true, googleCalendarEnabled: true },
+        });
+
+    if (!wantsAnyStaff && !staff) {
       return NextResponse.json({ error: "Profesional no encontrado" }, { status: 404 });
     }
 
@@ -146,15 +173,18 @@ export async function POST(request: Request) {
     // slot would read as free and every insert into it would fail with 409.
     await releaseExpiredHolds({ businessId: business.id });
 
-    const slots = await getAvailableSlots({
+    const slotOptions = {
       businessId: business.id,
-      staffId,
       date,
       serviceDuration: service.duration,
       slotInterval: settings?.slotInterval ?? 30,
       minHoursAdvance: settings?.minAdvanceHours ?? 2,
       bufferMinutes: settings?.bufferMinutes ?? 0,
-    });
+    };
+
+    const slots = wantsAnyStaff
+      ? await getAnyStaffSlots({ ...slotOptions, serviceId })
+      : await getAvailableSlots({ ...slotOptions, staffId });
 
     const requestedInstant = hasTimezone ? new Date(dateTime).getTime() : null;
     const requestedTime = timePart?.substring(0, 5);
@@ -165,6 +195,21 @@ export async function POST(request: Request) {
         : slots.find((s) => s.display === requestedTime);
 
     if (!slot || !slot.available) {
+      throw new SlotTakenError();
+    }
+
+    // With "cualquiera", the actual person is picked now: whoever performs this
+    // service and is genuinely free at this time.
+    const assignedStaff = wantsAnyStaff
+      ? await findFreeStaff({
+          businessId: business.id,
+          serviceId,
+          instant: slot.time,
+          options: slotOptions,
+        })
+      : staff;
+
+    if (!assignedStaff) {
       throw new SlotTakenError();
     }
 
@@ -212,7 +257,7 @@ export async function POST(request: Request) {
       for (let i = 1; i < recurrenceCount; i++) {
         const recurSlots = await getAvailableSlots({
           businessId: business.id,
-          staffId,
+          staffId: assignedStaff.id,
           date: addDateFn(slot.time, i),
           serviceDuration: service.duration,
           slotInterval: settings?.slotInterval ?? 30,
@@ -272,7 +317,7 @@ export async function POST(request: Request) {
         data: {
           businessId: business.id,
           serviceId,
-          staffId,
+          staffId: assignedStaff.id,
           userId,
           guestClientId,
           dateTime: slot.time,
@@ -302,7 +347,7 @@ export async function POST(request: Request) {
           data: {
             businessId: business.id,
             serviceId,
-            staffId,
+            staffId: assignedStaff.id,
             userId,
             guestClientId,
             dateTime: time,
@@ -454,16 +499,16 @@ export async function POST(request: Request) {
         clientName,
         clientEmail: clientEmail ?? undefined,
         serviceName: service.name,
-        staffName: staff.name,
+        staffName: assignedStaff.name,
         dateTime: slot.time,
         type: "confirmation",
       }), { appointmentId: appointment.id });
 
     // Google Calendar sync
-    if (staff.googleCalendarEnabled && staff.userId) {
+    if (assignedStaff.googleCalendarEnabled && assignedStaff.userId) {
       runInBackground("calendar-create", async () => {
         const { createCalendarEvent } = await import("@/lib/google-calendar");
-        const eventId = await createCalendarEvent(staff.userId!, {
+        const eventId = await createCalendarEvent(assignedStaff.userId!, {
           title: `${clientName} - ${service.name}`,
           startTime: slot.time,
           endTime: addMinutes(slot.time, service.duration),
@@ -487,7 +532,7 @@ export async function POST(request: Request) {
       entityId: appointment.id,
       details: {
         serviceId,
-        staffId,
+        staffId: assignedStaff.id,
         dateTime: slot.time.toISOString(),
         guestClientId,
         paymentMode,

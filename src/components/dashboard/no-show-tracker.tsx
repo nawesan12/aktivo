@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { AlertTriangle, ShieldAlert, Ban, TrendingUp } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import Link from "next/link";
+import { toast } from "sonner";
 
 
 export function NoShowTracker() {
@@ -18,10 +19,17 @@ export function NoShowTracker() {
   const handleLiftPenalty = async (penaltyId: string) => {
     try {
       const res = await fetch(`/api/panel/penalties/${penaltyId}`, { method: "PATCH" });
-      if (!res.ok) throw new Error("Error al levantar penalización");
+      if (!res.ok) {
+        throw new Error((await res.json()).error || "No pudimos levantar la penalización");
+      }
+      toast.success("Penalización levantada");
       mutatePenalties();
-    } catch {
-      // silently fail
+    } catch (error) {
+      // It used to fail in complete silence: the button did not change, no
+      // message appeared, and the client stayed blocked from booking.
+      toast.error(
+        error instanceof Error ? error.message : "No pudimos levantar la penalización"
+      );
     }
   };
 

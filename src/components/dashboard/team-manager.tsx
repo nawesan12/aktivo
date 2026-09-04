@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 
 const roleLabels: Record<string, string> = {
@@ -57,11 +58,11 @@ export function TeamManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
-      if (!res.ok) throw new Error("Error al actualizar");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Rol actualizado");
       mutate();
-    } catch {
-      toast.error("Error al actualizar el rol");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al actualizar el rol"));
     }
   }
 

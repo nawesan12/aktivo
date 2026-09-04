@@ -11,11 +11,11 @@ export const authConfig = {
       const isOnPanel = nextUrl.pathname.startsWith("/panel");
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       const isOnAccount = nextUrl.pathname.startsWith("/mi-cuenta");
+      // `/invitacion` excluded on purpose: see the note in src/proxy.ts.
       const isOnAuth =
         nextUrl.pathname.startsWith("/iniciar-sesion") ||
         nextUrl.pathname.startsWith("/registrarse") ||
-        nextUrl.pathname.startsWith("/recuperar-contrasena") ||
-        nextUrl.pathname.startsWith("/invitacion");
+        nextUrl.pathname.startsWith("/recuperar-contrasena");
 
       // The admin area needs the role, not just a session.
       if (isOnAdmin) {

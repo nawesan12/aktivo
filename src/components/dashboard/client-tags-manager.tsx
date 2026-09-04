@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Plus, X, Tag, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 
 interface ClientTag {
@@ -63,11 +64,11 @@ export function ClientTagsManager() {
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`/api/panel/tags/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Error al eliminar");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Tag eliminado");
       mutate();
-    } catch {
-      toast.error("Error al eliminar tag");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al eliminar tag"));
     }
   }
 
@@ -196,10 +197,10 @@ export function ClientTagAssigner({ clientId }: { clientId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tagId }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       mutateClientTags();
-    } catch {
-      toast.error("Error al asignar tag");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al asignar tag"));
     } finally {
       setAssigning(false);
     }
@@ -208,10 +209,10 @@ export function ClientTagAssigner({ clientId }: { clientId: string }) {
   async function removeTag(tagId: string) {
     try {
       const res = await fetch(`/api/panel/clients/${clientId}/tags?tagId=${tagId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       mutateClientTags();
-    } catch {
-      toast.error("Error al remover tag");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al remover tag"));
     }
   }
 

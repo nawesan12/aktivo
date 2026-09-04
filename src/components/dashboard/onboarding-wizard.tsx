@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import gsap from "@/lib/animations/gsap";
 import { Loader2, Check, ArrowRight, SkipForward } from "lucide-react";
 import { toast } from "sonner";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 interface OnboardingWizardProps {
   businessName: string;
@@ -63,11 +64,11 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ business: { description, phone } }),
       });
-      if (!res.ok) throw new Error("Error al guardar");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Perfil guardado");
       setStep(1);
-    } catch {
-      toast.error("Error al guardar el perfil");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al guardar el perfil"));
     } finally {
       setSavingProfile(false);
     }
@@ -82,13 +83,13 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: serviceName, duration, price, isActive: true }),
       });
-      if (!res.ok) throw new Error("Error al crear servicio");
+      if (!res.ok) throw new Error(await errorMessage(res));
       const data = await res.json();
       setCreatedServiceId(data.id);
       toast.success("Servicio creado");
       setStep(2);
-    } catch {
-      toast.error("Error al crear el servicio");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al crear el servicio"));
     } finally {
       setSavingService(false);
     }
@@ -108,12 +109,12 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
           serviceIds: createdServiceId ? [createdServiceId] : [],
         }),
       });
-      if (!res.ok) throw new Error("Error al crear profesional");
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Profesional creado");
       markSeen();
       setStep(3);
-    } catch {
-      toast.error("Error al crear el profesional");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al crear el profesional"));
     } finally {
       setSavingStaff(false);
     }

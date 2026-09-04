@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveBusinessBySlug } from "@/lib/business-resolver";
-import { getAvailableSlots } from "@/lib/availability";
+import { getAvailableSlots, getAnyStaffSlots } from "@/lib/availability";
 import { parseDateInArgentina } from "@/lib/timezone";
 import { handleApiError } from "@/lib/api-errors";
 import { runInBackground } from "@/lib/background";
@@ -34,15 +34,23 @@ export async function GET(
     const parsedDate = parseDateInArgentina(date);
     const settings = business.settings;
 
-    const slots = await getAvailableSlots({
+    const options = {
       businessId: business.id,
-      staffId,
       date: parsedDate,
       serviceDuration: parseInt(duration, 10),
       slotInterval: settings?.slotInterval ?? 30,
       minHoursAdvance: settings?.minAdvanceHours ?? 2,
       bufferMinutes: settings?.bufferMinutes ?? 0,
-    });
+    };
+
+    // "Cualquier profesional" means any of them, and the union is the whole
+    // point: it used to resolve to the first member of staff alphabetically, so
+    // a customer whose only free barber was the second one was told there were
+    // no times at all and left.
+    const slots =
+      staffId === "any"
+        ? await getAnyStaffSlots({ ...options, serviceId })
+        : await getAvailableSlots({ ...options, staffId });
 
     // Real traffic is what drives the background jobs on the free plan: no
     // Vercel cron can run more than once a day there. See `src/lib/jobs/tick.ts`.

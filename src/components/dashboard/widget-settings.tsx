@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { Code, Copy, Check, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 
 export function WidgetSettings() {
@@ -26,11 +27,11 @@ export function WidgetSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [key]: value }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await errorMessage(res));
       toast.success("Configuración guardada");
       mutate();
-    } catch {
-      toast.error("Error al guardar");
+    } catch (error) {
+      toast.error(messageOf(error, "Error al guardar"));
     } finally {
       setSaving(false);
     }
