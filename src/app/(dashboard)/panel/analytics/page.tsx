@@ -1,5 +1,6 @@
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { WidgetSettings } from "@/components/dashboard/widget-settings";
+import { PlanGate } from "@/components/dashboard/plan-gate";
 
 export const metadata = {
   title: "Analytics",
@@ -13,7 +14,11 @@ export default function AnalyticsPage() {
         <p className="text-muted-foreground">Métricas avanzadas y widget embebible</p>
       </div>
 
-      <AnalyticsDashboard />
+      <PlanGate feature="Analytics" requiredPlan="PROFESSIONAL">
+
+        <AnalyticsDashboard />
+
+      </PlanGate>
 
       <div className="pt-4 border-t border-border">
         <WidgetSettings />

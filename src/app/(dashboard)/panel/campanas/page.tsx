@@ -1,5 +1,6 @@
 import { CampaignsManager } from "@/components/dashboard/campaigns-manager";
 import { NoShowTracker } from "@/components/dashboard/no-show-tracker";
+import { PlanGate } from "@/components/dashboard/plan-gate";
 
 export const metadata = {
   title: "Campañas",
@@ -14,7 +15,9 @@ export default function CampanasPage() {
       </div>
 
       <div className="space-y-8">
-        <NoShowTracker />
+        <PlanGate feature="Campañas" requiredPlan="PROFESSIONAL">
+          <NoShowTracker />
+        </PlanGate>
         <CampaignsManager />
       </div>
     </div>

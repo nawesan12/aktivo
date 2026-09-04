@@ -43,11 +43,14 @@ export async function GET(request: NextRequest) {
       db.waitlistEntry.count({ where }),
     ]);
 
+    // `totalPages` is what the panel checks to draw the pager. Without it the
+    // comparison was `undefined > 1`, so page two was unreachable.
     return NextResponse.json({
       entries,
       total,
       page,
       pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
     });
   } catch (error) {
     return handleApiError(error);

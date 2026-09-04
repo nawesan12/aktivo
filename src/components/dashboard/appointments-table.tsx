@@ -202,8 +202,16 @@ export function AppointmentsTable({
       </div>
 
       {/* Table */}
-      <div className="glass rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
+      {/*
+        No `overflow-hidden` on the wrapper: the actions menu of each row is
+        absolutely positioned, and an ancestor that clips will clip it whatever
+        its z-index. Confirming, completing or cancelling a booking is the main
+        thing this screen is for, and on a phone the menu was cut off for every
+        row past the first few. The rounded corners are kept with a clip on the
+        scroller instead, which is where the horizontal overflow actually lives.
+      */}
+      <div className="glass rounded-xl">
+        <div className="overflow-x-auto rounded-xl">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border text-left">

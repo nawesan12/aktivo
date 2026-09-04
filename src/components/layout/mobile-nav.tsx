@@ -2,43 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Calendar,
-  CalendarDays,
-  Scissors,
-  Users,
-  UserCircle,
-  Clock,
-  CreditCard,
-  Bell,
-  Settings,
-  Shield,
-  X,
-  BarChart2,
-  Code2,
-} from "lucide-react";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
+import { PANEL_NAVIGATION as navigation } from "./navigation";
 import { useUIStore } from "@/stores/ui-store";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { InstallPWAButton } from "@/components/dashboard/install-pwa-button";
 
-const navigation = [
-  { name: "Dashboard", href: "/panel", icon: LayoutDashboard },
-  { name: "Turnos", href: "/panel/turnos", icon: Calendar },
-  { name: "Calendario", href: "/panel/calendario", icon: CalendarDays },
-  { name: "Servicios", href: "/panel/servicios", icon: Scissors },
-  { name: "Equipo", href: "/panel/equipo", icon: Users },
-  { name: "Clientes", href: "/panel/clientes", icon: UserCircle },
-  { name: "Horarios", href: "/panel/horarios", icon: Clock },
-  { name: "Pagos", href: "/panel/pagos", icon: CreditCard },
-  { name: "Notificaciones", href: "/panel/notificaciones", icon: Bell },
-  { name: "Reportes", href: "/panel/reportes", icon: BarChart2 },
-  { name: "Widget", href: "/panel/widget", icon: Code2 },
-  { name: "Configuración", href: "/panel/configuracion", icon: Settings },
-  { name: "Audit Log", href: "/panel/audit", icon: Shield },
-];
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -56,16 +26,10 @@ export function MobileNav() {
           >
             <JikuLogo size="sm" />
           </Link>
-          <button
-            onClick={() => setMobileNavOpen(false)}
-            className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="space-y-1 p-3">
+        <nav className="space-y-1 p-3 flex-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -91,7 +55,7 @@ export function MobileNav() {
         </nav>
 
         {/* Install PWA */}
-        <div className="px-3 mt-4">
+        <div className="px-3 pb-4 shrink-0">
           <InstallPWAButton />
         </div>
       </SheetContent>

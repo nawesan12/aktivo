@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { Menu, Moon, Sun } from "lucide-react";
 import { CommandSearch } from "@/components/dashboard/command-search";
+import { LocationSwitcher } from "@/components/dashboard/location-switcher";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,6 +45,15 @@ export function Topbar() {
         </Button>
 
         <CommandSearch />
+
+        {/*
+          Switching branches. The component was finished and never mounted
+          anywhere, so multi-location — the feature the top plan is sold on —
+          could be bought and not used: every business card in the account
+          linked to the same panel, and the active branch was whichever came
+          first alphabetically. It hides itself when there is no group.
+        */}
+        <LocationSwitcher />
       </div>
 
       {/* Right */}

@@ -2,15 +2,18 @@
 
 import useSWR from "swr";
 import Link from "next/link";
-import { Building2, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { Building2, ArrowRight, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { PLAN_NAMES } from "@/lib/subscription/config";
 
 
-const planLabels: Record<string, string> = {
-  STARTER: "Starter",
-  PROFESSIONAL: "Professional",
-  ENTERPRISE: "Enterprise",
-};
+// The same names the pricing page and the subscription screen use. This file
+// had a third set — "Starter"/"Professional"/"Enterprise" — so the plan a
+// person was on depended on which screen they were looking at.
+const planLabels: Record<string, string> = PLAN_NAMES;
 
 const roleLabels: Record<string, string> = {
   BUSINESS_OWNER: "Propietario",
@@ -21,6 +24,33 @@ const roleLabels: Record<string, string> = {
 
 export default function BusinessesPage() {
   const { data, isLoading } = useSWR("/api/account/profile");
+  const { update: updateSession } = useSession();
+  const [switching, setSwitching] = useState<string | null>(null);
+
+  async function enter(businessId: string) {
+    setSwitching(businessId);
+    try {
+      const res = await fetch("/api/panel/switch-business", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+
+      // The token carries the active business; without rewriting it the panel
+      // opens on whichever one it already had.
+      await updateSession({ businessId });
+
+      // A full load, not a client-side navigation: the panel is rendered on the
+      // server from the session's business, and a soft push would show the
+      // cached render of the branch we just left.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.href = "/panel";
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos entrar a ese negocio");
+      setSwitching(null);
+    }
+  }
 
   if (isLoading) return <FormSkeleton />;
 
@@ -61,12 +91,25 @@ export default function BusinessesPage() {
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
-                <Link
-                  href="/panel"
-                  className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1"
+                {/*
+                  Switches the session to this business before going in. Every
+                  card used to link straight to /panel, so clicking "Barbería
+                  Sur" landed you in "Barbería Norte" with no explanation.
+                */}
+                <button
+                  type="button"
+                  onClick={() => enter(biz.id)}
+                  disabled={switching !== null}
+                  className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
                 >
-                  Ir al panel <ArrowRight className="w-3 h-3" />
-                </Link>
+                  {switching === biz.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <>
+                      Ir al panel <ArrowRight className="w-3 h-3" />
+                    </>
+                  )}
+                </button>
                 <Link
                   href={`/${biz.slug}`}
                   className="flex-1 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center"

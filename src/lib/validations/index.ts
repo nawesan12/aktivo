@@ -174,6 +174,11 @@ export const settingsSchema = z.object({
   business: z.object({
     name: z.string().min(2).optional(),
     description: z.string().optional(),
+    // Zod strips what it does not declare, and these two were not declared: the
+    // owner uploaded a logo, saw the preview, got "configuración guardada", and
+    // it was gone on reload. There is no other write path for them.
+    logo: z.string().optional(),
+    coverImage: z.string().optional(),
     phone: optionalArgentinePhone,
     whatsapp: optionalArgentinePhone,
     email: z.string().email().optional().or(z.literal("")),

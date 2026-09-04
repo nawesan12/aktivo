@@ -56,10 +56,15 @@ export async function GET() {
       })
     );
 
+    // Shaped the way the panel reads it. It iterated `data.data` and read
+    // `stats.*`; against `{ referrals, totalCodes }` that meant an empty tbody
+    // under the headers — not even the empty state — and two counters in zero.
     return NextResponse.json({
-      referrals,
-      totalCodes: referrals.length,
-      totalRedemptions,
+      data: referrals,
+      stats: {
+        totalCodes: referrals.length,
+        totalRedemptions,
+      },
     });
   } catch (error) {
     return handleApiError(error);

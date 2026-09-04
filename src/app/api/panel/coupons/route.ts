@@ -30,8 +30,24 @@ export async function GET(request: NextRequest) {
       db.coupon.count({ where: { businessId: session.businessId } }),
     ]);
 
+    // The panel shows three counters over the table. They read `stats.*`, which
+    // this route never sent — so a business with fifty coupons saw three zeros.
+    const [active, redemptions] = await Promise.all([
+      db.coupon.count({
+        where: {
+          businessId: session.businessId,
+          isActive: true,
+          OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+        },
+      }),
+      db.couponRedemption.count({
+        where: { coupon: { businessId: session.businessId } },
+      }),
+    ]);
+
     return NextResponse.json({
       data: coupons,
+      stats: { total, active, totalRedemptions: redemptions },
       pagination: {
         page,
         limit,

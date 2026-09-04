@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PlanGate } from "@/components/dashboard/plan-gate";
 import { WidgetSettings } from "@/components/dashboard/widget-settings";
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function WidgetPage() {
           Integra tu boton de reservas en tu sitio web
         </p>
       </div>
-      <WidgetSettings />
+      <PlanGate feature="Widget de reservas" requiredPlan="PROFESSIONAL">
+        <WidgetSettings />
+      </PlanGate>
     </div>
   );
 }
