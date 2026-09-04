@@ -44,7 +44,10 @@ const MonthlyRevenueChart = dynamic(
 export function DashboardContent({ initialStats }: { initialStats: DashboardStats }) {
   const { data } = useSWR<DashboardStats>("/api/panel/stats", {
     fallbackData: initialStats,
-    refreshInterval: 60000,
+    // Each tick is 12 queries. Five minutes is plenty for a KPI panel, and
+    // coming back to the tab refreshes it anyway.
+    refreshInterval: 300000,
+    revalidateOnFocus: true,
   });
 
   // `data` is never empty: the server-rendered stats are the fallback. Checking

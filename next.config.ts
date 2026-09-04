@@ -7,14 +7,26 @@ const nextConfig: NextConfig = {
     // `next/image` throw, which takes the whole page down with it — so the list
     // has to cover every source the product actually stores:
     //   res.cloudinary.com   uploads from the panel
-    //   images.unsplash.com  demo content from the seed
     //   lh3 / avatars        profile pictures from Google and GitHub sign-in
+    //
+    // `images.unsplash.com` used to be here for the demo seed. It is gone: it
+    // never appears in a real business's data, and leaving it open meant paying
+    // to optimise arbitrary images from someone else's CDN.
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
-      { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
+    // Every distinct (source, width, quality) triple is a billed transformation
+    // and a cache write. The defaults offer eight widths and any quality, so a
+    // single logo could turn into dozens of them. These are the sizes the
+    // interface actually asks for.
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [32, 48, 64, 96, 128, 256],
+    qualities: [75],
+    // A month. The default is short, so the same image is re-optimised over and
+    // over for no reason: an uploaded photo does not change behind its URL.
+    minimumCacheTTL: 2678400,
   },
   async headers() {
     return [

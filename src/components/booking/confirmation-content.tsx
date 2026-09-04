@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { useBookingStore } from "@/stores/booking-store";
 import { MagneticButton } from "@/components/premium/magnetic-button";
 import {

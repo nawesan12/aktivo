@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { useBookingStore } from "@/stores/booking-store";
 import { ServiceCard } from "./service-card";
 import { Skeleton } from "@/components/ui/skeleton";

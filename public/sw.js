@@ -1,5 +1,9 @@
 const CACHE_NAME = "jiku-v1";
-const STATIC_ASSETS = ["/jiku-logo.svg", "/jiku-logo.png"];
+// The PNG is not here on purpose: it exists for the PWA install icon, which
+// the browser fetches once if someone installs the app. Precaching it made
+// every first-time visitor download it whether or not they ever installed
+// anything.
+const STATIC_ASSETS = ["/jiku-logo.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

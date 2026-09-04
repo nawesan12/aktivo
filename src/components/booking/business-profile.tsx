@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import gsap, { ScrollTrigger } from "@/lib/animations/gsap";
 import {
   Phone,
   MapPin,
@@ -20,9 +19,6 @@ import { MagneticButton } from "@/components/premium/magnetic-button";
 import { formatCurrency } from "@/lib/format";
 import Image from "next/image";
 
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 interface ReviewData {
   id: string;

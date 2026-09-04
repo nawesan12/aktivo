@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
+import { revalidateBusinessPage } from "@/lib/booking/business-page";
 
 export async function PATCH(
   request: NextRequest,
@@ -39,6 +40,10 @@ export async function PATCH(
       entityId: id,
       details: data,
     });
+
+    // The public profile shows this. Without dropping its cache the owner
+    // edits a price and keeps seeing the old one on their own page.
+    revalidateBusinessPage(session.businessSlug);
 
     return NextResponse.json(category);
   } catch (error) {
@@ -78,6 +83,10 @@ export async function DELETE(
       entityId: id,
       details: { name: existing.name },
     });
+
+    // The public profile shows this. Without dropping its cache the owner
+    // edits a price and keeps seeing the old one on their own page.
+    revalidateBusinessPage(session.businessSlug);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -72,6 +72,15 @@ export default auth((request: NextRequest) => {
   return NextResponse.next();
 });
 
+/**
+ * Only the paths this file actually decides something about.
+ *
+ * There used to be a catch-all here as well, and every branch above already
+ * keys on one of these prefixes — so the catch-all bought nothing and cost a
+ * function invocation on the landing page, on every SVG and PNG in `public/`,
+ * on the sitemap, and on each `.rsc` payload of client-side navigation. On a
+ * plan billed by invocation that was the single largest multiplier in the app.
+ */
 export const config = {
   matcher: [
     "/panel/:path*",
@@ -82,6 +91,5 @@ export const config = {
     "/registrarse",
     "/recuperar-contrasena",
     "/invitacion",
-    "/((?!_next/static|_next/image|favicon.ico|api/|widget/|embed/).*)",
   ],
 };

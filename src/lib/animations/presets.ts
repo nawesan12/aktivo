@@ -1,4 +1,4 @@
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { formatNumber } from "@/lib/format";
 
 export const fadeInUp = {

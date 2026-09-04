@@ -2,7 +2,14 @@ import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { appUrl } from "@/lib/env";
 
-export const dynamic = "force-dynamic";
+/**
+ * Rebuilt once a day.
+ *
+ * It was `force-dynamic`, so every crawler that asked for it — and they ask
+ * often — cost a function invocation plus a full scan of the businesses table.
+ * A sitemap that is a few hours stale is a sitemap doing its job.
+ */
+export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
@@ -32,6 +39,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const businesses = await db.business.findMany({
       where: { isActive: true },
       select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      // Search engines cap sitemaps at 50k URLs anyway; the bound is here so
+      // this can never turn into an unbounded scan.
+      take: 5000,
     });
 
     businessPages = businesses.map((business) => ({

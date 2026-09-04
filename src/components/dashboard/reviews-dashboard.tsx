@@ -52,7 +52,7 @@ export function ReviewsDashboard() {
   if (visibleFilter) params.set("visible", visibleFilter);
 
   const { data, isLoading, mutate } = useSWR(
-    `/api/panel/reviews?${params}`, { refreshInterval: 60000 }
+    `/api/panel/reviews?${params}`, { refreshInterval: 300000, revalidateOnFocus: true }
   );
 
   async function toggleVisibility(id: string, isVisible: boolean) {

@@ -25,15 +25,30 @@ const typeLabels: Record<string, string> = {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const { data } = useSWR("/api/panel/notifications/unread", {
-    refreshInterval: 30000,
+  /**
+   * No polling.
+   *
+   * This sits in the topbar of all 21 panel pages, so a 30-second interval was
+   * 960 invocations and about 1900 queries a day for one owner leaving the
+   * panel open — for a counter that changes a handful of times a day. It now
+   * refreshes when the tab regains focus and when the popover is opened, which
+   * is when anyone actually looks at it.
+   */
+  const { data, mutate } = useSWR("/api/panel/notifications/unread", {
+    revalidateOnFocus: true,
   });
 
   const items = data?.items || [];
   const unreadCount = data?.unreadCount || 0;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) mutate();
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="ghost"

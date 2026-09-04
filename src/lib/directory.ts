@@ -89,22 +89,29 @@ export async function searchBusinesses({
           orderBy: { name: "asc" },
           select: { name: true },
         },
-        reviews: {
-          where: { isVisible: true },
-          select: { rating: true },
-        },
       },
     }),
     db.business.count({ where }),
   ]);
 
+  // Aggregated in SQL, one query for the whole page. Pulling every visible
+  // review just to average them in JavaScript meant a business with two
+  // thousand reviews shipped two thousand rows per listing render.
+  const ratings = await db.review.groupBy({
+    by: ["businessId"],
+    where: { businessId: { in: businesses.map((b) => b.id) }, isVisible: true },
+    _avg: { rating: true },
+    _count: { _all: true },
+  });
+
+  const ratingByBusiness = new Map(ratings.map((r) => [r.businessId, r]));
+
   const data = businesses.map((biz) => {
-    const reviewCount = biz.reviews.length;
+    const rating = ratingByBusiness.get(biz.id);
+    const reviewCount = rating?._count._all ?? 0;
     const averageRating =
-      reviewCount > 0
-        ? Math.round(
-            (biz.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10
-          ) / 10
+      reviewCount > 0 && rating?._avg.rating != null
+        ? Math.round(rating._avg.rating * 10) / 10
         : null;
 
     return {

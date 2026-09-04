@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { getBusinessProfile } from "@/lib/booking/business-page";
 import { notFound } from "next/navigation";
 import { hexToHsl } from "@/lib/utils";
 import Image from "next/image";
@@ -14,16 +14,9 @@ export default async function BookingLayout({
 }) {
   const { businessSlug } = await params;
 
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    select: {
-      name: true,
-      slug: true,
-      logo: true,
-      primaryColor: true,
-      accentColor: true,
-    },
-  });
+  // Same load the page and its metadata use: `cache` makes the three share one
+  // round trip instead of asking for the same row three times.
+  const business = await getBusinessProfile(businessSlug);
 
   if (!business) notFound();
 

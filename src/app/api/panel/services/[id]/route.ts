@@ -4,6 +4,7 @@ import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/sessio
 import { logAction } from "@/lib/audit";
 import { serviceSchema } from "@/lib/validations";
 import { handleApiError } from "@/lib/api-errors";
+import { revalidateBusinessPage } from "@/lib/booking/business-page";
 
 export async function PATCH(
   request: NextRequest,
@@ -58,6 +59,10 @@ export async function PATCH(
       details: parsed.data,
     });
 
+    // The public profile shows this. Without dropping its cache the owner
+    // edits a price and keeps seeing the old one on their own page.
+    revalidateBusinessPage(session.businessSlug);
+
     return NextResponse.json(service);
   } catch (error) {
     return handleApiError(error);
@@ -90,6 +95,10 @@ export async function DELETE(
       entityId: id,
       details: { name: existing.name },
     });
+
+    // The public profile shows this. Without dropping its cache the owner
+    // edits a price and keeps seeing the old one on their own page.
+    revalidateBusinessPage(session.businessSlug);
 
     return NextResponse.json({ success: true });
   } catch (error) {

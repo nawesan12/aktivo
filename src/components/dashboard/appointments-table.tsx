@@ -79,7 +79,11 @@ export function AppointmentsTable({
   // The unfiltered first page arrives with the document; any other combination
   // of filters is fetched as before.
   const { data, isLoading, mutate } = useSWR<AppointmentListPage>(swrKey, {
-    refreshInterval: 30000,
+    // Two minutes, and refreshed on focus. At 30 seconds this was 120
+    // invocations an hour per open tab for an agenda that changes a few times
+    // a day.
+    refreshInterval: 120000,
+    revalidateOnFocus: true,
     ...(swrKey === initialKey && initialData ? { fallbackData: initialData } : {}),
   });
   const { data: settingsData } = useSWR("/api/panel/settings");

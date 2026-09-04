@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import useSWR from "swr";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { useBookingStore } from "@/stores/booking-store";
 import { StaffCard } from "./staff-card";
 import { Skeleton } from "@/components/ui/skeleton";

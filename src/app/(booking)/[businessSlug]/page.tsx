@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
+import {
+  getBusinessProfile,
+  getUncategorizedServices,
+  getBusinessReviews,
+} from "@/lib/booking/business-page";
 import { BusinessProfile } from "@/components/booking/business-profile";
 import { appUrl } from "@/lib/env";
 
@@ -8,13 +12,32 @@ interface Props {
   params: Promise<{ businessSlug: string }>;
 }
 
+/**
+ * Rebuilt at most every ten minutes, and immediately whenever the owner changes
+ * anything it shows (see `revalidateBusinessPage`).
+ *
+ * This is the most visited page in the product — the one a QR code on the
+ * counter points at — and it was hitting the database on every single view,
+ * including for the constant stream of bots probing `/wp-login.php` and
+ * `/.env`, which land here because the route is a root catch-all.
+ */
+export const revalidate = 600;
+
+/**
+ * Empty on purpose: nothing is pre-rendered at build time (the list of
+ * businesses is not known then, and would go stale immediately). Declaring it
+ * is what registers the route for incremental regeneration, so the first
+ * visitor to a slug renders it and everyone after that is served from the
+ * cache until it expires or the owner edits something.
+ */
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { businessSlug } = await params;
 
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    select: { name: true, description: true, coverImage: true, logo: true },
-  });
+  const business = await getBusinessProfile(businessSlug);
 
   if (!business) return { title: "Negocio no encontrado" };
 
@@ -41,33 +64,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BusinessProfilePage({ params }: Props) {
   const { businessSlug } = await params;
 
-  const business = await db.business.findUnique({
-    where: { slug: businessSlug },
-    include: {
-      settings: true,
-      categories: {
-        orderBy: { sortOrder: "asc" },
-        include: {
-          services: {
-            where: { isActive: true },
-            orderBy: { name: "asc" },
-          },
-        },
-      },
-      staff: {
-        where: { isActive: true },
-        orderBy: { name: "asc" },
-        include: {
-          workingHours: {
-            where: { isActive: true },
-            orderBy: { dayOfWeek: "asc" },
-          },
-        },
-      },
-    },
-  });
+  const business = await getBusinessProfile(businessSlug);
 
-  if (!business || !business.isActive) notFound();
+  if (!business) notFound();
 
   const categories = business.categories
     .filter((c) => c.services.length > 0)
@@ -84,14 +83,7 @@ export default async function BusinessProfilePage({ params }: Props) {
       })),
     }));
 
-  const uncategorizedServices = await db.service.findMany({
-    where: {
-      businessId: business.id,
-      isActive: true,
-      categoryId: null,
-    },
-    orderBy: { name: "asc" },
-  });
+  const uncategorizedServices = await getUncategorizedServices(business.id);
 
   if (uncategorizedServices.length > 0) {
     categories.push({
@@ -122,22 +114,7 @@ export default async function BusinessProfilePage({ params }: Props) {
   }));
 
   // Fetch reviews for public display
-  const [reviewsRaw, reviewAgg] = await Promise.all([
-    db.review.findMany({
-      where: { businessId: business.id, isVisible: true },
-      take: 10,
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { name: true } },
-        guestClient: { select: { name: true } },
-      },
-    }),
-    db.review.aggregate({
-      where: { businessId: business.id, isVisible: true },
-      _avg: { rating: true },
-      _count: true,
-    }),
-  ]);
+  const { items: reviewsRaw, aggregate: reviewAgg } = await getBusinessReviews(business.id);
 
   const reviews = reviewsRaw.map((r) => ({
     id: r.id,

@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import gsap from "@/lib/animations/gsap";
 
 export function useGSAP(callback: (gsap: typeof import("gsap").default) => void, deps: unknown[] = []) {
   const ref = useRef<HTMLDivElement>(null);

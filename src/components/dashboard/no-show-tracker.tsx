@@ -8,7 +8,8 @@ import Link from "next/link";
 
 export function NoShowTracker() {
   const { data, isLoading } = useSWR("/api/panel/no-shows", {
-    refreshInterval: 60000,
+    refreshInterval: 300000,
+    revalidateOnFocus: true,
   });
   const { data: penaltiesData, mutate: mutatePenalties } = useSWR("/api/panel/penalties");
 

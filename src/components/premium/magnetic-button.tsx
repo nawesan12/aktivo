@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode, type MouseEvent } from "react";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 
 interface MagneticButtonProps {
   children: ReactNode;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { useBookingStore } from "@/stores/booking-store";
 import { ProgressBar } from "./progress-bar";
 import { StepService } from "./step-service";

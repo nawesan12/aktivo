@@ -4,6 +4,7 @@ import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/sessio
 import { logAction } from "@/lib/audit";
 import { handleApiError, ValidationError } from "@/lib/api-errors";
 import { settingsSchema } from "@/lib/validations";
+import { revalidateBusinessPage } from "@/lib/booking/business-page";
 
 export async function GET() {
   try {
@@ -82,6 +83,10 @@ export async function PATCH(request: NextRequest) {
       entityId: session.businessId,
       details: { updated: Object.keys(body) },
     });
+
+    // The public profile shows this. Without dropping its cache the owner
+    // edits a price and keeps seeing the old one on their own page.
+    revalidateBusinessPage(session.businessSlug);
 
     return NextResponse.json({ success: true });
   } catch (error) {

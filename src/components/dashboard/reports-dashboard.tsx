@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { Download, FileText, Calendar, DollarSign, Users } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
@@ -17,7 +17,21 @@ const ranges = [
   { label: "90 días", value: "90d" },
 ];
 
-const CHART_COLORS = ["#6366F1", "#22D3EE", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+const chartFallback = (
+  <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
+    Cargando gráfico...
+  </div>
+);
+
+// Recharts weighs 318 KB and only two blocks of this page use it.
+const AppointmentsTimelineChart = dynamic(
+  () => import("./reports-charts").then((m) => m.AppointmentsTimelineChart),
+  { ssr: false, loading: () => chartFallback }
+);
+const RevenueByServiceChart = dynamic(
+  () => import("./reports-charts").then((m) => m.RevenueByServiceChart),
+  { ssr: false, loading: () => chartFallback }
+);
 
 export function ReportsDashboard() {
   const [range, setRange] = useState("30d");
@@ -120,21 +134,7 @@ export function ReportsDashboard() {
         <div className="glass rounded-xl p-6">
           <h3 className="font-heading font-semibold text-sm mb-4">Turnos por dia</h3>
           {timeline.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={timeline}>
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                  tickFormatter={(d: string) => d.slice(5)}
-                />
-                <YAxis tick={{ fontSize: 11, fill: "#a1a1aa" }} />
-                <Tooltip
-                  contentStyle={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
-                  labelStyle={{ color: "#fafafa" }}
-                />
-                <Bar dataKey="count" fill="#6366F1" radius={[4, 4, 0, 0]} name="Turnos" />
-              </BarChart>
-            </ResponsiveContainer>
+            <AppointmentsTimelineChart data={timeline} />
           ) : (
             <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
               Sin datos para este período
@@ -146,30 +146,7 @@ export function ReportsDashboard() {
         <div className="glass rounded-xl p-6">
           <h3 className="font-heading font-semibold text-sm mb-4">Ingresos por servicio</h3>
           {byService.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={byService}
-                  dataKey="revenue"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  label={({ name, percent }: { name?: string; percent?: number }) =>
-                    `${name || ""} (${((percent || 0) * 100).toFixed(0)}%)`
-                  }
-                  labelLine={{ stroke: "#a1a1aa" }}
-                >
-                  {byService.map((_: unknown, i: number) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
-                  formatter={(value?: number) => `${formatCurrency((value || 0))}`}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <RevenueByServiceChart data={byService} />
           ) : (
             <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
               Sin datos para este período

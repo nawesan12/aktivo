@@ -2,7 +2,6 @@
 
 import { type ReactNode, useEffect } from "react";
 import { ThemeProvider } from "./theme-provider";
-import { GSAPProvider } from "./gsap-provider";
 import { SessionProvider } from "./session-provider";
 import { SWRProvider } from "./swr-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,12 +18,10 @@ export function Providers({ children }: { children: ReactNode }) {
     <SessionProvider>
       <ThemeProvider>
         <SWRProvider>
-          <GSAPProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster richColors position="bottom-right" />
-            </TooltipProvider>
-          </GSAPProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster richColors position="bottom-right" />
+          </TooltipProvider>
         </SWRProvider>
       </ThemeProvider>
     </SessionProvider>

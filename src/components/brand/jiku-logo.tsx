@@ -21,7 +21,10 @@ interface JikuLogoProps {
 function LogoIcon({ size = 24, animated = false }: { size?: number; animated?: boolean }) {
   return (
     <Image
-      src="/jiku-logo.png"
+      // The SVG, not the PNG. It weighs 5 KB against 240, scales to any size
+      // without a second file, and never goes through image optimisation —
+      // which was being billed for a 24-pixel logo on every page.
+      src="/jiku-logo.svg"
       alt=""
       width={size}
       height={size}

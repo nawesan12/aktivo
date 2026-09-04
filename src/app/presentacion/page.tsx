@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 
 const TOTAL_SLIDES = 9;

@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 import { staffSchema } from "@/lib/validations";
 import { handleApiError } from "@/lib/api-errors";
 import { checkStaffLimit } from "@/lib/subscription/enforcement";
+import { revalidateBusinessPage } from "@/lib/booking/business-page";
 
 export async function GET() {
   try {
@@ -96,6 +97,10 @@ export async function POST(request: NextRequest) {
       entityId: staff.id,
       details: { name, specialty },
     });
+
+    // The public profile shows this. Without dropping its cache the owner
+    // edits a price and keeps seeing the old one on their own page.
+    revalidateBusinessPage(session.businessSlug);
 
     return NextResponse.json(staff, { status: 201 });
   } catch (error) {

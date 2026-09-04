@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import gsap from "gsap";
+import gsap from "@/lib/animations/gsap";
 import { Loader2, Check, ArrowRight, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 

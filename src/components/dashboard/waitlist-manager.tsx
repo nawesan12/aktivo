@@ -41,7 +41,7 @@ export function WaitlistManager() {
 
   const { data, isLoading, mutate } = useSWR<WaitlistResponse>(
     `/api/panel/waitlist?status=${filter}&page=${page}`,
-    { refreshInterval: 30000 }
+    { refreshInterval: 300000, revalidateOnFocus: true }
   );
 
   const handleNotify = async (id: string) => {
