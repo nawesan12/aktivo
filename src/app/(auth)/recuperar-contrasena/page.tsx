@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { JikuLogo } from "@/components/brand/jiku-logo";
+import { PASSWORD_MIN_LENGTH } from "@/lib/validations";
 
 function RecoverContent() {
   const searchParams = useSearchParams();
@@ -132,8 +133,8 @@ function ResetForm({ token }: { token: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres");
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      toast.error(`La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`);
       return;
     }
 

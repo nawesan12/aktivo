@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import gsap, { ScrollTrigger } from "@/lib/animations/gsap";
+import gsap from "@/lib/animations/gsap";
 import {
   Phone,
   MapPin,

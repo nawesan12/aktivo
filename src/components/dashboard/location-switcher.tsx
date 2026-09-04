@@ -4,10 +4,12 @@ import { useState } from "react";
 import useSWR from "swr";
 import { MapPin, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 
 export function LocationSwitcher() {
   const { data } = useSWR("/api/panel/group");
+  const { update: updateSession } = useSession();
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
@@ -29,7 +31,12 @@ export function LocationSwitcher() {
 
       if (!res.ok) throw new Error((await res.json()).error);
 
-      // Reload to apply new session
+      // Rewrite the session token before reloading. Without this the reload
+      // came back on whatever business the JWT already had, so the switch
+      // looked like it did nothing. The id is re-checked server-side against
+      // the user's memberships.
+      await updateSession({ businessId });
+
       toast.success("Sucursal cambiada");
       window.location.reload();
     } catch (error) {

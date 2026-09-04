@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, LogIn } from "lucide-react";
 import Link from "next/link";
 
-export function StepInfo({ slug }: { slug: string }) {
+export function StepInfo() {
   const { data: session } = useSession();
   const { guestName, guestPhone, guestEmail, notes, setGuestInfo, setNotes, setStep } = useBookingStore();
 

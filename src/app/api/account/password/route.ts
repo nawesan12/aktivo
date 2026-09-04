@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
+import { PASSWORD_MIN_LENGTH } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -31,8 +32,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 });
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+    if (newPassword.length < PASSWORD_MIN_LENGTH) {
+      return NextResponse.json(
+        { error: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres` },
+        { status: 400 }
+      );
     }
 
     if (newPassword !== confirmPassword) {

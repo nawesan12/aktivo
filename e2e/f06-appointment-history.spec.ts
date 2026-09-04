@@ -92,7 +92,7 @@ test.describe("F6 — Appointment History Improvements", () => {
 
     // Look for pagination controls
     const nextPageBtn = page.getByRole("button", { name: /siguiente|next|>/i });
-    const hasNextPage = await nextPageBtn.isVisible().catch(() => false);
+    await nextPageBtn.isVisible().catch(() => false);
 
     // If there are enough appointments, pagination should be visible
     // If not, empty state or single page is fine

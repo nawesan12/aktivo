@@ -74,13 +74,6 @@ export function StepDatetime({ slug }: { slug: string }) {
     availableDates?.filter((d) => d.hasSlots).map((d) => format(new Date(d.date), "yyyy-MM-dd")) ?? []
   );
 
-  // Build slot count map for calendar dots
-  const slotCountMap = new Map<string, number>(
-    availableDates
-      ?.filter((d) => d.hasSlots && d.slotCount !== undefined)
-      .map((d) => [format(new Date(d.date), "yyyy-MM-dd"), d.slotCount!]) ?? []
-  );
-
   // Time suggestions for authenticated users
   const { data: session } = useSession();
   const { data: suggestion } = useSWR(

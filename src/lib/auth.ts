@@ -89,10 +89,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
-      if (user || !token.lastRefreshed || Date.now() - (token.lastRefreshed as number) > REFRESH_INTERVAL_MS) {
+      const stale =
+        !token.lastRefreshed ||
+        Date.now() - (token.lastRefreshed as number) > REFRESH_INTERVAL_MS;
+
+      // `update` is how the location switcher asks for a different business.
+      // It never trusts the id it is given: the memberships are re-read below
+      // and the switch only happens if one of them matches.
+      const requestedBusinessId =
+        trigger === "update" && typeof session?.businessId === "string"
+          ? session.businessId
+          : null;
+
+      if (user || stale || requestedBusinessId) {
         const dbUser = await db.user.findUnique({
           where: { email: token.email! },
           select: {
@@ -100,7 +112,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: true,
             businesses: {
               where: { isActive: true },
-              take: 1,
+              // Every membership, deterministically ordered. Reading a single
+              // row with no ordering meant that for anyone with more than one
+              // business the active one was decided at random on each refresh —
+              // and that switching branches never survived it.
+              orderBy: { business: { name: "asc" } },
               select: {
                 role: true,
                 business: { select: { id: true, slug: true } },
@@ -112,12 +128,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
-          const primaryBusiness = dbUser.businesses[0];
-          if (primaryBusiness) {
-            token.businessId = primaryBusiness.business.id;
-            token.businessSlug = primaryBusiness.business.slug;
-            token.role = primaryBusiness.role;
+
+          const memberships = dbUser.businesses;
+          const active =
+            (requestedBusinessId &&
+              memberships.find((m) => m.business.id === requestedBusinessId)) ||
+            // Keep whatever was already active across a plain refresh.
+            memberships.find((m) => m.business.id === token.businessId) ||
+            memberships[0];
+
+          if (active) {
+            token.businessId = active.business.id;
+            token.businessSlug = active.business.slug;
+            token.role = active.role;
           }
+
           token.lastRefreshed = Date.now();
         }
       }

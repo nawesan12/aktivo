@@ -21,7 +21,8 @@ export function ExplorePageClient({
 }: ExplorePageClientProps) {
   const [query, setQuery] = useState(initialQuery);
   const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
+  // No province selector in the interface yet; the API accepts one.
+  const [province] = useState("");
   const [page, setPage] = useState(1);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 

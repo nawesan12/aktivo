@@ -13,7 +13,17 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const pool = new pg.Pool({ connectionString });
+  // Bounded on purpose. `pg` defaults to ten connections *per process*, and on
+  // Fluid Compute there are as many processes as concurrent load requires — so
+  // the default is really ten times however many instances Vercel decides to
+  // run, against a Postgres that has a fixed ceiling. Three is plenty for a
+  // request that makes a handful of queries and returns.
+  const pool = new pg.Pool({
+    connectionString,
+    max: 3,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+  });
   const adapter = new PrismaPg(pool);
 
   return new PrismaClient({

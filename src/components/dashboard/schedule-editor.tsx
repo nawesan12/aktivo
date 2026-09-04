@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -45,7 +45,9 @@ export function ScheduleEditor() {
   const [newRecurringDay, setNewRecurringDay] = useState(1);
   const [newRecurringTime, setNewRecurringTime] = useState("13:00");
 
-  const staff = staffData?.data || [];
+  // Memoised: `staffData?.data || []` builds a new array on every render, and
+  // the effect below depends on it — so it re-ran forever.
+  const staff = useMemo(() => staffData?.data ?? [], [staffData]);
 
   const { data: scheduleData, isLoading: loadingSchedule } = useSWR(
     selectedStaffId ? `/api/panel/staff/${selectedStaffId}/schedule` : null);

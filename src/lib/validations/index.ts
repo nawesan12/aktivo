@@ -3,9 +3,20 @@ import { isValidArgentinePhone } from "@/lib/phone";
 
 // ── Auth ──────────────────────────────────
 
+/**
+ * Minimum for a password being *set*. Deliberately not applied to the login
+ * form: the people who already have a six-character password have to be able
+ * to get in and change it.
+ */
+export const PASSWORD_MIN_LENGTH = 10;
+
+export const newPassword = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH, `Mínimo ${PASSWORD_MIN_LENGTH} caracteres`);
+
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  password: z.string().min(1, "Ingresá tu contraseña"),
 });
 
 export const registerSchema = z
@@ -13,7 +24,7 @@ export const registerSchema = z
     name: z.string().min(2, "Mínimo 2 caracteres"),
     businessName: z.string().min(2, "Mínimo 2 caracteres"),
     email: z.string().email("Email inválido"),
-    password: z.string().min(6, "Mínimo 6 caracteres"),
+    password: newPassword,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

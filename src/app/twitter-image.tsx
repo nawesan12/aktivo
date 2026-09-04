@@ -1,7 +1,3 @@
-import { ImageResponse } from "next/og";
-
-export const runtime = "edge";
-
 export const alt =
   "Jiku - Plataforma de turnos, CRM y pagos para negocios de servicios en Argentina";
 

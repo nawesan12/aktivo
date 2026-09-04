@@ -4,9 +4,20 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
+import { rateLimit, getClientIP } from "@/lib/rate-limit";
+import { PASSWORD_MIN_LENGTH } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
+    // The only route in the auth surface that had no ceiling. The token is
+    // hashed and the space is large, so guessing one is not the worry — an
+    // unbounded endpoint that writes a password hash is.
+    const ip = getClientIP(request);
+    const { success } = await rateLimit({ key: `reset:${ip}`, limit: 10, windowMs: 15 * 60 * 1000 });
+    if (!success) {
+      return NextResponse.json({ error: "Demasiados intentos. Intenta en 15 minutos." }, { status: 429 });
+    }
+
     const body = await request.json();
     const { token, password, confirmPassword } = body;
 
@@ -14,8 +25,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      return NextResponse.json(
+        { error: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres` },
+        { status: 400 }
+      );
     }
 
     if (password !== confirmPassword) {

@@ -272,15 +272,6 @@ async function main() {
   console.log("Staff-service assignments created");
 
   // ── 9. Working Hours (Mon-Sat) ─────────
-  const schedule = [
-    { day: 1, start: "09:00", end: "13:00" }, // Mon morning
-    { day: 1, start: "15:00", end: "20:00" }, // Mon afternoon (handled as single block)
-    { day: 2, start: "09:00", end: "20:00" },
-    { day: 3, start: "09:00", end: "20:00" },
-    { day: 4, start: "09:00", end: "20:00" },
-    { day: 5, start: "09:00", end: "20:00" },
-    { day: 6, start: "09:00", end: "14:00" },
-  ];
 
   // Simplified: single block per day for seed
   const dailySchedule = [

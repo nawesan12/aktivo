@@ -60,7 +60,7 @@ export function BookingWizard({ businessId, slug }: BookingWizardProps) {
     <StepService key="service" slug={slug} />,
     <StepStaff key="staff" slug={slug} />,
     <StepDatetime key="datetime" slug={slug} />,
-    <StepInfo key="info" slug={slug} />,
+    <StepInfo key="info" />,
     <StepConfirm key="confirm" slug={slug} />,
   ];
 
