@@ -21,6 +21,7 @@ import { StatusBadge } from "./status-badge";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { formatCurrency } from "@/lib/format";
+import { useDebounced } from "@/hooks/use-debounced";
 
 
 interface Client {
@@ -59,8 +60,12 @@ export function ClientsList() {
   const [search, setSearch] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
+  // Debounced: the key used to come straight from the input, so every keystroke
+  // was a query across two tables.
+  const debouncedSearch = useDebounced(search);
+
   const params = new URLSearchParams({ page: String(page), pageSize: "20" });
-  if (search) params.set("search", search);
+  if (debouncedSearch) params.set("search", debouncedSearch);
 
   const { data, isLoading } = useSWR(`/api/panel/clients?${params.toString()}`);
   const { data: clientDetail } = useSWR(
@@ -183,11 +188,11 @@ export function ClientsList() {
             <div className="flex items-center justify-between p-3 border-t border-border">
               <p className="text-xs text-muted-foreground">{pagination.total} cliente{pagination.total !== 1 ? "s" : ""}</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
+                <button aria-label="Página anterior" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <span className="text-xs px-2">{page} / {pagination.totalPages}</span>
-                <button onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
+                <button aria-label="Página siguiente" onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -202,7 +207,7 @@ export function ClientsList() {
           <div className="glass rounded-xl p-5 sticky top-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-semibold">{detail.name || "Sin nombre"}</h3>
-              <button onClick={() => setSelectedClientId(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+              <button aria-label="Cerrar el detalle del cliente" onClick={() => setSelectedClientId(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
                 <X className="w-4 h-4" />
               </button>
             </div>

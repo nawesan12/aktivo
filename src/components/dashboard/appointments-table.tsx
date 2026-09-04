@@ -25,6 +25,7 @@ import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { APPOINTMENT_STATUS_OPTIONS, isTerminal } from "@/lib/appointment-status";
 import type { AppointmentListPage } from "@/lib/panel/appointments";
+import { useDebounced } from "@/hooks/use-debounced";
 
 
 interface Appointment {
@@ -68,8 +69,11 @@ export function AppointmentsTable({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
 
+  // Debounced: one request per keystroke otherwise.
+  const debouncedSearch = useDebounced(search);
+
   const params = new URLSearchParams({ page: String(page), pageSize: "20" });
-  if (search) params.set("search", search);
+  if (debouncedSearch) params.set("search", debouncedSearch);
   if (statusFilter) params.set("status", statusFilter);
   if (dateFrom) params.set("dateFrom", dateFrom);
   if (dateTo) params.set("dateTo", dateTo);

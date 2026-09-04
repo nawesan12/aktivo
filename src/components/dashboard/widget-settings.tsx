@@ -62,6 +62,10 @@ export function WidgetSettings() {
               </p>
             </div>
             <button
+              type="button"
+              role="switch"
+              aria-checked={settings.widgetEnabled}
+              aria-label="Habilitar el widget de reservas"
               onClick={() => updateSetting("widgetEnabled", !settings.widgetEnabled)}
               disabled={saving}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${

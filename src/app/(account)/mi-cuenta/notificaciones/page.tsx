@@ -13,10 +13,30 @@ interface Preference {
   business?: { name: string };
 }
 
-function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
+/**
+ * A switch a screen reader can actually announce.
+ *
+ * It was a `<button>` whose only child was a decorative span: no name, no role,
+ * no state. Somebody using a reader heard "botón" and nothing else — on the
+ * controls for whether they get emails and reminders at all.
+ */
+function Toggle({
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  label: string;
+}) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       onClick={onChange}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -99,6 +119,7 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                   <Toggle
+                    label="Recibir emails"
                     checked={pref.emailEnabled}
                     onChange={() => updatePref(pref.businessId, "emailEnabled", !pref.emailEnabled)}
                     disabled={saving === pref.businessId}
@@ -116,6 +137,7 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                   <Toggle
+                    label="Recibir recordatorios de turno"
                     checked={pref.remindersEnabled}
                     onChange={() => updatePref(pref.businessId, "remindersEnabled", !pref.remindersEnabled)}
                     disabled={saving === pref.businessId}

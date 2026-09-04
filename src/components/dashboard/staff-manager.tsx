@@ -172,10 +172,10 @@ export function StaffManager() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-sm truncate">{member.name}</h3>
                     <div className="flex gap-1 shrink-0">
-                      <button onClick={() => openEdit(member)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+                      <button aria-label={`Editar a ${member.name}`} onClick={() => openEdit(member)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setDeleteId(member.id)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center text-destructive">
+                      <button aria-label={`Eliminar a ${member.name}`} onClick={() => setDeleteId(member.id)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center text-destructive">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

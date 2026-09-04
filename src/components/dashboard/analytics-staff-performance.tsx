@@ -47,13 +47,22 @@ export function AnalyticsStaffPerformance({ data }: AnalyticsStaffPerformancePro
         <h3 className="text-sm font-medium text-muted-foreground">Rendimiento del equipo</h3>
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+          disabled={data.length === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:pointer-events-none"
         >
           <Download className="w-3.5 h-3.5" />
           Exportar CSV
         </button>
       </div>
 
+      {data.length === 0 ? (
+        // It used to render six headers over an empty tbody, with the CSV
+        // button still live: clicking it downloaded a file of headers.
+        <p className="text-sm text-muted-foreground py-8 text-center">
+          Todavía no hay turnos completados en este período. Cuando los haya,
+          acá vas a ver quién factura más y quién tiene más ausencias.
+        </p>
+      ) : (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -96,16 +105,10 @@ export function AnalyticsStaffPerformance({ data }: AnalyticsStaffPerformancePro
                 <td className="py-2 text-right text-muted-foreground">{staff.noShowCount}</td>
               </tr>
             ))}
-            {data.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                  Sin datos disponibles
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

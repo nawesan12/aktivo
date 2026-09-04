@@ -146,10 +146,10 @@ export function ClientTagsManager() {
             <span>{tag.name}</span>
             <span className="text-xs text-muted-foreground">({tag._count.assignments})</span>
             <div className="hidden group-hover:flex items-center gap-1 ml-1">
-              <button onClick={() => startEdit(tag)} className="text-muted-foreground hover:text-foreground">
+              <button aria-label={`Editar la etiqueta ${tag.name}`} onClick={() => startEdit(tag)} className="text-muted-foreground hover:text-foreground">
                 <Pencil className="w-3 h-3" />
               </button>
-              <button onClick={() => handleDelete(tag.id)} className="text-muted-foreground hover:text-destructive">
+              <button aria-label={`Eliminar la etiqueta ${tag.name}`} onClick={() => handleDelete(tag.id)} className="text-muted-foreground hover:text-destructive">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>

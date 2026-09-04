@@ -7,6 +7,7 @@ import { es } from "date-fns/locale";
 import { Save, Loader2, Plus, X, Clock, CalendarOff } from "lucide-react";
 import { toast } from "sonner";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import Link from "next/link";
 
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -148,9 +149,25 @@ export function ScheduleEditor() {
         ))}
       </div>
 
-      {!selectedStaffId ? (
+      {staff.length === 0 ? (
+        // A new business lands here with nothing to select and no way out: the
+        // picker above is empty and the message asked them to choose from it.
+        <div className="glass rounded-xl p-12 text-center space-y-3">
+          <p className="font-heading font-semibold">Todavía no cargaste a nadie</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Los horarios son de cada profesional. Agregá al menos uno y volvé
+            acá para decir cuándo atiende.
+          </p>
+          <Link
+            href="/panel/equipo"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg brand-gradient text-white text-sm font-medium"
+          >
+            Agregar un profesional
+          </Link>
+        </div>
+      ) : !selectedStaffId ? (
         <div className="glass rounded-xl p-12 text-center">
-          <p className="text-muted-foreground text-sm">Selecciona un profesional</p>
+          <p className="text-muted-foreground text-sm">Elegí un profesional para ver sus horarios</p>
         </div>
       ) : loadingSchedule ? (
         <FormSkeleton />
@@ -203,7 +220,7 @@ export function ScheduleEditor() {
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20">
                   <span className="text-sm">{DAYS[rb.dayOfWeek]}</span>
                   <span className="text-sm text-muted-foreground">{rb.time}</span>
-                  <button onClick={() => removeRecurringBlock(i)} className="ml-auto w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+                  <button aria-label="Quitar este bloqueo" onClick={() => removeRecurringBlock(i)} className="ml-auto w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -247,7 +264,7 @@ export function ScheduleEditor() {
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20">
                   <span className="text-sm">{format(new Date(bd.date + "T12:00:00"), "dd/MM/yyyy", { locale: es })}</span>
                   {bd.reason && <span className="text-xs text-muted-foreground">— {bd.reason}</span>}
-                  <button onClick={() => removeBlockedDate(i)} className="ml-auto w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+                  <button aria-label="Quitar esta fecha bloqueada" onClick={() => removeBlockedDate(i)} className="ml-auto w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>

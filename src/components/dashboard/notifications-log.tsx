@@ -154,11 +154,11 @@ export function NotificationsLog() {
           <div className="flex items-center justify-between p-3 border-t border-border">
             <p className="text-xs text-muted-foreground">{pagination.total} notificación{pagination.total !== 1 ? "es" : ""}</p>
             <div className="flex items-center gap-1">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
+              <button aria-label="Página anterior" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-xs px-2">{page} / {pagination.totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
+              <button aria-label="Página siguiente" onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
