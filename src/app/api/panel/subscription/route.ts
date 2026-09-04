@@ -140,7 +140,10 @@ export async function POST(request: NextRequest) {
         external_reference: externalReference,
         payer_email: body.email || undefined,
         back_url: `${baseUrl}/panel/suscripcion?result=callback`,
-        reason: `Jiku ${plan === "PROFESSIONAL" ? "Pro" : "Business"} - Suscripción mensual`,
+        // What the customer reads on their MercadoPago statement. It said
+        // "Jiku Pro" and "Jiku Business", names that appear nowhere in the
+        // product — the plans are Inicial and Completo.
+        reason: `Jiku ${PLAN_NAMES[plan]} — Suscripción mensual`,
       },
     });
 
