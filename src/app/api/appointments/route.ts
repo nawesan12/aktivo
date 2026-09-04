@@ -15,7 +15,7 @@ import { formatArgentinaDate, parseDateInArgentina } from "@/lib/timezone";
 import { addMinutes, addWeeks, addMonths } from "date-fns";
 import { randomUUID } from "crypto";
 import { checkAppointmentLimit, getPlanForBusiness } from "@/lib/subscription/enforcement";
-import { PLAN_LIMITS, platformCommission } from "@/lib/subscription/config";
+import { PLAN_LIMITS } from "@/lib/subscription/config";
 import { appUrl } from "@/lib/env";
 import { runInBackground } from "@/lib/background";
 import { maybeTick } from "@/lib/jobs/tick";
@@ -466,10 +466,11 @@ export async function POST(request: Request) {
             },
             external_reference: appointment.id,
             notification_url: appUrl(`/api/webhooks/mercadopago`),
-            // Jiku's cut. The money is collected into the business's own
-            // account and MercadoPago settles this share to the platform, so
-            // nothing here moves funds by hand.
-            marketplace_fee: platformCommission(amount),
+            // No marketplace_fee: the platform does not take a cut any more, so
+            // the whole deposit settles into the business's own MercadoPago
+            // account. It is what the landing now says out loud — "100% de lo
+            // que cobrás va directo a tu Mercado Pago" — and the fee was the one
+            // line that made that false.
           },
         });
 

@@ -88,22 +88,6 @@ export const PLAN_NAMES: Record<BusinessPlan, string> = {
 
 export const GRACE_PERIOD_DAYS = 7;
 
-/**
- * What Jiku keeps from each deposit collected through a linked MercadoPago
- * account, on top of the subscription.
- *
- * The money goes straight to the business; MercadoPago withholds this share and
- * settles it to the platform. It is said out loud on the screen where the owner
- * links the account — they are going to see it in their own MercadoPago
- * statement, and it is better that they read it here first.
- */
-export const PLATFORM_COMMISSION_RATE = 0.01;
-
-/** The platform's cut of an amount, rounded to the cent. */
-export function platformCommission(amount: number): number {
-  return Math.round(amount * PLATFORM_COMMISSION_RATE * 100) / 100;
-}
-
 const PLAN_ORDER: BusinessPlan[] = ["STARTER", "PROFESSIONAL", "ENTERPRISE"];
 
 export function planRank(plan: BusinessPlan): number {

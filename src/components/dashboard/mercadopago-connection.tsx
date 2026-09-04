@@ -6,7 +6,6 @@ import useSWR from "swr";
 import { CheckCircle, AlertTriangle, Link2, Loader2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PLATFORM_COMMISSION_RATE } from "@/lib/subscription/config";
 
 interface Connection {
   available: boolean;
@@ -27,7 +26,6 @@ const CALLBACK_MESSAGES: Record<string, { ok: boolean; text: string }> = {
   failed: { ok: false, text: "No pudimos conectar con Mercado Pago" },
 };
 
-const commissionLabel = `${(PLATFORM_COMMISSION_RATE * 100).toFixed(0).replace(".", ",")}%`;
 
 /**
  * Linking a business's own MercadoPago, with a button.
@@ -179,9 +177,9 @@ export function MercadoPagoConnection() {
             {needsAttention ? "Reconectar Mercado Pago" : "Conectar Mercado Pago"}
           </button>
           <p className="text-xs text-muted-foreground">
-            Te lleva a Mercado Pago para que autorices con tu cuenta. Jiku retiene
-            una comisión del {commissionLabel} de cada seña cobrada, además de tu
-            plan; Mercado Pago cobra la suya aparte, como siempre.
+            Te lleva a Mercado Pago para que autorices con tu cuenta. Todo lo que
+            cobrás va directo a tu cuenta: Jiku no se queda con nada de cada seña,
+            sólo con tu plan. Mercado Pago cobra la suya aparte, como siempre.
           </p>
         </>
       )}
