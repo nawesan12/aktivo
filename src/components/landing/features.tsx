@@ -20,10 +20,11 @@ export function Features() {
         <div className="features-grid">
           <div className="feature jiku-reveal rd1">
             <div className="feature-num mono">01</div>
-            <h3>Agenda inteligente 24/7</h3>
+            <h3>Agenda abierta 24/7</h3>
             <p>
-              Tus clientes reservan solos a cualquier hora. La IA optimiza
-              huecos y sugiere horarios para maximizar tu capacidad.
+              Tus clientes reservan solos a cualquier hora, y sólo ven los
+              huecos que realmente tenés libres. Dos personas no pueden tomar
+              el mismo horario ni queriendo.
             </p>
           </div>
           <div className="feature jiku-reveal rd2">
@@ -36,10 +37,10 @@ export function Features() {
           </div>
           <div className="feature jiku-reveal rd3">
             <div className="feature-num mono">03</div>
-            <h3>Cobros integrados</h3>
+            <h3>Cobrá la seña al reservar</h3>
             <p>
-              Mercado Pago, transferencias, QR y links de pago. Vendé
-              paquetes, membresías y señas desde un solo lugar.
+              Conectás tu Mercado Pago con un botón y la plata entra directo a
+              tu cuenta. Total, un porcentaje o un monto fijo: vos elegís.
             </p>
           </div>
           <div className="feature jiku-reveal rd1">
@@ -60,10 +61,10 @@ export function Features() {
           </div>
           <div className="feature jiku-reveal rd3">
             <div className="feature-num mono">06</div>
-            <h3>Programa de fidelidad</h3>
+            <h3>Cupones y referidos</h3>
             <p>
-              Puntos, recompensas y tarjetas de sellos digitales. Tus clientes
-              vuelven más seguido y gastan más.
+              Códigos de descuento con vencimiento y tope de usos, y un
+              programa para premiar al cliente que te trae otro cliente.
             </p>
           </div>
         </div>

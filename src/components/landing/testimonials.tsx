@@ -1,88 +1,75 @@
+import { TRIAL_DAYS } from "@/lib/subscription/access";
+
 /**
- * Customer quotes.
+ * How it works, in the place testimonials used to be.
+ *
+ * There were three of them, with names, photos-as-initials, neighbourhoods and
+ * numbers: Martín Rodríguez of Blade Barbería in Palermo saying he went from
+ * losing eight appointments a week to nearly none; Valentina Sosa of Natural
+ * Spa in Recoleta reporting 40% more billing in three months. None of those
+ * people exist, and the product had never had a customer.
+ *
+ * Invented reviews are worse than no reviews: they are checkable, and the first
+ * prospect who asks to speak to one of them finds out everything else on the
+ * page might be made up too. Real quotes go here the day there are some.
+ *
+ * Meanwhile this answers the question somebody at this point of the page is
+ * actually asking, which is what happens if they sign up.
  */
+const STEPS = [
+  {
+    number: "01",
+    title: "Cargá lo tuyo",
+    body: "Tus servicios, tu equipo y los horarios en que abrís. Cinco minutos, una sola vez.",
+  },
+  {
+    number: "02",
+    title: "Pasá tu link",
+    body: "Va en tu Instagram, en el WhatsApp del local o en un QR sobre el mostrador. Tus clientes reservan solos, también a las dos de la mañana.",
+  },
+  {
+    number: "03",
+    title: "Ocupate de atender",
+    body: "Jiku confirma, recuerda el turno el día antes y pide la reseña después. Si querés, cobra la seña al reservar.",
+  },
+];
+
 export function Testimonials() {
   return (
     <section className="testimonials" id="testimonials">
       <div className="container">
         <div className="jiku-reveal" style={{ textAlign: "center" }}>
-          <div className="section-eyebrow">Reseñas</div>
+          <div className="section-eyebrow">Cómo funciona</div>
           <div className="section-title">
-            Lo que dicen quienes
+            Tres pasos y tu agenda
             <br />
-            usan Jiku
+            empieza a llenarse sola
           </div>
         </div>
         <div className="testi-grid">
-          <div className="testi-card jiku-reveal rd1">
-            <div className="testi-stars">★★★★★</div>
-            <p className="testi-text serif">
-              &ldquo;Pasé de perder 8 turnos por semana a casi cero. Los
-              recordatorios automáticos cambiaron todo. Mis clientes aman
-              reservar a las 2am.&rdquo;
-            </p>
-            <div className="testi-author">
-              <div
-                className="testi-avatar"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--jade), var(--jade-deep))",
-                }}
-              >
-                MR
-              </div>
-              <div>
-                <div className="testi-name">Martín Rodríguez</div>
-                <div className="testi-role">Blade Barbería · Palermo</div>
-              </div>
+          {STEPS.map((step, index) => (
+            <div key={step.number} className={`testi-card jiku-reveal rd${index + 1}`}>
+              <div className="feature-num mono">{step.number}</div>
+              <h3 className="testi-name" style={{ fontSize: "1.15rem", marginTop: 12 }}>
+                {step.title}
+              </h3>
+              <p className="testi-text" style={{ fontSize: "0.98rem", marginTop: 8 }}>
+                {step.body}
+              </p>
             </div>
-          </div>
-          <div className="testi-card jiku-reveal rd2">
-            <div className="testi-stars">★★★★★</div>
-            <p className="testi-text serif">
-              &ldquo;El CRM me permite saber exactamente qué necesita cada
-              clienta. Implementé paquetes y mi facturación subió un 40% en 3
-              meses.&rdquo;
-            </p>
-            <div className="testi-author">
-              <div
-                className="testi-avatar"
-                style={{
-                  background: "linear-gradient(135deg, #a78bfa, #7c3aed)",
-                }}
-              >
-                VS
-              </div>
-              <div>
-                <div className="testi-name">Valentina Sosa</div>
-                <div className="testi-role">Natural Spa · Recoleta</div>
-              </div>
-            </div>
-          </div>
-          <div className="testi-card jiku-reveal rd3">
-            <div className="testi-stars">★★★★★</div>
-            <p className="testi-text serif">
-              &ldquo;Tengo 3 sucursales y las manejo desde una sola pantalla.
-              Los reportes me dicen exactamente dónde mejorar. Es como tener
-              un socio digital.&rdquo;
-            </p>
-            <div className="testi-author">
-              <div
-                className="testi-avatar"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--coral), #ef4444)",
-                }}
-              >
-                FC
-              </div>
-              <div>
-                <div className="testi-name">Federico Castro</div>
-                <div className="testi-role">FitZone · 3 sedes GBA</div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
+        <p
+          className="jiku-reveal"
+          style={{
+            textAlign: "center",
+            marginTop: 32,
+            color: "var(--text-muted)",
+            fontSize: "0.95rem",
+          }}
+        >
+          {TRIAL_DAYS} días gratis, sin tarjeta. Si no te sirve, no hacés nada.
+        </p>
       </div>
     </section>
   );

@@ -18,23 +18,28 @@ export function BigFeature() {
               y el pedido de reseña después. Todo automático, todo con el nombre
               y los colores de tu negocio.
             </p>
+            {/*
+              These were "-73% ausencias" and "+45% reseñas en Google",
+              invented for a product that had never had a customer. What is here
+              now describes what the software does, which is checkable.
+            */}
             <div
               style={{ marginTop: 32, display: "flex", gap: 32 }}
             >
               <div>
                 <div className="jade" style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.03em" }}>
-                  -73%
+                  24 h
                 </div>
                 <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                  ausencias
+                  antes, el recordatorio
                 </div>
               </div>
               <div>
                 <div style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--gold)" }}>
-                  +45%
+                  0
                 </div>
                 <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                  reseñas en Google
+                  mensajes que mandás vos
                 </div>
               </div>
             </div>
@@ -42,10 +47,12 @@ export function BigFeature() {
           <div className="bf-visual jiku-reveal rd3">
             <div className="wa">
               <div className="wa-head">
-                <div className="wa-icon">💬</div>
+                {/* Email, which is what the product actually sends. The mockup
+                    kept the shape of a chat thread from when this was WhatsApp. */}
+                <div className="wa-icon">✉️</div>
                 <div>
-                  <div className="wa-name">Jiku Bot</div>
-                  <div className="wa-sub">Mensajes automáticos</div>
+                  <div className="wa-name">Avisos de Jiku</div>
+                  <div className="wa-sub">Por email, automáticos</div>
                 </div>
               </div>
               <div className="wa-msgs">
