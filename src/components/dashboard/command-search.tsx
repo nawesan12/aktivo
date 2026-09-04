@@ -87,6 +87,18 @@ export function CommandSearch() {
 
   return (
     <>
+      {/* On a phone there was no way in at all: the bar is hidden below md and
+          the "/" shortcut needs a keyboard, so the one search that reaches
+          turnos, clientes and servicios at once did not exist on the device the
+          owner actually has in their hand. */}
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Buscar"
+        className="md:hidden w-9 h-9 rounded-lg bg-muted/50 hover:bg-muted/70 flex items-center justify-center transition-colors"
+      >
+        <Search className="w-4 h-4 text-muted-foreground" />
+      </button>
+
       <button
         onClick={() => setOpen(true)}
         className="hidden md:flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 w-64 hover:bg-muted/70 transition-colors"

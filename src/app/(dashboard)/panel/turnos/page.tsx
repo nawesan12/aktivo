@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getSessionBusiness } from "@/lib/auth/session-business";
 import { requirePermission } from "@/lib/auth/rbac";
 import { appointmentListKey, listAppointments } from "@/lib/panel/appointments";
@@ -26,10 +27,15 @@ export default async function TurnosPage() {
           Administrá y gestioná todos los turnos de tu negocio
         </p>
       </div>
-      <AppointmentsTable
-        initialKey={appointmentListKey({ page: 1, pageSize: 20 })}
-        initialData={initialData}
-      />
+      {/* Required for the prerender: the table reads `?search=` so other
+          screens can link straight to one turno, and that is only known at
+          request time. The server-rendered rows still ship inside the boundary. */}
+      <Suspense fallback={null}>
+        <AppointmentsTable
+          initialKey={appointmentListKey({ page: 1, pageSize: 20 })}
+          initialData={initialData}
+        />
+      </Suspense>
     </div>
   );
 }

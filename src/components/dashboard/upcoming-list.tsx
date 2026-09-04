@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import Link from "next/link";
 import { Clock, User } from "lucide-react";
 import { StatusBadge } from "./status-badge";
 
@@ -23,7 +24,7 @@ export function UpcomingList({ appointments }: UpcomingListProps) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Clock className="w-8 h-8 mb-2 opacity-50" />
-        <p className="text-sm">No hay turnos proximos</p>
+        <p className="text-sm">No hay turnos próximos</p>
       </div>
     );
   }
@@ -31,8 +32,11 @@ export function UpcomingList({ appointments }: UpcomingListProps) {
   return (
     <div className="space-y-3">
       {appointments.map((apt) => (
-        <div
+        // The rows already lit up on hover and did nothing when clicked. They
+        // lead to the turno now, filtered by the client's name.
+        <Link
           key={apt.id}
+          href={`/panel/turnos?search=${encodeURIComponent(apt.clientName)}`}
           className="flex items-center gap-4 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -46,7 +50,7 @@ export function UpcomingList({ appointments }: UpcomingListProps) {
             </p>
           </div>
           <StatusBadge status={apt.status} />
-        </div>
+        </Link>
       ))}
     </div>
   );

@@ -1,10 +1,12 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useState, useCallback } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  Plus,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
+import { NewAppointmentDialog } from "./new-appointment-dialog";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { APPOINTMENT_STATUS_OPTIONS, isTerminal } from "@/lib/appointment-status";
@@ -60,14 +63,19 @@ export function AppointmentsTable({
   initialKey?: string;
   initialData?: AppointmentListPage;
 } = {}) {
+  // Seeded from the URL: other screens link here to point at one turno — the
+  // notifications log, for one — and without this the link landed on an
+  // unfiltered agenda and left the person to find it by hand.
+  const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   // Debounced: one request per keystroke otherwise.
   const debouncedSearch = useDebounced(search);
@@ -169,6 +177,21 @@ export function AppointmentsTable({
 
   return (
     <>
+      {/* The agenda could only be looked at: every turno had to come in through
+          the public page, so a shop taking a phone call had no way to write it
+          down here. */}
+      <div className="flex justify-end mb-4">
+        <PermissionGate permission="appointments:create">
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg brand-gradient text-white text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Cargar un turno
+          </button>
+        </PermissionGate>
+      </div>
+
       {/* Filters */}
       <div className="glass rounded-xl p-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
@@ -383,6 +406,12 @@ export function AppointmentsTable({
           </div>
         )}
       </div>
+
+      <NewAppointmentDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={() => mutate()}
+      />
 
       {/* Detail dialog */}
       <AppointmentDetailDialog

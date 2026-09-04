@@ -201,13 +201,62 @@ export function ClientsList() {
         </div>
       </div>
 
-      {/* Client detail panel */}
+      {/* Client detail: a column on a wide screen, a sheet on anything else.
+          It used to be `hidden xl:block` only, so below 1280px — every phone
+          and most laptops — clicking a client did nothing at all: the row lit
+          up, the cursor said it was a button, and the file with their phone,
+          their history and their spend was unreachable. */}
       {detail && (
         <div className="w-80 shrink-0 hidden xl:block">
           <div className="glass rounded-xl p-5 sticky top-4 space-y-4">
+            <ClientDetailCard
+              detail={detail}
+              onClose={() => setSelectedClientId(null)}
+              onExportPdf={handleExportProfilePdf}
+            />
+          </div>
+        </div>
+      )}
+
+      {detail && (
+        <div
+          className="xl:hidden fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Ficha de ${detail.name || "cliente"}`}
+        >
+          <button
+            aria-label="Cerrar"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setSelectedClientId(null)}
+          />
+          <div className="relative w-full sm:max-w-md glass rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+            <ClientDetailCard
+              detail={detail}
+              onClose={() => setSelectedClientId(null)}
+              onExportPdf={handleExportProfilePdf}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientDetailCard({
+  detail,
+  onClose,
+  onExportPdf,
+}: {
+  detail: ClientDetail;
+  onClose: () => void;
+  onExportPdf: () => void;
+}) {
+  return (
+    <>
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-semibold">{detail.name || "Sin nombre"}</h3>
-              <button aria-label="Cerrar el detalle del cliente" onClick={() => setSelectedClientId(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+              <button aria-label="Cerrar el detalle del cliente" onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -233,7 +282,7 @@ export function ClientsList() {
 
             <PermissionGate permission="reports:export">
               <button
-                onClick={handleExportProfilePdf}
+                onClick={onExportPdf}
                 className="w-full h-8 rounded-lg border border-border text-xs font-medium hover:bg-muted flex items-center justify-center gap-1"
               >
                 <FileText className="w-3 h-3" /> Exportar ficha PDF
@@ -259,9 +308,6 @@ export function ClientsList() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

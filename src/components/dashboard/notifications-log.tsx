@@ -4,14 +4,21 @@ import { useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import Link from "next/link";
+import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
   Bell,
   MessageSquare,
   Mail,
+  RefreshCw,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { PermissionGate } from "@/components/auth/permission-gate";
+import { errorMessage, messageOf } from "@/lib/api-message";
 
 
 interface Notification {
@@ -56,7 +63,27 @@ export function NotificationsLog() {
   if (dateFrom) params.set("dateFrom", dateFrom);
   if (dateTo) params.set("dateTo", dateTo);
 
-  const { data, isLoading } = useSWR(`/api/panel/notifications?${params.toString()}`);
+  const { data, isLoading, mutate } = useSWR(`/api/panel/notifications?${params.toString()}`);
+  const [resending, setResending] = useState<string | null>(null);
+
+  /**
+   * The table listed failures and offered nothing to do about them: the owner
+   * could see that a client never got their reminder and the only way to act on
+   * it was to phone them.
+   */
+  async function resend(id: string) {
+    setResending(id);
+    try {
+      const res = await fetch(`/api/panel/notifications/${id}/reenviar`, { method: "POST" });
+      if (!res.ok) throw new Error(await errorMessage(res));
+      toast.success("Reenviado");
+      mutate();
+    } catch (error) {
+      toast.error(messageOf(error, "No pudimos reenviarlo"));
+    } finally {
+      setResending(null);
+    }
+  }
 
   if (isLoading) return <TableSkeleton rows={8} />;
 
@@ -103,12 +130,13 @@ export function NotificationsLog() {
                 <th className="p-3 text-xs font-medium text-muted-foreground">Tipo</th>
                 <th className="p-3 text-xs font-medium text-muted-foreground">Destinatario</th>
                 <th className="p-3 text-xs font-medium text-muted-foreground">Estado</th>
+                <th className="p-3 text-xs font-medium text-muted-foreground w-24"></th>
               </tr>
             </thead>
             <tbody>
               {notifications.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center">
+                  <td colSpan={6} className="p-12 text-center">
                     <Bell className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
                     <p className="text-muted-foreground text-sm">Sin notificaciones</p>
                   </td>
@@ -141,6 +169,40 @@ export function NotificationsLog() {
                         {notif.error && (
                           <p className="text-[10px] text-destructive mt-0.5 truncate max-w-[200px]">{notif.error}</p>
                         )}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* The appointment id was already on every row and
+                              nothing linked to it: seeing that a reminder failed
+                              meant hunting for the turno by hand. */}
+                          {notif.appointment && (
+                            <Link
+                              href={`/panel/turnos?search=${encodeURIComponent(notif.recipient)}`}
+                              aria-label="Ver el turno de esta notificación"
+                              title="Ver el turno"
+                              className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </Link>
+                          )}
+                          {notif.status === "FAILED" && (
+                            <PermissionGate permission="notifications:read">
+                              <button
+                                onClick={() => resend(notif.id)}
+                                disabled={resending === notif.id}
+                                aria-label={`Reenviar a ${notif.recipient}`}
+                                className="h-8 px-2.5 rounded-lg border border-border text-xs hover:bg-muted flex items-center gap-1.5 disabled:opacity-50"
+                              >
+                                {resending === notif.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-3.5 h-3.5" />
+                                )}
+                                Reenviar
+                              </button>
+                            </PermissionGate>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

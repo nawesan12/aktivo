@@ -2,7 +2,8 @@
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { AlertTriangle, Mail, Phone } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Mail, Phone, Megaphone } from "lucide-react";
 
 interface ChurnData {
   atRiskClients: {
@@ -36,10 +37,23 @@ export function AnalyticsChurnList({ data }: { data: ChurnData }) {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-1">Clientes en Riesgo</h3>
-      <p className="text-sm text-muted-foreground mb-6">
-        {data.totalAtRisk} clientes sin actividad en los últimos 30 días.
-      </p>
+      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h3 className="text-lg font-semibold mb-1">Clientes en Riesgo</h3>
+          <p className="text-sm text-muted-foreground">
+            {data.totalAtRisk} clientes sin actividad en los últimos 30 días.
+          </p>
+        </div>
+        {/* The table named the people about to leave and left the owner to
+            contact them one at a time. This is the door to doing it once. */}
+        <Link
+          href="/panel/campanas"
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border text-sm hover:bg-muted shrink-0"
+        >
+          <Megaphone className="w-3.5 h-3.5" />
+          Armar una campaña
+        </Link>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -62,7 +76,7 @@ export function AnalyticsChurnList({ data }: { data: ChurnData }) {
                     <div>
                       <p className="font-medium">{client.clientName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {client.type === "registered" ? "Registrado" : "Guest"}
+                        {client.type === "registered" ? "Registrado" : "Invitado"}
                       </p>
                     </div>
                   </td>
@@ -81,14 +95,29 @@ export function AnalyticsChurnList({ data }: { data: ChurnData }) {
                   <td className="py-2.5">
                     <div className="flex items-center gap-2">
                       {client.email && (
-                        <a href={`mailto:${client.email}`} className="text-muted-foreground hover:text-primary">
+                        <a
+                          href={`mailto:${client.email}`}
+                          aria-label={`Escribirle a ${client.clientName}`}
+                          title={client.email}
+                          className="text-muted-foreground hover:text-primary"
+                        >
                           <Mail className="w-4 h-4" />
                         </a>
                       )}
                       {client.phone && (
-                        <a href={`https://wa.me/${client.phone.replace(/\D/g, "")}`} className="text-muted-foreground hover:text-success-foreground">
+                        <a
+                          href={`https://wa.me/${client.phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Escribirle por WhatsApp a ${client.clientName}`}
+                          title={client.phone}
+                          className="text-muted-foreground hover:text-success-foreground"
+                        >
                           <Phone className="w-4 h-4" />
                         </a>
+                      )}
+                      {!client.email && !client.phone && (
+                        <span className="text-xs text-muted-foreground">Sin contacto</span>
                       )}
                     </div>
                   </td>

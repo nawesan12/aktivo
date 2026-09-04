@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import useSWR from "swr";
 import {
   Calendar,
   DollarSign,
   Users,
   TrendingUp,
+  Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -68,9 +70,20 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Resumen de tu negocio</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-heading font-bold">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">Resumen de tu negocio</p>
+        </div>
+        {/* The most common thing an owner does at the panel, reachable from the
+            first screen instead of two navigations away. */}
+        <Link
+          href="/panel/turnos"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-lg brand-gradient text-white text-sm font-medium shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          Cargar un turno
+        </Link>
       </div>
 
       {/* KPIs */}
@@ -81,6 +94,10 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
           change={`${kpis.todayChange >= 0 ? "+" : ""}${kpis.todayChange} vs ayer`}
           icon={Calendar}
           trend={kpis.todayChange >= 0 ? "up" : "down"}
+          // The calendar opens on today, so "turnos hoy" lands exactly on them
+          // without this screen having to work out what "today" means in the
+          // business's timezone.
+          href="/panel/calendario"
         />
         <KpiCard
           label="Ingresos del mes"
@@ -88,6 +105,7 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
           change={`${kpis.revenueChange >= 0 ? "+" : ""}${kpis.revenueChange}% vs mes anterior`}
           icon={DollarSign}
           trend={kpis.revenueChange >= 0 ? "up" : "down"}
+          href="/panel/reportes"
         />
         <KpiCard
           label="Clientes activos"
@@ -95,6 +113,7 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
           change={`${kpis.clientChange >= 0 ? "+" : ""}${kpis.clientChange} este mes`}
           icon={Users}
           trend={kpis.clientChange >= 0 ? "up" : "down"}
+          href="/panel/clientes"
         />
         <KpiCard
           label="Tasa de ocupación"
@@ -102,6 +121,7 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
           change="del mes actual"
           icon={TrendingUp}
           trend={kpis.occupancy > 50 ? "up" : "down"}
+          href="/panel/analytics"
         />
       </div>
 
@@ -125,12 +145,22 @@ export function DashboardContent({ initialStats }: { initialStats: DashboardStat
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass rounded-xl p-6">
-          <h3 className="font-heading font-semibold mb-4">Próximos turnos</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading font-semibold">Próximos turnos</h3>
+            <Link href="/panel/turnos" className="text-xs text-primary hover:underline">
+              Ver todos
+            </Link>
+          </div>
           <UpcomingList appointments={upcoming || []} />
         </div>
 
         <div className="glass rounded-xl p-6">
-          <h3 className="font-heading font-semibold mb-4">Actividad reciente</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading font-semibold">Actividad reciente</h3>
+            <Link href="/panel/audit" className="text-xs text-primary hover:underline">
+              Ver todo
+            </Link>
+          </div>
           <ActivityFeed activities={recentActivity || []} />
         </div>
       </div>
