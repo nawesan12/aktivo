@@ -31,6 +31,16 @@ function verifyWebhookSignature(request: NextRequest, body: string): boolean {
   const xRequestId = request.headers.get("x-request-id");
 
   if (!xSignature || !xRequestId) {
+    // No signature at all is almost always the legacy IPN pointed at this URL:
+    // it posts `?topic=…&id=…` and signs nothing, so every one of its
+    // notifications lands here and is refused. Said plainly in the log, because
+    // MercadoPago's own test screen only shows a status code and the person
+    // reading it has no way to tell this apart from a wrong secret.
+    log.warn("unsigned notification refused — this URL only accepts signed webhooks, not IPN", {
+      topic: request.nextUrl.searchParams.get("topic") ?? undefined,
+      hasSignature: Boolean(xSignature),
+      hasRequestId: Boolean(xRequestId),
+    });
     return false;
   }
 
@@ -77,7 +87,14 @@ function verifyWebhookSignature(request: NextRequest, body: string): boolean {
   // Constant time, so the comparison cannot leak the signature one byte at a
   // time to somebody willing to send enough requests.
   if (received.length !== expected.length) return false;
-  return timingSafeEqual(received, expected);
+
+  const ok = timingSafeEqual(received, expected);
+  if (!ok) {
+    // Signed, but not with our secret: the one thing that means the secret in
+    // the environment and the one in MercadoPago have drifted apart.
+    log.warn("signed notification refused — the signing secret does not match");
+  }
+  return ok;
 }
 
 export async function POST(request: NextRequest) {
