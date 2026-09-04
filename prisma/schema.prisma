@@ -205,6 +205,7 @@ model Business {
 
   settings     BusinessSettings?
   config       BusinessConfig[]
+  mercadoPago  MercadoPagoAccount?
   members      UserBusiness[]
   staff        StaffMember[]
   categories   ServiceCategory[]
@@ -1060,4 +1061,39 @@ model JobRun {
   lastEndAt DateTime?
   lastError String?
   runs      Int       @default(0)
+}
+
+// ──────────────────────────────────────────
+// MercadoPago per business
+// ──────────────────────────────────────────
+
+/**
+ * A business's own MercadoPago account, linked through OAuth.
+ *
+ * Replaces pasting an access token into a form. Tokens live 180 days and the
+ * refresh token is rotated on every renewal, so both are stored — encrypted,
+ * with `encryptSecret` — and `expiresAt` is indexed so the renewal job can ask
+ * which ones are about to lapse without reading the table.
+ *
+ * `mpUserId` is the seller's id at MercadoPago. It is what lets an incoming
+ * webhook find the business it belongs to: the first notification for a payment
+ * arrives before we know its payment id, so there is nothing else to match on.
+ */
+model MercadoPagoAccount {
+  businessId    String    @id
+  mpUserId      String    @unique
+  accessToken   String    @db.Text
+  refreshToken  String    @db.Text
+  publicKey     String?
+  /** Null for accounts linked before OAuth, where only a pasted token exists. */
+  expiresAt     DateTime?
+  lastRefreshAt DateTime?
+  /** Why the last renewal failed, so the panel can say something useful. */
+  lastError     String?   @db.Text
+  connectedAt   DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }

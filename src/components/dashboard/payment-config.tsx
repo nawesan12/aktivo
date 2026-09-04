@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Save, CreditCard, CheckCircle, RotateCcw } from "lucide-react";
+import { Loader2, Save, CreditCard, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -42,8 +42,7 @@ export function PaymentConfig() {
         paymentMode: data.paymentMode || "DISABLED",
         depositPercentage: data.depositPercentage || 50,
         depositFixedAmount: data.depositFixedAmount || 0,
-        mpAccessToken: "",
-      });
+        });
       setCancellationPolicy(data.cancellationPolicy || "");
     }
   }, [data, reset]);
@@ -177,30 +176,6 @@ export function PaymentConfig() {
             {errors.depositFixedAmount && (
               <p className="text-xs text-destructive mt-1">{errors.depositFixedAmount.message}</p>
             )}
-          </div>
-        )}
-      </div>
-
-      {/* MercadoPago */}
-      <div className="glass rounded-xl p-6 space-y-4">
-        <h3 className="font-heading font-semibold">MercadoPago</h3>
-        <div>
-          <label htmlFor="mpAccessToken" className="text-sm font-medium mb-1.5 block">Access Token</label>
-          <input
-            id="mpAccessToken"
-            {...register("mpAccessToken")}
-            type="password"
-            placeholder={data?.hasMpToken ? "Token configurado (dejar vacio para mantener)" : "APP_USR-..."}
-            className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Obtene tu token en{" "}
-            <span className="text-primary">mercadopago.com.ar/developers</span>
-          </p>
-        </div>
-        {data?.hasMpToken && (
-          <div className="flex items-center gap-2 text-sm text-success-foreground">
-            <CheckCircle className="w-4 h-4" /> Token configurado
           </div>
         )}
       </div>

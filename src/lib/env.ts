@@ -48,6 +48,9 @@ const baseSchema = z.object({
   MP_PLATFORM_ACCESS_TOKEN: z.string().optional(),
   MP_PLAN_PROFESSIONAL_ID: z.string().optional(),
   MP_PLAN_ENTERPRISE_ID: z.string().optional(),
+  /** OAuth: lets a business link its own MercadoPago with a button. */
+  MP_CLIENT_ID: z.string().optional(),
+  MP_CLIENT_SECRET: z.string().optional(),
 
   // ── Email ───────────────────────────────────────────────────────────────
   RESEND_API_KEY: z.string().optional(),
@@ -109,6 +112,7 @@ const GROUPS: {
       "MP_PLAN_ENTERPRISE_ID",
     ],
   },
+  { name: "MercadoPago OAuth", keys: ["MP_CLIENT_ID", "MP_CLIENT_SECRET"] },
 ];
 
 /**
@@ -285,6 +289,7 @@ export function integrationStatus() {
   return {
     email: Boolean(e.RESEND_API_KEY),
     mercadopago: Boolean(e.MERCADOPAGO_ACCESS_TOKEN),
+    mercadopagoOAuth: Boolean(e.MP_CLIENT_ID && e.MP_CLIENT_SECRET),
     platformBilling: Boolean(e.MP_PLATFORM_ACCESS_TOKEN),
     googleAuth: Boolean(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET),
     redisRateLimit: Boolean(redisCredentials()),

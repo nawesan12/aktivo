@@ -140,7 +140,6 @@ export const paymentConfigSchema = z.object({
   paymentMode: z.enum(["DISABLED", "FULL", "PERCENTAGE", "FIXED"]),
   depositPercentage: z.number().min(1).max(100).optional(),
   depositFixedAmount: z.number().min(0).optional(),
-  mpAccessToken: z.string().optional(),
 });
 
 // ── Campaigns ───────────────────────────

@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
-import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
+import { getMPClient, getBusinessMPConnection } from "@/lib/mercadopago";
 import { calculatePaymentAmount } from "@/lib/pricing";
 import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
 import { calculateCouponDiscount, applyDiscount } from "@/lib/pricing";
@@ -15,7 +15,7 @@ import { formatArgentinaDate, parseDateInArgentina } from "@/lib/timezone";
 import { addMinutes, addWeeks, addMonths } from "date-fns";
 import { randomUUID } from "crypto";
 import { checkAppointmentLimit, getPlanForBusiness } from "@/lib/subscription/enforcement";
-import { PLAN_LIMITS } from "@/lib/subscription/config";
+import { PLAN_LIMITS, platformCommission } from "@/lib/subscription/config";
 import { appUrl } from "@/lib/env";
 import { runInBackground } from "@/lib/background";
 import { maybeTick } from "@/lib/jobs/tick";
@@ -168,10 +168,29 @@ export async function POST(request: Request) {
       throw new SlotTakenError();
     }
 
-    // Determine payment mode — enforce plan limits
+    // Determine payment mode — the plan has to allow charging, and the business
+    // has to have its own MercadoPago connected.
+    //
+    // That second condition is new and it matters: charging used to fall back to
+    // Jiku's own account when the business had no usable credential, so the
+    // customer paid and the money landed somewhere the business never sees. A
+    // booking with no charge is a worse product; a booking whose money went to
+    // the wrong account is a debt.
     const effectivePlan = await getPlanForBusiness(business.id);
     const planLimits = PLAN_LIMITS[effectivePlan];
-    const paymentMode = planLimits.mpPayments ? (settings?.paymentMode ?? "DISABLED") : "DISABLED";
+    const mpConnection = await getBusinessMPConnection(business.id);
+
+    const configuredMode = settings?.paymentMode ?? "DISABLED";
+    const canCharge = planLimits.mpPayments && mpConnection.status === "ok";
+    const paymentMode = canCharge ? configuredMode : "DISABLED";
+
+    if (configuredMode !== "DISABLED" && planLimits.mpPayments && !canCharge) {
+      log.warn("booking taken without charging: MercadoPago is not usable", {
+        businessId: business.id,
+        connection: mpConnection.status,
+      });
+    }
+
     const initialStatus = paymentMode === "DISABLED" ? "CONFIRMED" : "PENDING_PAYMENT";
 
     // Handle recurring appointments (Feature 5)
@@ -382,7 +401,8 @@ export async function POST(request: Request) {
 
       // Create MercadoPago preference
       try {
-        const mp = getMPClient(await getBusinessMPToken(business.id));
+        // `canCharge` above guarantees the connection is usable here.
+        const mp = getMPClient((mpConnection as { accessToken: string }).accessToken);
         const preference = await mp.preference.create({
           body: {
             items: [
@@ -391,7 +411,7 @@ export async function POST(request: Request) {
                 title: `${service.name} - ${business.name}`,
                 quantity: 1,
                 unit_price: amount,
-                currency_id: "ARS",
+                currency_id: settings?.currency ?? "ARS",
               },
             ],
             back_urls: {
@@ -401,6 +421,10 @@ export async function POST(request: Request) {
             },
             external_reference: appointment.id,
             notification_url: appUrl(`/api/webhooks/mercadopago`),
+            // Jiku's cut. The money is collected into the business's own
+            // account and MercadoPago settles this share to the platform, so
+            // nothing here moves funds by hand.
+            marketplace_fee: platformCommission(amount),
           },
         });
 

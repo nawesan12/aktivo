@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
+import { getMPClient, getBusinessMPToken, getBusinessByMPUserId } from "@/lib/mercadopago";
 import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
 import { sendEmail } from "@/lib/notifications/email";
@@ -74,7 +74,13 @@ export async function POST(request: NextRequest) {
     const body = JSON.parse(bodyText);
 
     if (body.type === "payment" && body.data?.id) {
-      return handlePaymentWebhook(String(body.data.id));
+      // `user_id` is the seller MercadoPago is notifying about. It is the only
+      // thing in the first notification that identifies the business, since the
+      // payment id is not on any of our rows yet.
+      return handlePaymentWebhook(
+        String(body.data.id),
+        body.user_id ? String(body.user_id) : null
+      );
     }
 
     if (body.type === "subscription_preapproval" && body.data?.id) {
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest) {
 
 // ── B2C: Appointment payment ──────────────────────────────
 
-async function handlePaymentWebhook(paymentId: string) {
+async function handlePaymentWebhook(paymentId: string, mpUserId: string | null) {
   // First, find the payment record to get the business context
   // We need to search by mpPaymentId (if already set) or check all pending payments
   const existingByMpId = await db.payment.findFirst({
@@ -120,15 +126,30 @@ async function handlePaymentWebhook(paymentId: string) {
     return NextResponse.json({ received: true, skipped: "already_processed" });
   }
 
-  // Get the business MP token for this payment's business
-  const businessId = existingByMpId?.appointment?.business?.id || existingByMpId?.businessId;
-  let businessMpToken: string | undefined;
+  // Which business is this, and with whose token do we ask MercadoPago about it?
+  //
+  // The row lookup only works from the second notification onwards, because the
+  // first one arrives before `mpPaymentId` has been written. Falling back to the
+  // seller id fixes exactly that gap: without it, the first notification of
+  // every payment was answered with the platform token, got a 404 because the
+  // payment belongs to somebody else's account, and was dropped — the customer
+  // paid and the booking stayed unconfirmed.
+  const businessId =
+    existingByMpId?.appointment?.business?.id ||
+    existingByMpId?.businessId ||
+    (mpUserId ? await getBusinessByMPUserId(mpUserId) : null);
 
-  if (businessId) {
-    businessMpToken = await getBusinessMPToken(businessId);
+  const businessMpToken = businessId ? await getBusinessMPToken(businessId) : null;
+
+  if (!businessMpToken) {
+    log.warn("no usable MercadoPago credential for this notification", {
+      paymentId,
+      businessId,
+      mpUserId,
+    });
+    return NextResponse.json({ received: true, skipped: "no_credential" });
   }
 
-  // Use the business-specific token to query MP
   const mpClient = getMPClient(businessMpToken);
 
   // A payment MercadoPago cannot hand us is not a transient failure, and

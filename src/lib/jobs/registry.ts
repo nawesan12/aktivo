@@ -4,6 +4,7 @@ import { autoMarkNoShows } from "@/lib/no-show";
 import { redeliverFailedNotifications } from "@/lib/notifications/redelivery";
 import { sendPendingReviewRequests } from "@/lib/reviews/requests";
 import { runScheduledCampaigns } from "@/lib/campaigns/run";
+import { renewMercadoPagoLinks } from "@/lib/mercadopago-renewal";
 
 export interface Job {
   /** Matches the primary key of the `JobRun` row. */
@@ -58,6 +59,14 @@ export const JOBS: Job[] = [
     intervalSeconds: 1800,
     opportunistic: true,
     run: sendPendingReviewRequests,
+  },
+  {
+    // Once an hour is plenty for something with a month of runway, and it keeps
+    // a failing link from being retried against MercadoPago every few minutes.
+    name: "mercadopago-renewal",
+    intervalSeconds: 3600,
+    opportunistic: true,
+    run: renewMercadoPagoLinks,
   },
   {
     // Daily cron only. A birthday greeting has to go out on the day; if it

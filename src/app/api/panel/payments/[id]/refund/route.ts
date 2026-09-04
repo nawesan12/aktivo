@@ -43,8 +43,24 @@ export async function POST(
     }
 
     // Call MercadoPago refund API
+    //
+    // The refund has to go through the same account that took the money. If the
+    // connection is gone, marking the payment REFUNDED here would tell the
+    // owner the customer was paid back when nobody was paid back.
     if (payment.mpPaymentId) {
-      const mp = getMPClient(await getBusinessMPToken(session.businessId));
+      const token = await getBusinessMPToken(session.businessId);
+
+      if (!token) {
+        return NextResponse.json(
+          {
+            error:
+              "No se puede devolver: la cuenta de Mercado Pago del negocio no está conectada. Reconectala e intentá de nuevo.",
+          },
+          { status: 409 }
+        );
+      }
+
+      const mp = getMPClient(token);
       await mp.refund.total({ payment_id: Number(payment.mpPaymentId) });
     }
 

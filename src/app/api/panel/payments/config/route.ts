@@ -3,9 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { paymentConfigSchema } from "@/lib/validations";
-import { getMPClient } from "@/lib/mercadopago";
 import { handleApiError } from "@/lib/api-errors";
-import { encryptSecret } from "@/lib/crypto";
 import { requirePlan } from "@/lib/subscription/enforcement";
 
 export async function GET() {
@@ -24,25 +22,15 @@ export async function GET() {
       },
     });
 
-    // Get MP token from BusinessConfig
-    const mpConfig = await db.businessConfig.findUnique({
-      where: {
-        businessId_key: {
-          businessId: session.businessId,
-          key: "mp_access_token",
-        },
-      },
-    });
-
     return NextResponse.json({
       paymentMode: settings?.paymentMode || "DISABLED",
       depositPercentage: settings?.depositPercentage,
       depositFixedAmount: settings?.depositFixedAmount,
+      requireDeposit: settings?.requireDeposit ?? false,
       cancellationPolicy: settings?.cancellationPolicy,
-      hasMpToken: !!mpConfig?.value,
     });
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, "panel:payments:config:GET");
   }
 }
 
@@ -58,19 +46,15 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
-    const { paymentMode, depositPercentage, depositFixedAmount, mpAccessToken } = parsed.data;
+    const { paymentMode, depositPercentage, depositFixedAmount } = parsed.data;
 
-    // Test MP token if provided
-    if (mpAccessToken) {
-      try {
-        const client = getMPClient(mpAccessToken);
-        // Verify token by making a test API call
-        await client.payment.search({ options: { limit: 1 } });
-      } catch {
-        return NextResponse.json({ error: "Token de MercadoPago inválido" }, { status: 400 });
-      }
-    }
-
+    // The MercadoPago credential is deliberately not handled here any more.
+    //
+    // It used to arrive with every save — the form sent an empty string by
+    // default — and an empty string was read as "delete the token". Changing
+    // the payment mode silently disconnected the account. Linking now lives in
+    // /api/panel/payments/mercadopago, where connecting and disconnecting are
+    // separate, explicit actions.
     await db.businessSettings.update({
       where: { businessId: session.businessId },
       data: {
@@ -81,37 +65,8 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Store MP token
-    if (mpAccessToken !== undefined) {
-      if (mpAccessToken) {
-        await db.businessConfig.upsert({
-          where: {
-            businessId_key: {
-              businessId: session.businessId,
-              key: "mp_access_token",
-            },
-          },
-          // Encrypted at rest: a database dump must not hand over every
-          // tenant's payment credentials.
-          update: { value: encryptSecret(mpAccessToken) },
-          create: {
-            businessId: session.businessId,
-            key: "mp_access_token",
-            value: encryptSecret(mpAccessToken),
-          },
-        });
-      } else {
-        await db.businessConfig.deleteMany({
-          where: {
-            businessId: session.businessId,
-            key: "mp_access_token",
-          },
-        });
-      }
-    }
-
-    // Store cancellation policy
-    if (body.cancellationPolicy !== undefined) {
+    // Free text, so it stays out of the schema and is written on its own.
+    if (typeof body.cancellationPolicy === "string") {
       await db.businessSettings.update({
         where: { businessId: session.businessId },
         data: { cancellationPolicy: body.cancellationPolicy || null },
@@ -129,6 +84,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, "panel:payments:config:PUT");
   }
 }
