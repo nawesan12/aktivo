@@ -1,0 +1,45 @@
+name: Tick
+
+# El plan gratis de Vercel sólo permite un cron por día, así que el trabajo de
+# fondo se dispara con el tráfico real de la aplicación (ver src/lib/jobs/tick.ts).
+# Eso alcanza para casi todo, salvo el recordatorio de una hora antes: su ventana
+# es de 60 minutos y los primeros turnos del día caen justo cuando nadie está
+# navegando ni el dueño abrió el panel.
+#
+# Esto es ese piso. GitHub Actions es "best effort" y se atrasa unos minutos en
+# horas pico; si algún día hace falta puntualidad al minuto, cron-job.org hace lo
+# mismo, también gratis, pegándole a la misma URL con el mismo header.
+#
+# El workflow se auto-desactiva a los 60 días sin actividad en el repositorio.
+# Si pasa, se vuelve a habilitar desde la pestaña Actions.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar los trabajos pendientes
+        run: |
+          code=$(curl -sS -o /tmp/tick.json -w '%{http_code}' \
+            --max-time 60 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://jikuapp.com/api/tick)
+
+          cat /tmp/tick.json
+          echo
+
+          # Un 401 significa que el secreto quedó desincronizado con Vercel, y es
+          # justo el caso que hay que ver: si no, esto falla en silencio y los
+          # recordatorios dejan de salir sin que nadie se entere.
+          if [ "$code" != "200" ]; then
+            echo "::error::/api/tick respondió $code"
+            exit 1
+          fi

@@ -21,7 +21,10 @@ export function SubscriptionBanner() {
   const { data } = useSWR<Access>("/api/panel/access");
 
   if (!data) return null;
-  if (!data.blocked && (data.hasSubscription || data.trialDaysLeft > 3)) return null;
+  // Visible for the whole trial, not just the last stretch of it. Seven days is
+  // short enough that hiding the countdown just means finding out by surprise.
+  if (!data.blocked && data.hasSubscription) return null;
+  if (!data.blocked && data.trialDaysLeft === 0) return null;
 
   if (data.blocked) {
     return (
