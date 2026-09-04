@@ -13,17 +13,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
   providers: [
-    Google({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
-          access_type: "offline",
-          prompt: "consent",
-        },
-      },
-    }),
+    // Registrado sólo si hay credenciales. Sin ellas el proveedor igual existía,
+    // con clientId undefined, así que /api/auth/signin/google mandaba al usuario
+    // a Google para que Google le dijera `invalid_client`. El README decía que
+    // sin estas variables el login con Google se ocultaba; no era cierto.
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? [
+          Google({
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+            authorization: {
+              params: {
+                scope:
+                  "openid email profile https://www.googleapis.com/auth/calendar.events",
+                access_type: "offline",
+                prompt: "consent",
+              },
+            },
+          }),
+        ]
+      : []),
     Credentials({
       name: "credentials",
       credentials: {

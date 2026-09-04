@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { toast } from "sonner";
@@ -14,7 +12,6 @@ import { registerUser } from "./actions";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
     register,
@@ -34,11 +31,6 @@ export default function RegisterPage() {
 
     toast.success("Cuenta creada exitosamente");
     router.push("/panel/bienvenida");
-  }
-
-  function handleGoogle() {
-    setIsGoogleLoading(true);
-    signIn("google", { callbackUrl: "/panel" });
   }
 
   return (
@@ -127,22 +119,6 @@ export default function RegisterPage() {
               Crear cuenta
             </button>
           </form>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">o continuá con</span>
-            </div>
-          </div>
-          <button
-            onClick={handleGoogle}
-            disabled={isGoogleLoading}
-            className="w-full h-10 rounded-lg border border-border bg-muted/30 text-sm font-medium hover:bg-muted/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isGoogleLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Google
-          </button>
           <p className="text-center text-sm text-muted-foreground">
             Ya tenés cuenta?{" "}
             <Link href="/iniciar-sesion" className="text-primary hover:underline">
