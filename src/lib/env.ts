@@ -323,7 +323,21 @@ export function integrationStatus() {
  * `undefined/review/<token>` and mailed out like that.
  */
 export function appUrl(path = ""): string {
-  const base = loadEnv().NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
+  /*
+    The fallback is not belt and braces: during `next build` this module
+    deliberately skips validation and hands back `process.env` as-is, so a build
+    running without NEXT_PUBLIC_APP_URL — a preview environment where the
+    variable is scoped to production only — used to reach `.replace` on
+    undefined. That crashes collecting page data for `/_not-found`, which is the
+    first route Next evaluates, so the whole build fails with a TypeError three
+    frames deep and nothing naming the variable.
+
+    Same default `next.config.ts` uses for the www redirect.
+  */
+  // Truthiness, not `??`: an unset variable arrives as undefined on Vercel and
+  // as "" through a shell that exported it empty, and both mean the same thing.
+  const configured = loadEnv().NEXT_PUBLIC_APP_URL || "https://jikuapp.com";
+  const base = configured.replace(/\/+$/, "");
   if (!path) return base;
   return `${base}/${path.replace(/^\/+/, "")}`;
 }

@@ -104,3 +104,26 @@ describe("integrationStatus", () => {
     expect(status.cron).toBe(false);
   });
 });
+
+describe("appUrl durante el build", () => {
+  it("no explota cuando falta NEXT_PUBLIC_APP_URL", async () => {
+    /*
+      En la fase de build `loadEnv()` no valida a propósito: devuelve
+      `process.env` tal cual y avisa. Con la variable ausente, `appUrl` llamaba
+      `.replace` sobre undefined y tiraba un TypeError mientras Next juntaba los
+      datos de `/_not-found` — la primera ruta que evalúa. El build entero se
+      caía con un error que no nombraba la variable en ningún lado, y sólo en
+      los entornos donde la variable está limitada a producción.
+    */
+    vi.stubEnv("NEXT_PHASE", "phase-production-build");
+    const { appUrl } = await loadWith({ NEXT_PUBLIC_APP_URL: undefined });
+
+    expect(() => appUrl("/turnos")).not.toThrow();
+    expect(appUrl("/turnos")).toMatch(/^https?:\/\/.+\/turnos$/);
+  });
+
+  it("usa la variable cuando está, sin barra de más", async () => {
+    const { appUrl } = await loadWith({ NEXT_PUBLIC_APP_URL: "https://jikuapp.com/" });
+    expect(appUrl("/el-corte")).toBe("https://jikuapp.com/el-corte");
+  });
+});
