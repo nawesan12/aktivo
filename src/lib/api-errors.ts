@@ -49,6 +49,22 @@ export class ConflictError extends AppError {
 }
 
 /**
+ * Someone else got the slot first.
+ *
+ * There are two ways to find that out — the availability check reads it as
+ * taken, or the database rejects the insert — and they used to answer
+ * differently: one a plain 409 with its own wording, the other a 409 with a
+ * `SLOT_TAKEN` code. Same situation, two shapes, and a client that could only
+ * recognise one of them.
+ */
+export class SlotTakenError extends AppError {
+  constructor() {
+    super("Ese horario acaba de ser reservado. Elegí otro, por favor.", 409);
+    this.name = "SlotTakenError";
+  }
+}
+
+/**
  * The trial ran out and nobody subscribed. 402 rather than 403: it is not a
  * permissions problem, and the interface has to tell them apart — one sends the
  * user to the payment screen, the other means they should not be here at all.
@@ -119,9 +135,10 @@ export function handleApiError(error: unknown, scope?: string): NextResponse {
     );
   }
 
-  // Two clients raced for the same slot and the database rejected the loser
-  // (exclusion constraint "Appointment_no_overlap_per_staff").
-  if (isSlotTakenError(error)) {
+  // Two clients raced for the same slot: either the availability check saw it
+  // gone, or the database rejected the loser (exclusion constraint
+  // "Appointment_no_overlap_per_staff").
+  if (error instanceof SlotTakenError || isSlotTakenError(error)) {
     return NextResponse.json(
       {
         error: "Ese horario acaba de ser reservado. Elegí otro, por favor.",

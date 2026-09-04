@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { resolveBusinessBySlug } from "@/lib/business-resolver";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
+import { safeImageUrl } from "@/lib/images";
 
 export async function GET(
   _request: Request,
@@ -55,7 +56,7 @@ export async function GET(
         description: s.description,
         duration: s.duration,
         price: Number(s.price),
-        image: s.image,
+        image: safeImageUrl(s.image),
         staffIds: s.staff.map((ss) => ss.staffId),
       })),
     }));
@@ -70,7 +71,7 @@ export async function GET(
           description: s.description,
           duration: s.duration,
           price: Number(s.price),
-          image: s.image,
+          image: safeImageUrl(s.image),
           staffIds: s.staff.map((ss) => ss.staffId),
         })),
       });

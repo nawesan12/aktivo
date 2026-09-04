@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { resolveBusinessBySlug } from "@/lib/business-resolver";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
+import { safeImageUrl } from "@/lib/images";
 
 export async function GET(
   request: Request,
@@ -46,7 +47,7 @@ export async function GET(
       name: s.name,
       email: s.email,
       phone: s.phone,
-      image: s.image,
+      image: safeImageUrl(s.image),
       bio: s.bio,
       specialty: s.specialty,
       workingHours: s.workingHours.map((wh) => ({

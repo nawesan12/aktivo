@@ -45,6 +45,7 @@ test("un visitante reserva desde el widget", async ({ page }) => {
 
   await page.getByPlaceholder(/nombre/i).or(page.locator("input").nth(0)).first().fill(guest.name);
   await page.getByPlaceholder(/tel|whatsapp/i).or(page.locator('input[type="tel"]')).first().fill(guest.phone);
+  await page.locator('input[type="email"]').first().fill(guest.email);
 
   await page.getByRole("button", { name: /confirmar turno/i }).click();
 

@@ -8,7 +8,7 @@ import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
 import { calculatePaymentAmount } from "@/lib/pricing";
 import { appointmentSchema, guestInfoSchema } from "@/lib/validations";
 import { calculateCouponDiscount, applyDiscount } from "@/lib/pricing";
-import { handleApiError } from "@/lib/api-errors";
+import { handleApiError, SlotTakenError } from "@/lib/api-errors";
 import { getAvailableSlots } from "@/lib/availability";
 import { releaseExpiredHolds } from "@/lib/bookings/expiry";
 import { formatArgentinaDate, parseDateInArgentina } from "@/lib/timezone";
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         : slots.find((s) => s.display === requestedTime);
 
     if (!slot || !slot.available) {
-      return NextResponse.json({ error: "El horario seleccionado ya no esta disponible" }, { status: 409 });
+      throw new SlotTakenError();
     }
 
     // Determine payment mode — enforce plan limits

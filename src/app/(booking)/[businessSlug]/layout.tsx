@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { getBusinessProfile } from "@/lib/booking/business-page";
+import { safeImageUrl } from "@/lib/images";
 import { notFound } from "next/navigation";
 import { hexToHsl } from "@/lib/utils";
 import Image from "next/image";
@@ -43,9 +44,9 @@ export default async function BookingLayout({
             href={`/${business.slug}`}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            {business.logo ? (
+            {safeImageUrl(business.logo) ? (
               <Image
-                src={business.logo}
+                src={safeImageUrl(business.logo)!}
                 alt={business.name}
                 width={28}
                 height={28}

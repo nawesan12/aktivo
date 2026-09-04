@@ -120,7 +120,7 @@ test("rechaza una reserva con un teléfono imposible", async ({ request }) => {
       serviceId: fixture.service.id,
       staffId: fixture.staff.id,
       dateTime: slot,
-      guest: { name: "Prueba E2E", phone: "0000000000", email: "" },
+      guest: { name: "Prueba E2E", phone: "0000000000", email: "e2e@jikuapp.test" },
     },
   });
 

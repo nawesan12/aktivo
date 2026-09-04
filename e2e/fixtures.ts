@@ -145,6 +145,8 @@ export function testGuest(suffix: string) {
   return {
     name: "Prueba E2E",
     phone: `${TEST_PHONE_PREFIX}${suffix}`,
-    email: "",
+    // Required since email became the only notification channel: a booking
+    // without one reaches nobody.
+    email: `e2e-${suffix}@jikuapp.test`,
   };
 }

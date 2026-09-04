@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { safeImageUrl } from "@/lib/images";
 import {
   getBusinessProfile,
   getUncategorizedServices,
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!business) return { title: "Negocio no encontrado" };
 
-  const ogImage = business.coverImage || business.logo || undefined;
+  const ogImage = safeImageUrl(business.coverImage) ?? safeImageUrl(business.logo) ?? undefined;
 
   return {
     title: `${business.name} - Reserva tu turno`,
@@ -79,7 +80,7 @@ export default async function BusinessProfilePage({ params }: Props) {
         description: s.description,
         duration: s.duration,
         price: Number(s.price),
-        image: s.image,
+        image: safeImageUrl(s.image),
       })),
     }));
 
@@ -95,7 +96,7 @@ export default async function BusinessProfilePage({ params }: Props) {
         description: s.description,
         duration: s.duration,
         price: Number(s.price),
-        image: s.image,
+        image: safeImageUrl(s.image),
       })),
     });
   }
@@ -103,7 +104,7 @@ export default async function BusinessProfilePage({ params }: Props) {
   const staffData = business.staff.map((s) => ({
     id: s.id,
     name: s.name,
-    image: s.image,
+    image: safeImageUrl(s.image),
     bio: s.bio,
     specialty: s.specialty,
     workingHours: s.workingHours.map((wh) => ({
@@ -170,8 +171,8 @@ export default async function BusinessProfilePage({ params }: Props) {
         address: business.address,
         city: business.city,
         province: business.province,
-        logoUrl: business.logo,
-        coverUrl: business.coverImage,
+        logoUrl: safeImageUrl(business.logo),
+        coverUrl: safeImageUrl(business.coverImage),
         primaryColor: business.primaryColor,
         accentColor: business.accentColor,
       }}

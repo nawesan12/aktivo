@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
+import { safeImageUrl } from "@/lib/images";
 
 /**
  * Public business directory search.
@@ -119,7 +120,7 @@ export async function searchBusinesses({
       name: biz.name,
       slug: biz.slug,
       description: biz.description,
-      logo: biz.logo,
+      logo: safeImageUrl(biz.logo),
       city: biz.city,
       province: biz.province,
       averageRating,

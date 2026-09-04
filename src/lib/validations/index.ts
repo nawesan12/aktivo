@@ -100,7 +100,10 @@ export const appointmentSchema = z.object({
 export const guestInfoSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres"),
   phone: argentinePhone,
-  email: z.string().min(1, "Necesitamos tu email").email("Email inválido"),
+  email: z
+    .string("Necesitamos tu email")
+    .min(1, "Necesitamos tu email")
+    .email("Email inválido"),
 });
 
 // ── Schedule ─────────────────────────────
