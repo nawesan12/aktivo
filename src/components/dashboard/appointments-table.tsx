@@ -78,6 +78,16 @@ export function AppointmentsTable({
   if (dateFrom) params.set("dateFrom", dateFrom);
   if (dateTo) params.set("dateTo", dateTo);
 
+  const filtering = Boolean(debouncedSearch || statusFilter || dateFrom || dateTo);
+
+  function clearFilters() {
+    setSearch("");
+    setStatusFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
+  }
+
   const swrKey = `/api/panel/appointments?${params.toString()}`;
 
   // The unfiltered first page arrives with the document; any other combination
@@ -232,7 +242,29 @@ export function AppointmentsTable({
                 <tr>
                   <td colSpan={6} className="p-12 text-center">
                     <CalendarIcon className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-                    <p className="text-muted-foreground text-sm">No hay turnos</p>
+                    {/* "No hay turnos" was the answer to two different
+                        questions: an empty agenda, and a filter that matched
+                        nothing. The second one looked like the business had
+                        lost its bookings. */}
+                    {filtering ? (
+                      <>
+                        <p className="text-sm">Ningún turno coincide con los filtros</p>
+                        <button
+                          onClick={clearFilters}
+                          className="mt-3 text-sm text-primary hover:underline"
+                        >
+                          Limpiar filtros
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm">Todavía no tenés turnos</p>
+                        <p className="text-muted-foreground text-xs mt-1">
+                          Van a aparecer acá apenas alguien reserve, o podés cargar
+                          uno a mano desde el botón de arriba.
+                        </p>
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : (

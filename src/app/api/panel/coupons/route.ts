@@ -4,8 +4,40 @@ import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/sessio
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
 import type { CouponType } from "@/generated/prisma/client";
+import { z } from "zod";
 
-const VALID_COUPON_TYPES: CouponType[] = ["PERCENTAGE", "FIXED"];
+/**
+ * `calculateCouponDiscount` already refuses to discount more than the price, so
+ * a 150% coupon cannot take money out of the till. What it cannot do is tell
+ * the owner they typed something that does not mean what they think — or stop
+ * `new Date("mañana")` from reaching Prisma and coming back as a 500.
+ */
+const couponSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .min(3, "Mínimo 3 caracteres")
+      .max(24, "Máximo 24 caracteres")
+      .regex(/^[A-Za-z0-9-]+$/, "Solo letras, números y guiones")
+      .transform((value) => value.toUpperCase()),
+    type: z.enum(["PERCENTAGE", "FIXED"], {
+      message: "Tipo de cupón inválido. Debe ser PERCENTAGE o FIXED",
+    }),
+    value: z.number().positive("El valor tiene que ser mayor a cero"),
+    minAmount: z.number().nonnegative().nullable().optional(),
+    maxUses: z.number().int().positive().nullable().optional(),
+    validFrom: z.coerce.date().optional(),
+    validUntil: z.coerce.date().nullable().optional(),
+  })
+  .refine((data) => data.type !== "PERCENTAGE" || data.value <= 100, {
+    message: "Un porcentaje va de 1 a 100",
+    path: ["value"],
+  })
+  .refine(
+    (data) => !data.validUntil || !data.validFrom || data.validUntil > data.validFrom,
+    { message: "La fecha de fin tiene que ser posterior a la de inicio", path: ["validUntil"] }
+  );
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,30 +97,14 @@ export async function POST(request: NextRequest) {
     const session = await getSessionBusiness();
     await requireBusinessPermission(session, "coupons:manage");
 
-    const body = await request.json();
-    const { code, type, value, minAmount, maxUses, validFrom, validUntil } = body;
-
-    if (!code || !type || value === undefined || value === null) {
-      return NextResponse.json(
-        { error: "Código, tipo y valor son requeridos" },
-        { status: 400 }
-      );
-    }
-
-    if (!VALID_COUPON_TYPES.includes(type as CouponType)) {
-      return NextResponse.json(
-        { error: "Tipo de cupón inválido. Debe ser PERCENTAGE o FIXED" },
-        { status: 400 }
-      );
-    }
-
-    const upperCode = code.toUpperCase();
+    const { code, type, value, minAmount, maxUses, validFrom, validUntil } =
+      couponSchema.parse(await request.json());
 
     const existing = await db.coupon.findUnique({
       where: {
         businessId_code: {
           businessId: session.businessId,
-          code: upperCode,
+          code,
         },
       },
     });
@@ -103,13 +119,13 @@ export async function POST(request: NextRequest) {
     const coupon = await db.coupon.create({
       data: {
         businessId: session.businessId,
-        code: upperCode,
+        code,
         type: type as CouponType,
-        value: Number(value),
-        minAmount: minAmount != null ? Number(minAmount) : null,
-        maxUses: maxUses != null ? Number(maxUses) : null,
-        validFrom: validFrom ? new Date(validFrom) : new Date(),
-        validUntil: validUntil ? new Date(validUntil) : null,
+        value,
+        minAmount: minAmount ?? null,
+        maxUses: maxUses ?? null,
+        validFrom: validFrom ?? new Date(),
+        validUntil: validUntil ?? null,
       },
       include: {
         _count: { select: { redemptions: true } },
@@ -122,7 +138,7 @@ export async function POST(request: NextRequest) {
       action: "coupon:create",
       entity: "Coupon",
       entityId: coupon.id,
-      details: { code: upperCode, type, value },
+      details: { code, type, value },
     });
 
     return NextResponse.json(coupon, { status: 201 });

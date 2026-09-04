@@ -205,12 +205,20 @@ export function PaymentConfig() {
       </div>
     </form>
 
-    {/* Payment history */}
-    {payments.length > 0 && (
-      <div className="glass rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border">
-          <h3 className="font-heading font-semibold text-sm">Historial de pagos</h3>
-        </div>
+    {/* Payment history. The whole section used to disappear when there was
+        nothing in it, so a business that had just turned payments on saw no
+        sign that a history existed at all — and no way to tell "no cobré nada
+        todavía" from "esto no anda". */}
+    <div className="glass rounded-xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-border">
+        <h3 className="font-heading font-semibold text-sm">Historial de pagos</h3>
+      </div>
+      {payments.length === 0 ? (
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          Todavía no recibiste ningún pago. Las señas que cobres al reservar van
+          a aparecer acá.
+        </p>
+      ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -268,8 +276,8 @@ export function PaymentConfig() {
             </tbody>
           </table>
         </div>
-      </div>
-    )}
+      )}
+    </div>
     </div>
   );
 }

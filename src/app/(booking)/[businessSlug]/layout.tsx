@@ -4,6 +4,7 @@ import { getBusinessProfile } from "@/lib/booking/business-page";
 import { safeImageUrl } from "@/lib/images";
 import { notFound } from "next/navigation";
 import { contrastColor, isHexColor } from "@/lib/utils";
+import { PLAN_LIMITS } from "@/lib/subscription/config";
 import Image from "next/image";
 
 export default async function BookingLayout({
@@ -74,6 +75,23 @@ export default async function BookingLayout({
         </div>
       </header>
       <main id="contenido" className="pt-14">{children}</main>
+
+      {/* "Marca blanca" is sold as part of the top plan and until now removed
+          nothing, because there was no Jiku anywhere on the page to remove.
+          This is the thing it takes away: a single line of credit at the foot
+          of the page, gone for whoever pays for the plan that promises it. */}
+      {!PLAN_LIMITS[business.plan].whiteLabel && (
+        <footer className="py-8 text-center">
+          <a
+            href="https://jikuapp.com"
+            target="_blank"
+            rel="noopener"
+            className="text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+          >
+            Turnos con Jiku
+          </a>
+        </footer>
+      )}
     </div>
   );
 }
