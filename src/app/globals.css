@@ -312,37 +312,34 @@
 
 @layer utilities {
   /*
-    Room for the notch and the home indicator.
+    Room for the notch and the home indicator, *added* to whatever padding the
+    element already wanted.
 
-    `viewport-fit=cover` lets the page under both; these give it back. Applied
-    to the elements that actually touch an edge rather than to `body`, so a
-    centred layout does not gain stray margins on a phone without a notch —
-    `env()` is 0 there and every one of these collapses to nothing.
+    These used to be plain `padding-top: env(...)`, which declares the same
+    property as Tailwind's `px-*` / `py-*` on the same element at the same
+    specificity — so whichever landed later in the stylesheet won, and it was
+    always these. Every element that paired them lost its base padding: the
+    panel's topbar rendered `padding: 0 0 13px`, with its buttons flush against
+    both edges of the phone and nothing above them, and the bottom bar lost the
+    gap under its labels.
+
+    The base is a variable the call site sets and the safe area is added to it,
+    so the two can never overwrite each other. On a phone with no notch every
+    `env()` is 0 and the padding is exactly the base.
   */
   .safe-top {
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(var(--safe-top, 0px) + env(safe-area-inset-top, 0px));
   }
 
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: calc(var(--safe-bottom, 0px) + env(safe-area-inset-bottom, 0px));
   }
 
   .safe-x {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left: calc(var(--safe-x, 0px) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--safe-x, 0px) + env(safe-area-inset-right, 0px));
   }
 
-  /*
-    Was a frosted pane: a translucent white at 5% over a dark page, with a 24px
-    backdrop blur. It is the surface roughly a hundred call sites across the
-    panel and the account use, and on the light page it renders as almost
-    nothing — a barely-there rectangle on an almost-white ground.
-
-    The redesign's surface is an opaque white card with a hairline and a soft
-    shadow, so that is what this is now. The name stays because the call sites
-    do; `.glass-blur` is still here for the two places where something really
-    does sit over moving content.
-  */
   .glass {
     background: var(--card);
     border: 1px solid var(--border);

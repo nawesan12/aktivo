@@ -54,7 +54,6 @@ interface ReportsData {
 export function ReportsDashboard() {
   const [range, setRange] = useState("90d");
   const { data, isLoading } = useSWR<ReportsData>(`/api/panel/reports?range=${range}`);
-  const { data: settingsData } = useSWR("/api/panel/settings");
 
   const byStaff = useMemo(
     () => [...(data?.byStaff ?? [])].sort((a, b) => b.revenue - a.revenue),
@@ -65,12 +64,14 @@ export function ReportsDashboard() {
     [data]
   );
 
+  /* The name is fetched when somebody exports, not on every visit. */
   async function handleExportPdf() {
     const { exportReportsPdf } = await import("@/lib/pdf/export-reports");
+    const access = await fetch("/api/panel/access").then((r) => r.json());
     await exportReportsPdf(
       { summary: data!.summary, byStaff, byService },
       range,
-      settingsData?.business?.name || "Mi Negocio"
+      access?.business?.name || "Mi Negocio"
     );
   }
 

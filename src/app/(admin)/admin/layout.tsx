@@ -61,7 +61,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        <header className="safe-top safe-x flex flex-col justify-center border-b border-border bg-card px-4 lg:px-6">
+        <header className="safe-top safe-x flex flex-col justify-center border-b border-border bg-card [--safe-x:16px] lg:[--safe-x:24px]">
           <div className="flex h-14 items-center justify-between">
           <div className="lg:hidden">
             <AdminMobileHeader />
@@ -75,7 +75,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </div>
           </div>
         </header>
-        <main id="contenido" className="bg-dots safe-bottom flex-1 px-4 pb-8 pt-[26px] lg:px-7">{children}</main>
+        <main id="contenido" className="bg-dots safe-bottom flex-1 px-4 pt-[26px] [--safe-bottom:32px] lg:px-7">{children}</main>
       </div>
     </div>
   );

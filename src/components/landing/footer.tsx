@@ -38,7 +38,7 @@ const COLUMNS = [
 
 export function Footer() {
   return (
-    <footer className="safe-bottom border-t border-border-subtle bg-card px-[22px] pb-7 pt-14 sm:px-10 lg:px-16 lg:pt-[52px]">
+    <footer className="safe-bottom border-t border-border-subtle bg-card px-[22px] pt-14 [--safe-bottom:28px] sm:px-10 lg:px-16 lg:pt-[52px]">
       <div className="mb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-11">
         <div>
           <JikuLogo size="md" />

@@ -59,7 +59,7 @@ export default async function BookingLayout({
           This is the thing it takes away: a single line of credit at the foot
           of the page, gone for whoever pays for the plan that promises it. */}
       {!PLAN_LIMITS[business.plan].whiteLabel && (
-        <footer className="py-8 text-center safe-bottom">
+        <footer className="safe-bottom pt-8 text-center [--safe-bottom:32px]">
           <a
             href="https://jikuapp.com"
             target="_blank"

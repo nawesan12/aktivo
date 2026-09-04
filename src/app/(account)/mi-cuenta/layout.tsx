@@ -58,7 +58,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
         </div>
         <AccountTabs />
       </header>
-      <main id="contenido" className="max-w-4xl mx-auto px-4 py-8 safe-bottom">
+      <main id="contenido" className="safe-bottom mx-auto max-w-4xl px-4 pt-8 [--safe-bottom:32px]">
         {children}
       </main>
     </div>

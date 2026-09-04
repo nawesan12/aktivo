@@ -23,16 +23,26 @@ interface BusinessSummary {
  * there is somewhere else to go.
  */
 export function LocationSwitcher() {
-  const { data: settings } = useSWR<{ business: BusinessSummary }>("/api/panel/settings");
-  const { data: groupData } = useSWR<{ group?: { name: string; businesses: BusinessSummary[] } }>(
-    "/api/panel/group"
-  );
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
-  const business = settings?.business;
+  /*
+    The name comes from the chrome's one request, not from `/api/panel/settings`
+    — which reads the whole business row plus its settings so this could print
+    two words. The list of branches is only asked for when the switcher is
+    opened, and only by an account that has a group: most shops have one
+    location and were paying for that round trip on every page.
+  */
+  const { data: access } = useSWR<{ business: BusinessSummary | null; hasGroup: boolean }>(
+    "/api/panel/access"
+  );
+  const { data: groupData } = useSWR<{ group?: { name: string; businesses: BusinessSummary[] } }>(
+    open && access?.hasGroup ? "/api/panel/group" : null
+  );
+
+  const business = access?.business ?? null;
   const locations = groupData?.group?.businesses ?? [];
-  const canSwitch = locations.length > 1;
+  const canSwitch = Boolean(access?.hasGroup);
 
   async function switchBusiness(businessId: string) {
     setSwitching(true);

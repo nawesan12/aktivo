@@ -126,7 +126,6 @@ export function ClientsList() {
   const { data: clientDetail } = useSWR(
     selectedClientId ? `/api/panel/clients/${selectedClientId}` : null
   );
-  const { data: settingsData } = useSWR("/api/panel/settings");
 
   const clients: Client[] = useMemo(() => data?.data ?? [], [data]);
   const pagination = data?.pagination ?? { page: 1, totalPages: 1, total: 0 };
@@ -144,15 +143,26 @@ export function ClientsList() {
     SEGMENTS.find((entry) => entry.id === segment)?.match ?? (() => true)
   );
 
+  /*
+    The shop's name is asked for when somebody exports, not on every visit. It
+    used to come from a `useSWR("/api/panel/settings")` at the top of this
+    component — the whole business row and its settings, fetched on every load
+    of this screen, to title a PDF that most people never generate.
+  */
+  async function businessName() {
+    const access = await fetch("/api/panel/access").then((r) => r.json());
+    return access?.business?.name || "Mi Negocio";
+  }
+
   async function handleExportClientsPdf() {
     const { exportClientsPdf } = await import("@/lib/pdf/export-clients");
-    await exportClientsPdf(clients, settingsData?.business?.name || "Mi Negocio");
+    await exportClientsPdf(clients, await businessName());
   }
 
   async function handleExportProfilePdf() {
     if (!detail) return;
     const { exportClientProfilePdf } = await import("@/lib/pdf/export-client-profile");
-    await exportClientProfilePdf(detail, settingsData?.business?.name || "Mi Negocio");
+    await exportClientProfilePdf(detail, await businessName());
   }
 
   if (isLoading) return <TableSkeleton rows={8} />;

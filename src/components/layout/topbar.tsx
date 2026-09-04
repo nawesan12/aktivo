@@ -18,7 +18,7 @@ export function Topbar() {
   const [newAppointment, setNewAppointment] = useState(false);
 
   return (
-    <header className="safe-top safe-x flex items-center gap-3.5 border-b border-border bg-card px-4 py-[13px] lg:px-7">
+    <header className="safe-top safe-x flex items-center gap-3.5 border-b border-border bg-card pb-[18px] [--safe-top:18px] [--safe-x:16px] lg:pb-[13px] lg:[--safe-top:13px] lg:[--safe-x:28px]">
       {/* Only on a phone: on a desktop the sidebar already lists everything. */}
       <PanelMenu />
       <CommandSearch />

@@ -654,7 +654,7 @@ function BookingSummary({
       </aside>
 
       {/* Phone: a fixed bar with the money and the button. */}
-      <div className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-[18px] pb-4 pt-3 backdrop-blur-xl lg:hidden">
+      <div className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-[18px] pt-3 backdrop-blur-xl [--safe-bottom:16px] lg:hidden">
         {isGuest && ready && (
           <div className="mb-2.5">
             <GuestFields compact />

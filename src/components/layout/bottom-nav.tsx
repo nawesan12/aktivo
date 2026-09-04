@@ -21,7 +21,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 flex items-end justify-around border-t border-border bg-background/95 px-2 pb-[13px] pt-[9px] backdrop-blur-xl lg:hidden"
+      className="safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 flex items-end justify-around border-t border-border bg-background/95 pt-[9px] backdrop-blur-xl [--safe-bottom:16px] [--safe-x:8px] lg:hidden"
     >
       {MOBILE_NAV.map((entry, index) => {
         if (entry === "action") {

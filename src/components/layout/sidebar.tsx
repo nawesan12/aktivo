@@ -12,6 +12,7 @@ import { LocationSwitcher } from "@/components/dashboard/location-switcher";
 interface Access {
   trialDaysLeft: number;
   hasSubscription: boolean;
+  waitlistPending: number;
 }
 
 /**
@@ -26,15 +27,17 @@ interface Access {
  */
 export function Sidebar() {
   const pathname = usePathname();
+  /*
+    One request for the whole chrome. The badge counts, the shop's name in the
+    footer and the trial countdown used to be three separate fetches on every
+    panel page — plus a fourth for the branch list, which most accounts do not
+    have. They all read this now, and SWR hands the same response to the banner
+    and the switcher without asking again.
+  */
   const { data: access } = useSWR<Access>("/api/panel/access");
-  // status=pending is the only count worth a badge: entries already notified or
-  // expired are not waiting on anyone.
-  const { data: waitlist } = useSWR<{ total: number }>(
-    "/api/panel/waitlist?status=pending&pageSize=1"
-  );
 
   const counters = {
-    waitlist: waitlist?.total ?? 0,
+    waitlist: access?.waitlistPending ?? 0,
     trial: access && !access.hasSubscription ? access.trialDaysLeft : 0,
   };
 

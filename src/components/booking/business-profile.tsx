@@ -393,7 +393,7 @@ export function BusinessProfile({
       </div>
 
       {/* On a phone the one action worth having always in reach. */}
-      <div className="safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-[18px] py-3 backdrop-blur-xl lg:hidden">
+      <div className="safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pt-3 backdrop-blur-xl [--safe-bottom:12px] [--safe-x:18px] lg:hidden">
         <Link
           href={`/${business.slug}/reservar`}
           className="flex items-center justify-center rounded-[11px] bg-primary py-3.5 text-sm font-bold text-primary-foreground shadow-cta"

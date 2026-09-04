@@ -50,7 +50,7 @@ export function PanelMenu() {
           </SheetTitle>
         </SheetHeader>
 
-        <nav className="safe-bottom flex flex-col overflow-y-auto px-[10px] pb-4 text-[13px]">
+        <nav className="safe-bottom flex flex-col overflow-y-auto px-[10px] text-[13px] [--safe-bottom:16px]">
           {PANEL_NAV_GROUPS.map((group, index) => (
             <div key={index} className="contents">
               {index > 0 && (
