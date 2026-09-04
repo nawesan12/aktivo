@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getBusinessIdentity } from "@/lib/booking/business-page";
 import { BookingWizard } from "@/components/booking/booking-wizard";
@@ -36,5 +37,13 @@ export default async function BookingPage({ params }: Props) {
   const business = await getBusinessIdentity(businessSlug);
   if (!business) notFound();
 
-  return <BookingWizard businessId={business.id} slug={business.slug} />;
+  return (
+    // The wizard reads `?serviceId=` with `useSearchParams`, which is only known
+    // at request time. Without this boundary the page cannot be prerendered and
+    // answers 500 — and only in production: the development server does not
+    // enforce the bailout, so it looks fine locally.
+    <Suspense fallback={null}>
+      <BookingWizard businessId={business.id} slug={business.slug} />
+    </Suspense>
+  );
 }

@@ -88,4 +88,16 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
     "Corte de prueba"
   );
   console.log("OK página pública sirviendo el servicio");
+
+  // Cada página pública del negocio, con un negocio de verdad.
+  //
+  // Esto existe porque un cambio de caché rompió /reservar con un 500 y no lo
+  // vio nadie: el build pasa —no hay negocios para prerenderizar— y el servidor
+  // de desarrollo no aplica la regla que falla en producción. La única forma de
+  // enterarse es pedir las páginas.
+  for (const path of [`/${slug}`, `/${slug}/reservar`, `/${slug}/mis-turnos`, `/embed/${slug}`]) {
+    const response = await page.request.get(path);
+    expect(response.status(), `${path} respondió ${response.status()}`).toBe(200);
+  }
+  console.log("OK todas las páginas públicas del negocio responden 200");
 });
