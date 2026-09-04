@@ -111,7 +111,15 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
   });
   expect(enabled.status(), "no se pudo habilitar el widget").toBe(200);
 
-  const embedOn = await page.request.get(`/embed/${slug}`);
-  expect(embedOn.status(), `el widget habilitado respondió ${embedOn.status()}`).toBe(200);
+  // Con reintento: la página del embed se regenera al habilitar el widget, y
+  // durante un instante la red todavía sirve el 404 anterior. Para un iframe en
+  // el sitio de otro eso es aceptable; para el test, no esperarlo sería
+  // convertir una carrera en un fallo.
+  let embedStatus = 0;
+  for (let attempt = 0; attempt < 8 && embedStatus !== 200; attempt++) {
+    if (attempt > 0) await page.waitForTimeout(3000);
+    embedStatus = (await page.request.get(`/embed/${slug}`)).status();
+  }
+  expect(embedStatus, `el widget habilitado respondió ${embedStatus}`).toBe(200);
   console.log("OK widget: 404 apagado, 200 encendido");
 });

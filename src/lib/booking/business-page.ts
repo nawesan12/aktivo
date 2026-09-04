@@ -116,4 +116,6 @@ export function revalidateBusinessPage(slug: string | undefined) {
   revalidatePath(`/${slug}`);
   revalidatePath(`/${slug}/reservar`);
   revalidatePath(`/embed/${slug}`);
+  // The share card carries the name, the colours and the prices.
+  revalidatePath(`/${slug}/opengraph-image`);
 }

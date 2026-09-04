@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getBusinessProfile } from "@/lib/booking/business-page";
+import { getBusinessProfile, getUncategorizedServices } from "@/lib/booking/business-page";
 import { loadGoogleFont } from "@/lib/og-fonts";
 import { isHexColor, contrastColor } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
@@ -12,6 +12,20 @@ export const size = {
 };
 
 export const contentType = "image/png";
+
+/**
+ * Generated once and reused, like the page it belongs to.
+ *
+ * Rendering it fetches three fonts from Google and reads the business, and
+ * social crawlers ask for it every time a link is pasted anywhere. Left
+ * dynamic, that is a function invocation and three network round trips per
+ * share.
+ */
+export const revalidate = 600;
+
+export function generateStaticParams() {
+  return [];
+}
 
 const INK = "#09090b";
 
@@ -69,9 +83,12 @@ export default async function BusinessOGImage({
   const accent = isHexColor(business.accentColor) ? business.accentColor : "#22D3EE";
   const onPrimary = contrastColor(primary);
 
-  const services = business.categories
-    .flatMap((category) => category.services)
-    .slice(0, 3);
+  // Uncategorised services count too: a business that never made categories —
+  // the common case for a new one — would otherwise get a card with no prices.
+  const services = [
+    ...business.categories.flatMap((category) => category.services),
+    ...(await getUncategorizedServices(business.id)),
+  ].slice(0, 3);
 
   const city = [business.city, business.province].filter(Boolean).join(", ");
 
