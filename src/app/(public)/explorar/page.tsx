@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ExplorePageClient } from "@/components/directory/explore-page-client";
 import { appUrl } from "@/lib/env";
-import { directorySearchKey, searchBusinesses } from "@/lib/directory";
+import { directorySearchKey, listDirectoryCities, searchBusinesses } from "@/lib/directory";
 
 export const metadata: Metadata = {
   title: "Explorar Negocios - Reserva turnos online",
@@ -33,7 +33,10 @@ export const revalidate = 600;
 export default async function ExplorePage() {
   // Rendered on the server so the results are in the HTML: this is the page
   // meant to be indexed, and a crawler used to receive an empty list.
-  const initialResults = await searchBusinesses({ page: 1, limit: 20 });
+  const [initialResults, cities] = await Promise.all([
+    searchBusinesses({ page: 1, limit: 20 }),
+    listDirectoryCities(),
+  ]);
 
   return (
     // Suspense is required for the page to prerender: the client reads `?q=`
@@ -44,6 +47,7 @@ export default async function ExplorePage() {
       <ExplorePageClient
         initialKey={directorySearchKey({ page: 1, limit: 20 })}
         initialResults={initialResults}
+        cities={cities}
       />
     </Suspense>
   );

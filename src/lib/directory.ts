@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { safeImageUrl } from "@/lib/images";
+import { slugify } from "@/lib/utils";
 
 /**
  * Public business directory search.
@@ -161,4 +162,63 @@ export function directorySearchKey({
   if (city) params.set("city", city);
   if (province) params.set("province", province);
   return `/api/directory?${params}`;
+}
+
+export interface DirectoryCity {
+  city: string;
+  province: string | null;
+  slug: string;
+  count: number;
+}
+
+/**
+ * The cities that have something to show, most populated first.
+ *
+ * Somebody searching for a haircut types "barbería en Mar del Plata", not
+ * "explorar". Without a page per city there is nothing for that search to land
+ * on: the directory is one URL whose contents come from a query string, which
+ * a crawler cannot enumerate.
+ *
+ * Only businesses that can actually be booked are counted, matching what
+ * `searchBusinesses` lists — a city page that promises four and shows one is
+ * worse than no city page.
+ */
+export async function listDirectoryCities(): Promise<DirectoryCity[]> {
+  const businesses = await db.business.findMany({
+    where: {
+      isActive: true,
+      city: { not: null },
+      services: { some: { isActive: true } },
+      staff: { some: { isActive: true } },
+    },
+    select: { city: true, province: true },
+  });
+
+  const byCity = new Map<string, DirectoryCity>();
+
+  for (const business of businesses) {
+    const city = business.city?.trim();
+    if (!city) continue;
+
+    const slug = slugify(city);
+    if (!slug) continue;
+
+    const existing = byCity.get(slug);
+    if (existing) {
+      existing.count++;
+      continue;
+    }
+
+    byCity.set(slug, { city, province: business.province, slug, count: 1 });
+  }
+
+  return [...byCity.values()].sort(
+    (a, b) => b.count - a.count || a.city.localeCompare(b.city, "es")
+  );
+}
+
+/** The city behind a slug, or null when nothing matches it. */
+export async function findDirectoryCity(slug: string): Promise<DirectoryCity | null> {
+  const cities = await listDirectoryCities();
+  return cities.find((city) => city.slug === slug) ?? null;
 }

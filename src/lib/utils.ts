@@ -55,3 +55,19 @@ export function contrastColor(hex: string): string {
 export function isHexColor(value: string | null | undefined): value is string {
   return typeof value === "string" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
 }
+
+/**
+ * A URL-safe form of a piece of text.
+ *
+ * Signup already had this inline for business names; the city landing pages
+ * need the same rules so "Mar del Plata" and "Ciudad Autónoma de Buenos Aires"
+ * become addresses that survive a paste into WhatsApp.
+ */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}

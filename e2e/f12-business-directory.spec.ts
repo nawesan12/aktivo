@@ -116,3 +116,31 @@ test.describe("F12 — Business Directory", () => {
     });
   });
 });
+
+test.describe("Landings por ciudad", () => {
+  test("una ciudad con negocios tiene su propia página, y una inventada no", async ({
+    page,
+    request,
+  }) => {
+    // The directory is one URL filtered by a query string, which a crawler
+    // cannot enumerate. These pages are what "peluquería en Mar del Plata"
+    // lands on.
+    await page.goto("/explorar");
+    const cityLink = page.locator('a[href^="/explorar/"]').first();
+    await expect(cityLink).toBeVisible();
+
+    const href = await cityLink.getAttribute("href");
+    await page.goto(href!);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Turnos en");
+    await expect(page.locator('a[href^="/"]').first()).toBeVisible();
+
+    const missing = await request.get("/explorar/ciudad-que-no-existe");
+    expect(missing.status()).toBe(404);
+  });
+
+  test("el sitemap ofrece las páginas de ciudad", async ({ request }) => {
+    const res = await request.get("/sitemap.xml");
+    expect(res.ok()).toBeTruthy();
+    expect(await res.text()).toContain("/explorar/");
+  });
+});

@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { Search, MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import { BusinessCard } from "@/components/directory/business-card";
-import type { DirectoryBusiness, DirectoryPage } from "@/lib/directory";
+import type { DirectoryBusiness, DirectoryCity, DirectoryPage } from "@/lib/directory";
+import { useDebounced } from "@/hooks/use-debounced";
 
 interface ExplorePageClientProps {
   /** SWR key the server-rendered results correspond to. */
   initialKey?: string;
   initialResults?: DirectoryPage;
+  /** Cities with something to show, for the per-city pages. */
+  cities?: DirectoryCity[];
 }
 
 export function ExplorePageClient({
   initialKey,
   initialResults,
+  cities = [],
 }: ExplorePageClientProps) {
   // Read here rather than on the server. Reading it there made the page
   // dynamic, and this filter was always a client-side concern: someone typing
@@ -28,27 +33,14 @@ export function ExplorePageClient({
   // No province selector in the interface yet; the API accepts one.
   const [province] = useState("");
   const [page, setPage] = useState(1);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
-  // The timer lives in a ref rather than in an IIFE closure: the previous
-  // version re-ran the factory on every render and only survived because
-  // useCallback happened to keep the first result.
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const debounceTimer = useCallback((value: string) => {
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setDebouncedQuery(value);
-      setPage(1);
-    }, 300);
-  }, []);
-
-  // Don't leave a pending search running after the page is gone.
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  // The same debounce every other search box in the app uses, instead of a
+  // hand-rolled timer ref kept alive by a useCallback.
+  const debouncedQuery = useDebounced(query);
 
   const handleSearch = (value: string) => {
     setQuery(value);
-    debounceTimer(value);
+    setPage(1);
   };
 
   const params = new URLSearchParams({ page: String(page), limit: "20" });
@@ -106,6 +98,24 @@ export function ExplorePageClient({
               </div>
             </div>
           </div>
+
+          {/* Real links to the per-city pages. Typing a city into the box above
+              filters this list without changing the URL, which means nothing a
+              crawler can follow and nothing anyone can share. */}
+          {cities.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2 mt-6">
+              {cities.slice(0, 10).map((entry) => (
+                <Link
+                  key={entry.slug}
+                  href={`/explorar/${entry.slug}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  {entry.city}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

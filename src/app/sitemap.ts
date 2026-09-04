@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { appUrl } from "@/lib/env";
+import { listDirectoryCities } from "@/lib/directory";
 
 /**
  * Rebuilt once a day.
@@ -34,8 +35,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   let businessPages: MetadataRoute.Sitemap = [];
+  let cityPages: MetadataRoute.Sitemap = [];
 
   try {
+    // The city landings, which exist precisely to be found: "peluquería en
+    // Córdoba" is a search, "/explorar?city=..." is not an address.
+    cityPages = (await listDirectoryCities()).map((city) => ({
+      url: appUrl(`/explorar/${city.slug}`),
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+
     const businesses = await db.business.findMany({
       // The same condition the directory uses. Without it the sitemap offered
       // Google the profile of every business that signed up and never finished
@@ -71,5 +82,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unavailable at build time — static pages only
   }
 
-  return [...staticPages, ...businessPages];
+  return [...staticPages, ...cityPages, ...businessPages];
 }
