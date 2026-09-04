@@ -416,7 +416,11 @@
 }
 .jiku-landing .trust-logos {
   display: flex;
-  gap: 40px;
+  /* Five items of ~150px in a 343px phone, and no wrap: the row was cut off at
+     both edges, with "Sin tarjeta" sliced in half against the screen. */
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 40px;
   align-items: center;
   opacity: 0.35;
 }
@@ -978,4 +982,24 @@
   .jiku-landing .hero-metrics { flex-direction: column; gap: 16px; }
   .jiku-landing .stats-grid { grid-template-columns: 1fr; }
   .jiku-landing .footer-grid { grid-template-columns: 1fr; }
+  .jiku-landing .trust-inner { gap: 20px; }
+  .jiku-landing .trust-logo { font-size: 0.95rem; }
+  .jiku-landing .trust { padding: 40px 0; }
+  /* The decorative kanji is 12rem tall and centred with a -50% translate, so it
+     sticks out past both edges of a phone and dragged the page wider than the
+     screen. It is background, not content: clipping it is the intent. */
+  .jiku-landing .philosophy-kanji { font-size: 7rem; }
+  .jiku-landing .philosophy { padding: 80px 0; }
+  .jiku-landing .cta { padding: 90px 0; }
+}
+
+/* Sections that carry an oversized decoration — a glow, a ring, a kanji —
+   positioned outside their own box. Every one of these widened the document on
+   a phone; `clip` contains them without turning anything into a scroller. */
+.jiku-landing .hero,
+.jiku-landing .stats,
+.jiku-landing .philosophy,
+.jiku-landing .trust,
+.jiku-landing .cta {
+  overflow-x: clip;
 }

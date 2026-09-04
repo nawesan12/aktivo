@@ -4,6 +4,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { JikuLogo } from "@/components/brand/jiku-logo";
+import { UserMenu } from "@/components/layout/user-menu";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -26,17 +27,18 @@ export default async function AccountLayout({ children }: { children: ReactNode 
     <div className="min-h-screen">
       <header className="border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/">
+          {/* Not "/": a signed-in visitor is redirected off the landing, so
+              the logo would have bounced them somewhere unexpected. */}
+          <Link href={session.user.businessId ? "/panel" : "/mi-cuenta/perfil"} aria-label="Inicio">
             <JikuLogo size="sm" />
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">{session.user.name}</span>
-            <Link
-              href="/panel"
-              className="text-sm text-primary hover:underline"
-            >
-              Volver al panel
-            </Link>
+          <div className="flex items-center gap-3">
+            {session.user.businessId && (
+              <Link href="/panel" className="text-sm text-primary hover:underline">
+                Volver al panel
+              </Link>
+            )}
+            <UserMenu />
           </div>
         </div>
         <nav className="max-w-4xl mx-auto px-4 flex gap-1 overflow-x-auto">

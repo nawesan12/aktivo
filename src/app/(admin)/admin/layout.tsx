@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Shield, LayoutDashboard, Building2, Users, Settings, ArrowLeft } from "lucide-react";
 import { AdminMobileHeader } from "@/components/admin/admin-mobile-header";
+import { UserMenu } from "@/components/layout/user-menu";
 
 const adminNav = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -56,11 +57,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <AdminMobileHeader />
           </div>
           <div className="hidden lg:block" />
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{session.user.name}</span>
-            <Link href="/panel" className="text-sm text-primary hover:underline">
-              Panel
-            </Link>
+          <div className="flex items-center gap-3">
+            {/* There was no way out of here: the header offered "Panel", and a
+                platform admin has no business, so /panel bounces them straight
+                back to /admin. */}
+            <UserMenu links={[{ label: "Mi cuenta", href: "/mi-cuenta" }]} />
           </div>
         </header>
         <main id="contenido" className="flex-1 p-4 lg:p-6">{children}</main>

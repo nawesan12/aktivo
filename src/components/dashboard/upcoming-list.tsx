@@ -44,9 +44,16 @@ export function UpcomingList({ appointments }: UpcomingListProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{apt.clientName}</p>
-            <p className="text-xs text-muted-foreground truncate">
-              {apt.serviceName} · {apt.staffName} ·{" "}
-              {format(new Date(apt.dateTime), "HH:mm", { locale: es })}
+            {/* The time is the thing you scan this list for, so it never gets
+                truncated away: on a phone the whole line had about 100px and
+                ended in an ellipsis before reaching the hour. */}
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {format(new Date(apt.dateTime), "HH:mm", { locale: es })}
+              </span>{" "}
+              <span className="truncate inline-block max-w-full align-bottom">
+                {apt.serviceName} · {apt.staffName}
+              </span>
             </p>
           </div>
           <StatusBadge status={apt.status} />

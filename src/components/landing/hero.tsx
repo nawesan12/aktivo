@@ -19,7 +19,7 @@ export function Hero() {
               <span className="line-2 serif">se mueve sola</span>
             </h1>
             <p className="hero-desc">
-              Reservas 24/7. Recordatorios automáticos. Cobros integrados. CRM
+              Reservas 24/7. Confirmación al instante. Cobros integrados. CRM
               inteligente. Todo girando alrededor de un solo <span className="jade">eje</span>: Jiku.
             </p>
             <div className="hero-ctas">
@@ -33,18 +33,26 @@ export function Hero() {
                 Ver demo en vivo
               </a>
             </div>
+            {/* These were "12,400+ negocios activos", "2.8M turnos / mes" and
+                "-73% ausencias", on a product that has never had a customer.
+                Three fabricated numbers in the first screen anybody sees, and
+                the kind of claim that is trivially checkable — a prospect who
+                asks which twelve thousand businesses stops believing the rest
+                of the page too.
+
+                What replaces them is what we can actually promise today. */}
             <div className="hero-metrics">
               <div>
-                <div className="hero-metric-num">12,400+</div>
-                <div className="hero-metric-label">Negocios activos</div>
+                <div className="hero-metric-num">7 días</div>
+                <div className="hero-metric-label">Gratis, sin tarjeta</div>
               </div>
               <div>
-                <div className="hero-metric-num">2.8M</div>
-                <div className="hero-metric-label">Turnos / mes</div>
+                <div className="hero-metric-num">5 min</div>
+                <div className="hero-metric-label">Y tu link está andando</div>
               </div>
               <div>
-                <div className="hero-metric-num">-73%</div>
-                <div className="hero-metric-label">Ausencias</div>
+                <div className="hero-metric-num">24/7</div>
+                <div className="hero-metric-label">Tu agenda toma turnos</div>
               </div>
             </div>
           </div>

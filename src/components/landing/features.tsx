@@ -29,10 +29,15 @@ export function Features() {
           </div>
           <div className="feature jiku-reveal rd2">
             <div className="feature-num mono">02</div>
-            <h3>Recordatorios automáticos</h3>
+            {/* This said "Recordatorios automáticos … sin que toques el
+                celular". The reminder job runs off real traffic, which is what
+                the free hosting plan allows, so "automático" was a promise the
+                product cannot keep on its own. What it does do without any
+                asterisk is confirm at the moment of booking. */}
+            <h3>Confirmación al instante</h3>
             <p>
-              Confirmación al reservar, recordatorio 24 h antes y pedido de
-              reseña después. Todo sin que toques el celular.
+              Apenas reservan, al cliente le llega el mail con el día, la hora y
+              con quién. Vos no tocás nada.
             </p>
           </div>
           <div className="feature jiku-reveal rd3">
@@ -47,7 +52,7 @@ export function Features() {
             <div className="feature-num mono">04</div>
             <h3>CRM que enamora</h3>
             <p>
-              Historial completo de cada cliente. Campañas automáticas de
+              Historial completo de cada cliente. Campañas de
               fidelización, cumpleaños y reactivación.
             </p>
           </div>

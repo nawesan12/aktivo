@@ -213,19 +213,23 @@ export function AppointmentsTable({
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
-        <div className="flex items-center gap-2">
+        {/* Full width on a phone: two native date inputs side by side are
+            wider than the column, and this row does not wrap on its own. */}
+        <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
           <input
             type="date"
+            aria-label="Desde"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="h-9 px-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary min-w-0 flex-1"
           />
-          <span className="text-xs text-muted-foreground">a</span>
+          <span className="text-xs text-muted-foreground shrink-0">a</span>
           <input
             type="date"
+            aria-label="Hasta"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="h-9 px-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary min-w-0 flex-1"
           />
         </div>
         <PermissionGate permission="reports:export">

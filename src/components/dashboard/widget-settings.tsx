@@ -54,11 +54,14 @@ export function WidgetSettings() {
 
         <div className="space-y-4">
           {/* Enable/Disable */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Widget Habilitado</p>
+          {/* The text had nothing stopping it from pushing the switch off the
+              edge: no `min-w-0`, no gap, and the switch itself was allowed to
+              shrink instead. */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium">Widget habilitado</p>
               <p className="text-sm text-muted-foreground">
-                Permite que otros sitios web muestren tu botón de booking
+                Deja que tu propia web muestre el botón de reservar
               </p>
             </div>
             <button
@@ -68,7 +71,7 @@ export function WidgetSettings() {
               aria-label="Habilitar el widget de reservas"
               onClick={() => updateSetting("widgetEnabled", !settings.widgetEnabled)}
               disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
                 settings.widgetEnabled ? "bg-primary" : "bg-muted"
               }`}
             >
@@ -149,11 +152,14 @@ export function WidgetSettings() {
               </button>
             </div>
           </div>
-          <pre className="p-4 bg-background rounded-lg text-sm overflow-x-auto border border-border">
-            <code className="text-muted-foreground">{embedCode}</code>
+          {/* The snippet is one long line and is meant to scroll: without
+              `max-w-full` the `pre` grew to the width of its content and took
+              the card with it, so `overflow-x-auto` never engaged. */}
+          <pre className="p-4 bg-background rounded-lg text-sm overflow-x-auto max-w-full border border-border">
+            <code className="text-muted-foreground whitespace-pre">{embedCode}</code>
           </pre>
           <p className="text-xs text-muted-foreground mt-2">
-            Pega este código antes del cierre del tag {"</body>"} en tu sitio web.
+            Pegá este código antes del cierre de {"</body>"} en tu web.
           </p>
         </div>
       )}

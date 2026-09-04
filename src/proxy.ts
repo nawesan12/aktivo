@@ -4,6 +4,18 @@ import type { NextRequest } from "next/server";
 import { authConfig } from "@/lib/auth.config";
 import { businessSlugForHost } from "@/lib/custom-domain";
 
+/**
+ * Where a signed-in person belongs.
+ *
+ * One place for it: the landing redirect, the auth-page redirect and the
+ * panel-without-a-business redirect were all answering the same question and
+ * would have drifted.
+ */
+function homeFor(user: { role?: string; businessId?: string | null } | undefined): string {
+  if (user?.role === "PLATFORM_ADMIN") return "/admin";
+  return user?.businessId ? "/panel" : "/mi-cuenta";
+}
+
 /** Our own host, plus the deployment URLs Vercel gives every build. */
 function isOwnHost(host: string): boolean {
   const hostname = host.toLowerCase().split(":")[0];
@@ -54,6 +66,17 @@ export default auth(async (request: NextRequest) => {
   const user = (request as AuthedRequest).auth?.user;
   const isAuthenticated = !!user;
 
+  // Someone who is already signed in has no business on the sales page: they
+  // came to work, and the landing is an ad for a product they already bought.
+  // The matcher only routes "/" here when a session cookie is present, so an
+  // anonymous visit — which is all the traffic the landing actually gets —
+  // never reaches this function at all.
+  if (pathname === "/" && isAuthenticated) {
+    const url = request.nextUrl.clone();
+    url.pathname = homeFor(user);
+    return NextResponse.redirect(url);
+  }
+
   // Admin surface: both the pages and their API. Enforced here so that adding a
   // new /api/admin route can't accidentally ship without a role check — each
   // route still checks too, this is the floor, not the only lock.
@@ -95,6 +118,8 @@ export default auth(async (request: NextRequest) => {
   // there was simply nothing to show.
   if (isOnPanel && isAuthenticated && !user?.businessId) {
     const url = request.nextUrl.clone();
+    // Not `homeFor`: a business owner between businesses needs the picker, not
+    // their account page.
     url.pathname = user?.role === "PLATFORM_ADMIN" ? "/admin" : "/mi-cuenta/negocios";
     return NextResponse.redirect(url);
   }
@@ -111,7 +136,7 @@ export default auth(async (request: NextRequest) => {
 
   if (isOnAuth && isAuthenticated) {
     const url = request.nextUrl.clone();
-    url.pathname = user?.role === "PLATFORM_ADMIN" ? "/admin" : "/panel";
+    url.pathname = homeFor(user);
     return NextResponse.redirect(url);
   }
 
@@ -136,6 +161,19 @@ export const config = {
       source: "/((?!_next/|favicon.ico|.*\\.[a-z0-9]+$).*)",
       missing: [{ type: "host", value: "jikuapp.com" }],
     },
+    // The landing, but only for a request that carries a session cookie: an
+    // anonymous visit — which is all the traffic the landing actually gets —
+    // never invokes this function, so the page stays a CDN hit.
+    //
+    // Written out one by one because Next requires the matcher to be a static
+    // literal. Both names appear because the cookie prefix depends on the
+    // scheme, and the `.0` forms because Auth.js splits a large session across
+    // numbered chunks; missing one would leave a signed-in owner on the sales
+    // page.
+    { source: "/", has: [{ type: "cookie", key: "authjs.session-token" }] },
+    { source: "/", has: [{ type: "cookie", key: "authjs.session-token.0" }] },
+    { source: "/", has: [{ type: "cookie", key: "__Secure-authjs.session-token" }] },
+    { source: "/", has: [{ type: "cookie", key: "__Secure-authjs.session-token.0" }] },
     "/panel/:path*",
     "/admin/:path*",
     "/api/admin/:path*",

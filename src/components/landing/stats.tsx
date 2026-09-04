@@ -19,8 +19,8 @@ export function Stats() {
             <div className="stat-label">Tu agenda toma turnos</div>
           </div>
           <div className="stat-card jiku-reveal rd1">
-            <div className="stat-num">2</div>
-            <div className="stat-label">Avisos por turno, automáticos</div>
+            <div className="stat-num">1%</div>
+            <div className="stat-label">De comisión sobre lo que cobrás</div>
           </div>
           <div className="stat-card jiku-reveal rd2">
             <div className="stat-num">5 min</div>

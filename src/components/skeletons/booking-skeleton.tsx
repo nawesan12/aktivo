@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ServiceSkeleton() {
   return (
     <div className="space-y-4">
-      <Skeleton className="h-7 w-40" />
+      <Skeleton className="h-7 w-40 max-w-full" />
       <Skeleton className="h-4 w-60" />
       <div className="flex gap-2 mb-6">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -22,7 +22,7 @@ export function ServiceSkeleton() {
 export function StaffSkeleton() {
   return (
     <div className="space-y-4">
-      <Skeleton className="h-7 w-48" />
+      <Skeleton className="h-7 w-48 max-w-full" />
       <Skeleton className="h-4 w-56" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -41,7 +41,7 @@ export function DatetimeSkeleton() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Skeleton className="h-72 rounded-xl" />
         <div className="space-y-3">
-          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-32 max-w-full" />
           <div className="grid grid-cols-3 gap-2">
             {Array.from({ length: 9 }).map((_, i) => (
               <Skeleton key={i} className="h-10 rounded-lg" />
@@ -56,8 +56,8 @@ export function DatetimeSkeleton() {
 export function InfoSkeleton() {
   return (
     <div className="space-y-4">
-      <Skeleton className="h-7 w-32" />
-      <Skeleton className="h-4 w-64" />
+      <Skeleton className="h-7 w-32 max-w-full" />
+      <Skeleton className="h-4 w-64 max-w-full" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Skeleton className="h-10 rounded-lg" />
         <Skeleton className="h-10 rounded-lg" />
@@ -71,12 +71,12 @@ export function InfoSkeleton() {
 export function ConfirmSkeleton() {
   return (
     <div className="space-y-4">
-      <Skeleton className="h-7 w-40" />
+      <Skeleton className="h-7 w-40 max-w-full" />
       <Skeleton className="h-4 w-56" />
       <Skeleton className="h-64 rounded-xl" />
       <Skeleton className="h-20 rounded-xl" />
       <div className="flex justify-center">
-        <Skeleton className="h-12 w-48 rounded-xl" />
+        <Skeleton className="h-12 w-48 max-w-full rounded-xl" />
       </div>
     </div>
   );

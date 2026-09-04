@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { SEED, loginAs } from "./helpers";
 import { PANEL_NAVIGATION } from "../src/components/layout/navigation";
+import { findOverflows } from "./overflow-audit";
 
 /**
  * Every screen of the panel, at the sizes it is actually used on.
@@ -40,6 +41,16 @@ test.describe("F18 — el panel entra en la pantalla", () => {
         if (overflow.scrollWidth > overflow.clientWidth + 1) {
           broken.push(
             `${item.href} — ${overflow.scrollWidth}px de contenido en ${overflow.clientWidth}px`
+          );
+        }
+
+        // And the failure the document-level check cannot see: a row that does
+        // not wrap inside a card that clips. The page never scrolls, so this
+        // passed for months while filter bars and toggles were cut off the edge
+        // of every phone.
+        for (const clipped of await findOverflows(page)) {
+          broken.push(
+            `${item.href} — ${clipped.selector} recorta ${clipped.scrollWidth}px en ${clipped.clientWidth}px`
           );
         }
       }

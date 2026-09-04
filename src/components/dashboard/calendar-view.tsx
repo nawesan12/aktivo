@@ -138,15 +138,28 @@ export function CalendarView() {
       <div className="glass rounded-xl p-4 lg:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate("prev")} className="w-9 h-9 rounded-lg border border-border hover:bg-muted flex items-center justify-center">
+          {/* A 200px title plus three buttons and their gaps is wider than a
+              phone, and this row was the one part of the header that did not
+              wrap. */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
+            <button
+              onClick={() => navigate("prev")}
+              aria-label="Mes anterior"
+              className="w-9 h-9 rounded-lg border border-border hover:bg-muted flex items-center justify-center shrink-0"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h2 className="font-heading font-semibold capitalize min-w-[200px] text-center">{headerText}</h2>
-            <button onClick={() => navigate("next")} className="w-9 h-9 rounded-lg border border-border hover:bg-muted flex items-center justify-center">
+            <h2 className="font-heading font-semibold capitalize sm:min-w-[200px] text-center flex-1 min-w-0 truncate">
+              {headerText}
+            </h2>
+            <button
+              onClick={() => navigate("next")}
+              aria-label="Mes siguiente"
+              className="w-9 h-9 rounded-lg border border-border hover:bg-muted flex items-center justify-center shrink-0"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button onClick={() => navigate("today")} className="h-9 px-3 rounded-lg border border-border text-sm hover:bg-muted">
+            <button onClick={() => navigate("today")} className="h-9 px-3 rounded-lg border border-border text-sm hover:bg-muted shrink-0">
               Hoy
             </button>
           </div>
@@ -160,7 +173,7 @@ export function CalendarView() {
                   viewMode === mode ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
               >
-                {mode === "month" ? "Mes" : mode === "week" ? "Semana" : "Dia"}
+                {mode === "month" ? "Mes" : mode === "week" ? "Semana" : "Día"}
               </button>
             ))}
           </div>

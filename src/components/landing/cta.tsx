@@ -16,9 +16,11 @@ export function Cta() {
             <br />
             de un <em className="serif jade">eje</em>
           </h2>
+          {/* "Unite a los 12,400+ negocios que encontraron el suyo": there
+              are none. The invitation works without inventing a crowd. */}
           <p>
-            Unite a los 12,400+ negocios que encontraron el suyo. Empezá
-            gratis, sin tarjeta, en menos de 3 minutos.
+            Poné tus servicios, tus horarios y tu link. Gratis, sin tarjeta, en
+            menos de 3 minutos.
           </p>
           <Link href="/registrarse" className="btn btn-jade">
             Crear mi cuenta gratis →

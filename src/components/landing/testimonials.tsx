@@ -30,7 +30,7 @@ const STEPS = [
   {
     number: "03",
     title: "Ocupate de atender",
-    body: "Jiku confirma, recuerda el turno el día antes y pide la reseña después. Si querés, cobra la seña al reservar.",
+    body: "Jiku manda la confirmación apenas reservan, con el día, la hora y con quién. Si querés, cobra la seña en el mismo paso.",
   },
 ];
 

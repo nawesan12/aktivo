@@ -112,10 +112,10 @@ export function NotificationsLog() {
           <option value="PENDING">Pendiente</option>
           <option value="FAILED">Fallido</option>
         </select>
-        <div className="flex items-center gap-2">
-          <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm" />
+        <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
+          <input type="date" aria-label="Desde" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="h-9 px-2 rounded-lg bg-muted/50 border border-border text-sm min-w-0 flex-1" />
           <span className="text-xs text-muted-foreground">a</span>
-          <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="h-9 px-3 rounded-lg bg-muted/50 border border-border text-sm" />
+          <input type="date" aria-label="Hasta" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="h-9 px-2 rounded-lg bg-muted/50 border border-border text-sm min-w-0 flex-1" />
         </div>
       </div>
 

@@ -36,19 +36,23 @@ export function AnalyticsDatePicker({ startDate, endDate, onChange }: AnalyticsD
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2 text-xs">
+      {/* The two date inputs together are wider than a phone column, and this
+          row is the only part of the picker that does not wrap. */}
+      <div className="flex items-center gap-2 text-xs w-full sm:w-auto min-w-0">
         <input
           type="date"
+          aria-label="Desde"
           value={startDate}
           onChange={(e) => onChange({ startDate: e.target.value, endDate })}
-          className="bg-muted rounded-lg px-2 py-1.5 text-xs text-foreground border-none outline-none"
+          className="bg-muted rounded-lg px-2 py-1.5 text-xs text-foreground border-none outline-none min-w-0 flex-1"
         />
-        <span className="text-muted-foreground">&mdash;</span>
+        <span className="text-muted-foreground shrink-0">&mdash;</span>
         <input
           type="date"
+          aria-label="Hasta"
           value={endDate}
           onChange={(e) => onChange({ startDate, endDate: e.target.value })}
-          className="bg-muted rounded-lg px-2 py-1.5 text-xs text-foreground border-none outline-none"
+          className="bg-muted rounded-lg px-2 py-1.5 text-xs text-foreground border-none outline-none min-w-0 flex-1"
         />
       </div>
     </div>

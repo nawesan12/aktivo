@@ -6,7 +6,6 @@ import { Hero } from "@/components/landing/hero";
 import { Trust } from "@/components/landing/trust";
 import { Philosophy } from "@/components/landing/philosophy";
 import { Features } from "@/components/landing/features";
-import { BigFeature } from "@/components/landing/big-feature";
 import { Stats } from "@/components/landing/stats";
 import { Pricing } from "@/components/landing/pricing";
 import { Testimonials } from "@/components/landing/testimonials";
@@ -32,7 +31,6 @@ export default function LandingPage() {
         <Trust />
         <Philosophy />
         <Features />
-        <BigFeature />
         <Stats />
         <Pricing />
         <Testimonials />
