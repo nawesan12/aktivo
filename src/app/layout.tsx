@@ -88,20 +88,22 @@ export const metadata: Metadata = {
     ],
     apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
+  // Same words as the card image, on purpose: a title that describes a category
+  // next to an image that makes a promise reads like two different products.
   openGraph: {
     type: "website",
     locale: "es_AR",
     siteName: "Jiku",
-    title: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
+    title: "Jiku — tu agenda se mueve sola",
     description:
-      "Turnos, CRM, pagos y fidelización para barberías, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
+      "Turnos online 24/7, cobros con Mercado Pago y recordatorios automáticos para barberías, salones y negocios de servicios en Argentina.",
     url: appUrl(),
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jiku - Plataforma de Crecimiento para Negocios de Servicios",
+    title: "Jiku — tu agenda se mueve sola",
     description:
-      "Turnos, CRM, pagos y fidelización para barberías, salones y negocios de servicios. La plataforma argentina que impulsa tu negocio.",
+      "Turnos online 24/7, cobros con Mercado Pago y recordatorios automáticos para barberías, salones y negocios de servicios en Argentina.",
   },
   robots: {
     index: true,
