@@ -53,10 +53,18 @@ const baseSchema = z.object({
   MP_CLIENT_SECRET: z.string().optional(),
 
   // ── Custom domains ──────────────────────────────────────────────────────
-  /** Lets a business point its own domain at its page. */
+  /**
+   * Lets a business point its own domain at its page.
+   *
+   * Only the token is ours to set: `VERCEL_PROJECT_ID` and `VERCEL_TEAM_ID` are
+   * injected into every deployment by Vercel itself. They are deliberately NOT
+   * part of a half-configured group — grouping them took the whole app down,
+   * because the platform supplies one of them and nobody supplies the other, so
+   * the validator refused to boot and every page that runs on the server
+   * answered 500.
+   */
   VERCEL_API_TOKEN: secret().optional(),
   VERCEL_PROJECT_ID: z.string().optional(),
-  /** Only needed when the project lives under a team rather than a personal account. */
   VERCEL_TEAM_ID: z.string().optional(),
 
   // ── Email ───────────────────────────────────────────────────────────────
@@ -120,7 +128,6 @@ const GROUPS: {
     ],
   },
   { name: "MercadoPago OAuth", keys: ["MP_CLIENT_ID", "MP_CLIENT_SECRET"] },
-  { name: "Dominios propios", keys: ["VERCEL_API_TOKEN", "VERCEL_PROJECT_ID"] },
 ];
 
 /**
