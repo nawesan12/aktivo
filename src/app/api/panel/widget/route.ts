@@ -4,6 +4,7 @@ import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/sessio
 import { handleApiError } from "@/lib/api-errors";
 import { requirePlan } from "@/lib/subscription/enforcement";
 import { appUrl } from "@/lib/env";
+import { revalidateBusinessPage } from "@/lib/booking/business-page";
 
 export async function GET() {
   try {
@@ -54,6 +55,10 @@ export async function PATCH(request: NextRequest) {
         ...(widgetPosition && { widgetPosition }),
       },
     });
+
+    // Turning the widget on has to take effect now, not when the cached 404
+    // of the embed page expires.
+    revalidateBusinessPage(session.businessSlug);
 
     return NextResponse.json(settings);
   } catch (error) {

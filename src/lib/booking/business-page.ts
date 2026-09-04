@@ -101,13 +101,19 @@ export const getBusinessReviews = cache(async (businessId: string) => {
 });
 
 /**
- * Drops the cached public page of a business.
+ * Drops every cached public page of a business.
  *
- * The profile is rebuilt on a timer, which is fine for visitors and wrong for
- * the owner: they change a price, look at their own page, and see the old one.
- * Call this from anything that edits what the profile shows.
+ * They are all rebuilt on a timer, which is fine for visitors and wrong for the
+ * owner: they change a price, look at their own page, and see the old one.
+ *
+ * `/embed` is in the list for a sharper reason: it answers 404 while the widget
+ * is off, and a cached 404 meant turning the widget on did nothing for ten
+ * minutes. Call this from anything that edits what these pages show.
  */
 export function revalidateBusinessPage(slug: string | undefined) {
   if (!slug) return;
+
   revalidatePath(`/${slug}`);
+  revalidatePath(`/${slug}/reservar`);
+  revalidatePath(`/embed/${slug}`);
 }

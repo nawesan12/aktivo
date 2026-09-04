@@ -95,9 +95,23 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
   // vio nadie: el build pasa —no hay negocios para prerenderizar— y el servidor
   // de desarrollo no aplica la regla que falla en producción. La única forma de
   // enterarse es pedir las páginas.
-  for (const path of [`/${slug}`, `/${slug}/reservar`, `/${slug}/mis-turnos`, `/embed/${slug}`]) {
+  for (const path of [`/${slug}`, `/${slug}/reservar`, `/${slug}/mis-turnos`]) {
     const response = await page.request.get(path);
     expect(response.status(), `${path} respondió ${response.status()}`).toBe(200);
   }
   console.log("OK todas las páginas públicas del negocio responden 200");
+
+  // ── El widget embebible ─────────────────────────────────────────────────
+  // Apagado por defecto: el iframe tiene que dar 404, no servirse igual.
+  const embedOff = await page.request.get(`/embed/${slug}`);
+  expect(embedOff.status(), "el widget se sirve estando apagado").toBe(404);
+
+  const enabled = await page.request.patch("/api/panel/widget", {
+    data: { widgetEnabled: true },
+  });
+  expect(enabled.status(), "no se pudo habilitar el widget").toBe(200);
+
+  const embedOn = await page.request.get(`/embed/${slug}`);
+  expect(embedOn.status(), `el widget habilitado respondió ${embedOn.status()}`).toBe(200);
+  console.log("OK widget: 404 apagado, 200 encendido");
 });
