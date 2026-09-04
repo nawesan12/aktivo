@@ -28,6 +28,29 @@ const nextConfig: NextConfig = {
     // over for no reason: an uploaded photo does not change behind its URL.
     minimumCacheTTL: 2678400,
   },
+  /**
+   * `www` va al ápex, que es el host sobre el que está construida la app:
+   * `NEXT_PUBLIC_APP_URL` es el ápex, y de ahí salen los links de los emails, el
+   * canonical y los `back_url` de MercadoPago. Con los dos hosts sirviendo lo
+   * mismo, Google lo lee como contenido duplicado.
+   *
+   * Vive acá y no en el panel de Vercel porque así queda versionado y se revisa
+   * como cualquier otro cambio. La redirección la resuelve la capa de ruteo, no
+   * una función: no cuesta una invocación.
+   */
+  async redirects() {
+    const apex = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://jikuapp.com").host;
+
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host" as const, value: `www.${apex}` }],
+        destination: `https://${apex}/:path*`,
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
