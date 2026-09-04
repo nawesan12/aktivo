@@ -130,7 +130,23 @@ export async function POST(request: NextRequest) {
       return handleSubscriptionPaymentWebhook(String(body.data.id));
     }
 
-    return NextResponse.json({ received: true });
+    // Anything else. Answered 200 so MercadoPago stops retrying, but never
+    // silently: this used to be a bare `{received:true}` with no log at all, so
+    // a notification shape we do not handle vanished without trace. That is the
+    // one failure that costs a real payment — MercadoPago is migrating to its
+    // Orders API, whose notifications arrive as `type: "order"` and carry the
+    // payments inside `data.payments[]`, and if it ever starts sending ours
+    // that way this line is what tells us instead of payments quietly never
+    // confirming again.
+    log.warn("notification type not handled", {
+      type: typeof body.type === "string" ? body.type : undefined,
+      action: typeof body.action === "string" ? body.action : undefined,
+      // Present on an Orders notification; its absence means this is something
+      // else entirely.
+      payments: Array.isArray(body.data?.payments) ? body.data.payments.length : undefined,
+    });
+
+    return NextResponse.json({ received: true, skipped: "unhandled_type" });
   } catch (error) {
     log.error("webhook processing failed", error);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
