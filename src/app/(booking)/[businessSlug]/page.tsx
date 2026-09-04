@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { safeImageUrl } from "@/lib/images";
+import { formatCurrency } from "@/lib/format";
 import {
   getBusinessProfile,
   getUncategorizedServices,
@@ -126,14 +127,42 @@ export default async function BusinessProfilePage({ params }: Props) {
     clientName: r.user?.name || r.guestClient?.name || "Cliente",
   }));
 
+  // Opening hours as the union of everyone's, same as the page shows. Google
+  // uses this for the "open now" line in search results, and it was missing.
+  const hoursByDay = new Map<number, { open: string; close: string }>();
+
+  for (const member of business.staff) {
+    for (const wh of member.workingHours) {
+      const current = hoursByDay.get(wh.dayOfWeek);
+      hoursByDay.set(wh.dayOfWeek, {
+        open: current && current.open < wh.startTime ? current.open : wh.startTime,
+        close: current && current.close > wh.endTime ? current.close : wh.endTime,
+      });
+    }
+  }
+
+  const SCHEMA_DAYS = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  const allServices = categories.flatMap((category) => category.services);
+  const prices = allServices.map((s) => s.price).filter((p) => p > 0);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: business.name,
     ...(business.description && { description: business.description }),
     url: appUrl(`/${business.slug}`),
-    ...(business.logo && { image: business.logo }),
+    ...(safeImageUrl(business.logo) && { image: safeImageUrl(business.logo) }),
     ...(business.phone && { telephone: business.phone }),
+    ...(business.email && { email: business.email }),
     ...((business.address || business.city) && {
       address: {
         "@type": "PostalAddress",
@@ -143,6 +172,47 @@ export default async function BusinessProfilePage({ params }: Props) {
         addressCountry: "AR",
       },
     }),
+    ...(hoursByDay.size > 0 && {
+      openingHoursSpecification: [...hoursByDay.entries()].map(([day, hours]) => ({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: `https://schema.org/${SCHEMA_DAYS[day]}`,
+        opens: hours.open,
+        closes: hours.close,
+      })),
+    }),
+    ...(prices.length > 0 && {
+      priceRange: `${formatCurrency(Math.min(...prices))} - ${formatCurrency(Math.max(...prices))}`,
+    }),
+    ...(allServices.length > 0 && {
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Servicios",
+        itemListElement: allServices.slice(0, 30).map((service) => ({
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: service.name,
+            ...(service.description && { description: service.description }),
+          },
+          price: String(service.price),
+          priceCurrency: business.settings?.currency ?? "ARS",
+        })),
+      },
+    }),
+    // What makes Google offer a "reservar" action straight from the result.
+    potentialAction: {
+      "@type": "ReserveAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: appUrl(`/${business.slug}/reservar`),
+        inLanguage: "es-AR",
+        actionPlatform: [
+          "https://schema.org/DesktopWebPlatform",
+          "https://schema.org/MobileWebPlatform",
+        ],
+      },
+      result: { "@type": "Reservation", name: `Turno en ${business.name}` },
+    },
     ...(reviewAgg._count > 0 && {
       aggregateRating: {
         "@type": "AggregateRating",
@@ -171,8 +241,10 @@ export default async function BusinessProfilePage({ params }: Props) {
         address: business.address,
         city: business.city,
         province: business.province,
+        website: business.website,
         logoUrl: safeImageUrl(business.logo),
         coverUrl: safeImageUrl(business.coverImage),
+        cancellationPolicy: business.settings?.cancellationPolicy ?? null,
         primaryColor: business.primaryColor,
         accentColor: business.accentColor,
       }}

@@ -13,7 +13,12 @@ import {
   ChevronDown,
   Star,
   CalendarCheck,
+  Mail,
+  Globe,
+  Share2,
+  Info,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MagneticButton } from "@/components/premium/magnetic-button";
 import { formatCurrency } from "@/lib/format";
@@ -41,10 +46,13 @@ interface BusinessProfileProps {
     address: string | null;
     city: string | null;
     province: string | null;
+    website: string | null;
     logoUrl: string | null;
     coverUrl: string | null;
     primaryColor: string | null;
     accentColor: string | null;
+    /** Shown to the visitor before they book, not hidden in the wizard. */
+    cancellationPolicy: string | null;
   };
   categories: Array<{
     id: string;
@@ -217,9 +225,28 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
     return () => ctx.revert();
   }, []);
 
-  // Gather working hours from the first staff member (or aggregate)
-  const hoursSource = staff[0]?.workingHours ?? [];
-  const hoursByDay = new Map(hoursSource.map((wh) => [wh.dayOfWeek, wh]));
+  /**
+   * When the shop is open: the union of everybody's hours, not one person's.
+   *
+   * It used to read `staff[0].workingHours` — the first professional
+   * alphabetically — and publish that as the opening hours of the business. A
+   * barbershop with three barbers advertised Ana's schedule, so the days Ana
+   * was off read "Cerrado" while the place was open.
+   */
+  const hoursByDay = new Map<number, { startTime: string; endTime: string }>();
+
+  for (const member of staff) {
+    for (const wh of member.workingHours) {
+      const current = hoursByDay.get(wh.dayOfWeek);
+
+      hoursByDay.set(wh.dayOfWeek, {
+        startTime: current && current.startTime < wh.startTime ? current.startTime : wh.startTime,
+        endTime: current && current.endTime > wh.endTime ? current.endTime : wh.endTime,
+      });
+    }
+  }
+
+  const hasPublishedHours = hoursByDay.size > 0;
 
   const quickInfoItems = [
     business.phone && {
@@ -236,6 +263,21 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
       icon: MessageCircle,
       label: "WhatsApp",
       href: `https://wa.me/${business.whatsapp.replace(/\D/g, "")}`,
+    },
+    // Both of these were filled in by the owner in the panel and thrown away
+    // here: `email` arrived as a prop and was never read, `website` was not even
+    // passed. Somebody typing their data into a form expects it to show up.
+    business.email && {
+      icon: Mail,
+      label: business.email,
+      href: `mailto:${business.email}`,
+    },
+    business.website && {
+      icon: Globe,
+      label: "Sitio web",
+      href: business.website.startsWith("http")
+        ? business.website
+        : `https://${business.website}`,
     },
     {
       icon: CalendarCheck,
@@ -390,9 +432,14 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {category.services.map((service) => (
-                    <div
+                    // Clicking a service starts the booking on that service.
+                    // The wizard already read `?serviceId=` and skipped its
+                    // first step; the cards just never linked anywhere, so the
+                    // most obvious click on the page did nothing.
+                    <Link
                       key={service.id}
-                      className="bp-service-card opacity-0 glass rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg group"
+                      href={`/${business.slug}/reservar?serviceId=${service.id}`}
+                      className="bp-service-card opacity-0 glass rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       style={{ "--tw-shadow-color": `${primary}10` } as React.CSSProperties}
                     >
                       <div className="flex items-start gap-3 p-5">
@@ -427,7 +474,7 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -487,7 +534,7 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
       )}
 
       {/* ─── Horarios ─── */}
-      {hoursSource.length > 0 && (
+      {hasPublishedHours && (
         <section className="max-w-4xl mx-auto px-4 mb-16">
           <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
             <span style={gradientTextStyle}>Horarios</span>
@@ -582,6 +629,37 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
         </section>
       )}
 
+      {/* ─── Política de cancelación ─── */}
+      {/*
+        Stored since the beginning and never rendered anywhere. It is exactly
+        what a person wants to read *before* booking — whether they can cancel,
+        and until when — not after the fact.
+      */}
+      {business.cancellationPolicy && (
+        <section className="max-w-4xl mx-auto px-4 mb-16">
+          <div className="glass rounded-xl p-5 sm:p-6">
+            <h2 className="flex items-center gap-2 font-heading font-semibold mb-2">
+              <Info className="w-4 h-4 text-primary shrink-0" />
+              Cancelaciones
+            </h2>
+            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+              {business.cancellationPolicy}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ─── Footer ─── */}
+      <footer className="max-w-4xl mx-auto px-4 pb-28 md:pb-16">
+        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground text-center sm:text-left">
+            {business.name}
+            {business.city ? ` · ${business.city}` : ""}
+          </p>
+          <ShareButton name={business.name} />
+        </div>
+      </footer>
+
       {/* ─── Floating Mobile CTA ─── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
         <Link
@@ -593,5 +671,46 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
         </Link>
       </div>
     </div>
+  );
+}
+
+/**
+ * Sharing the page.
+ *
+ * The whole point of a business having a link is passing it around, and there
+ * was no way to do it from the page. Uses the native share sheet where there is
+ * one — which on a phone is what people expect — and falls back to copying.
+ */
+function ShareButton({ name }: { name: string }) {
+  async function share() {
+    const url = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: name, url });
+        return;
+      } catch {
+        // The person dismissed the sheet. Nothing to report.
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("No pudimos copiar el link");
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={share}
+      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+    >
+      <Share2 className="w-4 h-4" />
+      Compartir
+    </button>
   );
 }

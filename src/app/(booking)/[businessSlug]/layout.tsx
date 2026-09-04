@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getBusinessProfile } from "@/lib/booking/business-page";
 import { safeImageUrl } from "@/lib/images";
 import { notFound } from "next/navigation";
-import { hexToHsl } from "@/lib/utils";
+import { contrastColor, isHexColor } from "@/lib/utils";
 import Image from "next/image";
 
 export default async function BookingLayout({
@@ -21,22 +21,31 @@ export default async function BookingLayout({
 
   if (!business) notFound();
 
-  // Inject per-business CSS custom properties
-  const brandStyle = {
-    "--business-primary": business.primaryColor || "#6366f1",
-    "--business-accent": business.accentColor || "#22d3ee",
-  } as React.CSSProperties;
+  // The business's palette, applied to the real Tailwind tokens.
+  //
+  // This used to write `hexToHsl(...)` into `--primary` — the Tailwind v3 token
+  // format, `"142 71% 45%"` — over a v4 theme whose tokens hold actual colours.
+  // The result was an invalid declaration that the browser dropped, so every
+  // `bg-primary`, `text-primary` and `border-primary` on the public page and in
+  // the booking wizard painted nothing at all. Neither the business's colour nor
+  // Jiku's: nothing.
+  const primary = isHexColor(business.primaryColor) ? business.primaryColor : null;
+  const accent = isHexColor(business.accentColor) ? business.accentColor : null;
 
-  // Override Tailwind --primary so all bg-primary/text-primary use business color
-  const primaryHsl = business.primaryColor ? hexToHsl(business.primaryColor) : null;
+  const brandStyle = {
+    ...(primary && {
+      "--primary": primary,
+      "--primary-foreground": contrastColor(primary),
+      "--ring": primary,
+    }),
+    ...(accent && {
+      "--accent": accent,
+      "--accent-foreground": contrastColor(accent),
+    }),
+  } as React.CSSProperties;
 
   return (
     <div style={brandStyle} className="min-h-screen">
-      {primaryHsl && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          :root { --primary: ${primaryHsl}; }
-        ` }} />
-      )}
       {/* Minimal header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">

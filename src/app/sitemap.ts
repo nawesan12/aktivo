@@ -37,7 +37,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const businesses = await db.business.findMany({
-      where: { isActive: true },
+      // The same condition the directory uses. Without it the sitemap offered
+      // Google the profile of every business that signed up and never finished
+      // setting itself up — pages with nothing to book.
+      where: {
+        isActive: true,
+        services: { some: { isActive: true } },
+        staff: { some: { isActive: true } },
+      },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
       // Search engines cap sitemaps at 50k URLs anyway; the bound is here so
@@ -45,12 +52,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 5000,
     });
 
-    businessPages = businesses.map((business) => ({
-      url: appUrl(`/${business.slug}`),
-      lastModified: business.updatedAt,
-      changeFrequency: "daily" as const,
-      priority: 0.7,
-    }));
+    businessPages = businesses.flatMap((business) => [
+      {
+        url: appUrl(`/${business.slug}`),
+        lastModified: business.updatedAt,
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      },
+      // The page somebody searching "reservar turno en X" actually wants.
+      {
+        url: appUrl(`/${business.slug}/reservar`),
+        lastModified: business.updatedAt,
+        changeFrequency: "daily" as const,
+        priority: 0.6,
+      },
+    ]);
   } catch {
     // DB unavailable at build time — static pages only
   }

@@ -58,9 +58,22 @@ export async function searchBusinesses({
     staff: { some: { isActive: true } },
   };
 
-  if (q) where.name = { contains: q, mode: "insensitive" };
-  if (city) where.city = city;
-  if (province) where.province = province;
+  // The box says "por nombre o servicio" and only searched the name. Somebody
+  // typing "corte de barba" got nothing, from a directory full of barbershops
+  // that do exactly that.
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+      { services: { some: { isActive: true, name: { contains: q, mode: "insensitive" } } } },
+    ];
+  }
+
+  // `contains`, not equality: the city arrives as the visitor typed it, and
+  // "buenos aires" matched nothing against "Buenos Aires".
+  if (city) where.city = { contains: city, mode: "insensitive" };
+  if (province) where.province = { contains: province, mode: "insensitive" };
+
   if (category) {
     where.services = {
       some: {
