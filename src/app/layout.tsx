@@ -35,6 +35,17 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  /**
+   * Lets the page reach under the notch and the home indicator, which is what
+   * makes `env(safe-area-inset-*)` report anything other than zero. Without it
+   * the panel header sat behind the iPhone status bar — the icons looked
+   * shoved up against the clock and out of line with each other — and an
+   * installed PWA, which fills the whole screen, had it worse.
+   *
+   * The insets are then paid back as padding, in `globals.css` and on the two
+   * headers that sit at the top of a screen.
+   */
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#09090b" },

@@ -177,6 +177,7 @@ model User {
   ownedGroups             BusinessGroup[]
   // Client UX
   notificationPreferences NotificationPreference[]
+  memberships             Membership[]
 
   @@index([email])
 }
@@ -268,6 +269,9 @@ model Business {
   notificationPreferences NotificationPreference[]
   coupons                 Coupon[]
   referrals               Referral[]
+  membershipPlans         MembershipPlan[]
+  memberships             Membership[]
+  membershipCredits       MembershipCredit[]
 
   @@index([slug])
   @@index([groupId])
@@ -528,17 +532,22 @@ model Appointment {
   // Reminders (F4)
   reminder24hSentAt     DateTime?
   reminder1hSentAt      DateTime?
+  /// Set when this visit was paid for with a membership credit rather than
+  /// money. Kept on the appointment so cancelling it can give the credit back.
+  membershipId          String?
 
-  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  service       Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  staff         StaffMember    @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  guestClient   GuestClient?   @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
-  payment       Payment?
-  notifications Notification[]
+  business          Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  service           Service            @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staff             StaffMember        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestClient       GuestClient?       @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
+  membership        Membership?        @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  membershipCredits MembershipCredit[]
+  payment           Payment?
+  notifications     Notification[]
   // Sprint 7
-  review        Review?
-  reviewToken   ReviewToken?
+  review            Review?
+  reviewToken       ReviewToken?
 
   @@index([businessId, dateTime])
   @@index([staffId, dateTime])
@@ -574,6 +583,7 @@ model GuestClient {
   campaignExecutions      CampaignExecution[]
   // Client UX
   notificationPreferences NotificationPreference[]
+  memberships             Membership[]
 
   @@unique([businessId, phone])
   @@index([businessId])
@@ -1147,4 +1157,104 @@ model BusinessPhoto {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId, sortOrder])
+}
+
+// ──────────────────────────────────────────
+// Memberships
+//
+// A shop selling "cuatro cortes al mes por $X" instead of charging per visit.
+// It is the one thing a barbershop asks for that turns a good month into a
+// predictable one, and Jiku had no way to express it.
+// ──────────────────────────────────────────
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+/**
+ * What a business sells: a bundle of visits over a period.
+ */
+model MembershipPlan {
+  id             String   @id @default(cuid())
+  businessId     String
+  name           String
+  description    String?  @db.Text
+  price          Decimal  @db.Decimal(10, 2)
+  /// Visits granted each period. Zero means the plan is only about its perks.
+  includedVisits Int      @default(0)
+  durationDays   Int      @default(30)
+  /// How far ahead a member may book before everyone else can.
+  priorityDays   Int      @default(0)
+  /// Free-form perks shown on the public page, one string per line.
+  benefits       String[] @default([])
+  /// Cap on active members. Null is no cap.
+  maxMembers     Int?
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+
+  @@unique([businessId, name])
+  @@index([businessId, isActive, sortOrder])
+}
+
+/**
+ * One client's subscription to a plan, for one period.
+ */
+model Membership {
+  id            String           @id @default(cuid())
+  businessId    String
+  planId        String
+  userId        String?
+  guestClientId String?
+  startDate     DateTime         @default(now())
+  endDate       DateTime
+  status        MembershipStatus @default(ACTIVE)
+  notes         String?          @db.Text
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  business     Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  plan         MembershipPlan     @relation(fields: [planId], references: [id])
+  user         User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestClient  GuestClient?       @relation(fields: [guestClientId], references: [id], onDelete: Cascade)
+  credits      MembershipCredit[]
+  appointments Appointment[]
+
+  @@index([businessId, status, endDate])
+  @@index([userId])
+  @@index([guestClientId])
+}
+
+/**
+ * Every movement of a membership's visits.
+ * The balance is the sum of this table, not a column on `Membership`. A counter
+ * and a history are two records of the same fact and they drift: the first
+ * concurrent booking that increments one without writing the other leaves a
+ * member with visits nobody can account for, and no way to find out which is
+ * right.
+ */
+model MembershipCredit {
+  id            String   @id @default(cuid())
+  businessId    String
+  membershipId  String
+  /// Positive grants visits, negative spends them.
+  amount        Int
+  reason        String?
+  appointmentId String?
+  /// The panel user behind a manual adjustment. Null when the system did it.
+  createdById   String?
+  createdAt     DateTime @default(now())
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  membership  Membership   @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([membershipId])
+  @@index([businessId, createdAt])
 }

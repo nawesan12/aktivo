@@ -46,9 +46,9 @@ export default async function BookingLayout({
   } as React.CSSProperties;
 
   return (
-    <div style={brandStyle} className="min-h-screen">
+    <div style={brandStyle} className="min-h-screen flex flex-col">
       {/* Minimal header */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass">
+      <header className="fixed top-0 left-0 right-0 z-50 glass safe-top safe-x">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link
             href={`/${business.slug}`}
@@ -74,14 +74,16 @@ export default async function BookingLayout({
           </Link>
         </div>
       </header>
-      <main id="contenido" className="pt-14">{children}</main>
+      <main id="contenido" className="flex-1 pt-[calc(3.5rem+env(safe-area-inset-top))]">
+        {children}
+      </main>
 
       {/* "Marca blanca" is sold as part of the top plan and until now removed
           nothing, because there was no Jiku anywhere on the page to remove.
           This is the thing it takes away: a single line of credit at the foot
           of the page, gone for whoever pays for the plan that promises it. */}
       {!PLAN_LIMITS[business.plan].whiteLabel && (
-        <footer className="py-8 text-center">
+        <footer className="py-8 text-center safe-bottom">
           <a
             href="https://jikuapp.com"
             target="_blank"

@@ -89,7 +89,7 @@ export function StepService({ slug }: { slug: string }) {
   return (
     <div>
       <h2 className="text-xl font-heading font-bold mb-1">Elegir servicio</h2>
-      <p className="text-sm text-muted-foreground mb-6">Selecciona el servicio que necesitas</p>
+      <p className="text-sm text-muted-foreground mb-6">Elegí el servicio que buscás</p>
 
       {/* Category tabs */}
       {showTabs && (

@@ -25,7 +25,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border bg-background/80 backdrop-blur-xl">
+      <header className="border-b border-border bg-background/80 backdrop-blur-xl safe-top safe-x">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Not "/": a signed-in visitor is redirected off the landing, so
               the logo would have bounced them somewhere unexpected. */}

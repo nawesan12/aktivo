@@ -75,7 +75,7 @@ export function ReferralInput({ slug }: ReferralInputProps) {
                 setCode(e.target.value);
                 setError(null);
               }}
-              placeholder="Ingresa el código"
+              placeholder="Escribí el código"
               className="flex-1 px-3 py-2 text-sm rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <button

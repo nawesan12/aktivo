@@ -159,7 +159,7 @@ export function StepDatetime({ slug }: { slug: string }) {
                 available: (d) => availableDateSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
-                available: "font-bold relative after:content-[''] after:absolute after:bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-emerald-400",
+                available: "font-bold relative after:content-[''] after:absolute after:bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-primary",
               }}
               className="w-full"
             />
@@ -170,7 +170,7 @@ export function StepDatetime({ slug }: { slug: string }) {
         <div>
           {!selectedDate && (
             <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-muted-foreground">Selecciona una fecha para ver los horarios</p>
+              <p className="text-sm text-muted-foreground">Elegí un día y te muestro los horarios libres</p>
             </div>
           )}
 

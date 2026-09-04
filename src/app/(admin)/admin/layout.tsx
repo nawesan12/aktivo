@@ -52,7 +52,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        <header className="h-16 border-b border-border bg-background/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6">
+        <header className="safe-top safe-x border-b border-border bg-background/80 backdrop-blur-xl px-4 lg:px-6 flex flex-col justify-center min-h-16">
+          <div className="h-16 flex items-center justify-between">
           <div className="lg:hidden">
             <AdminMobileHeader />
           </div>
@@ -63,8 +64,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 back to /admin. */}
             <UserMenu links={[{ label: "Mi cuenta", href: "/mi-cuenta" }]} />
           </div>
+          </div>
         </header>
-        <main id="contenido" className="flex-1 p-4 lg:p-6">{children}</main>
+        <main id="contenido" className="flex-1 p-4 lg:p-6 safe-bottom">{children}</main>
       </div>
     </div>
   );

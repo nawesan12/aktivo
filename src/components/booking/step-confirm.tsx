@@ -135,7 +135,7 @@ export function StepConfirm({ slug }: { slug: string }) {
   return (
     <div>
       <h2 className="text-xl font-heading font-bold mb-1">Confirmar turno</h2>
-      <p className="text-sm text-muted-foreground mb-6">Revisa los detalles antes de confirmar</p>
+      <p className="text-sm text-muted-foreground mb-6">Revisá los detalles antes de confirmar</p>
 
       {/* Summary card */}
       <div className="glass rounded-xl p-6 space-y-4 mb-6">

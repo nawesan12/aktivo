@@ -10,12 +10,15 @@ export interface PlanLimits {
   advancedReports: boolean;
   multiLocation: boolean;
   whiteLabel: boolean;
+  /** Selling "cuatro cortes al mes" instead of charging per visit. */
+  memberships: boolean;
 }
 
 export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
   STARTER: {
     maxStaff: 1,
     maxAppointmentsPerMonth: 50,
+    memberships: false,
     mpPayments: false,
     crm: false,
     campaigns: false,
@@ -24,17 +27,34 @@ export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
     multiLocation: false,
     whiteLabel: false,
   },
+  /**
+   * The entry plan, deliberately sized for a shop that is starting out.
+   *
+   * It used to be three professionals and unlimited turnos, which is most of a
+   * busy barbershop — so nothing above it had a reason to exist. Two chairs and
+   * a real ceiling is the shape of a plan somebody grows out of, which is the
+   * point of an entry plan.
+   */
   PROFESSIONAL: {
-    maxStaff: 3,
-    maxAppointmentsPerMonth: null,
+    maxStaff: 2,
+    // About five turnos a day per chair. A shop working steadily passes it,
+    // and passing it is exactly when the next plan starts paying for itself.
+    maxAppointmentsPerMonth: 300,
     mpPayments: true,
     crm: true,
-    campaigns: true,
+    campaigns: false,
     widget: true,
-    advancedReports: true,
+    advancedReports: false,
     multiLocation: false,
     whiteLabel: false,
+    memberships: false,
   },
+  /**
+   * The plan a shop moves to because it makes them money, not because they ran
+   * out of seats: memberships turn a good month into a predictable one, and
+   * campaigns bring people back. Those are the reasons to pay more; a head
+   * count is a tax, not a benefit.
+   */
   ENTERPRISE: {
     maxStaff: null,
     maxAppointmentsPerMonth: null,
@@ -45,6 +65,7 @@ export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
     advancedReports: true,
     multiLocation: true,
     whiteLabel: true,
+    memberships: true,
   },
 };
 

@@ -897,11 +897,11 @@ export default function PresentacionPage() {
               </div>
               <div className="pc-period">ARS &middot; Facturaci&oacute;n mensual</div>
               <ul className="pc-features">
-                <li>&#10003; Hasta 3 profesionales</li>
-                <li>&#10003; Turnos ilimitados</li>
+                <li>&#10003; Hasta 2 profesionales</li>
+                <li>&#10003; 300 turnos por mes</li>
                 <li>&#10003; Cobros con Mercado Pago</li>
-                <li>&#10003; CRM + fidelizaci&oacute;n</li>
-                <li>&#10003; Reportes avanzados</li>
+                <li>&#10003; Ficha de cada cliente</li>
+                <li>&#10003; Bot&oacute;n de reservas en tu web</li>
               </ul>
             </div>
             <div className="pricing-card anim-card">
@@ -914,10 +914,10 @@ export default function PresentacionPage() {
               <div className="pc-period">ARS &middot; Facturaci&oacute;n mensual</div>
               <ul className="pc-features">
                 <li>&#10003; Todo lo del plan Inicial</li>
-                <li>&#10003; Profesionales ilimitados</li>
-                <li>&#10003; Multi-sucursal</li>
-                <li>&#10003; Marca blanca</li>
-                <li>&#10003; Soporte prioritario</li>
+                <li>&#10003; Membres&iacute;as: abono mensual</li>
+                <li>&#10003; Campa&ntilde;as para traerlos de vuelta</li>
+                <li>&#10003; Turnos y profesionales sin tope</li>
+                <li>&#10003; Sucursales y marca blanca</li>
               </ul>
             </div>
           </div>

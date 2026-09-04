@@ -113,11 +113,14 @@ export function NewAppointmentDialog({
       // actually landed on. And whether anything was emailed is said plainly —
       // a walk-in entered without an address gets nothing, and it is the owner
       // who then has to remember to remind them.
-      toast.success(
-        created.notified
-          ? `Turno cargado para ${created.clientName} con ${created.staffName}. Le mandamos la confirmación.`
-          : `Turno cargado para ${created.clientName} con ${created.staffName}. Sin email, no le llega confirmación.`
-      );
+      const base = `Turno cargado para ${created.clientName} con ${created.staffName}.`;
+      const abono = created.usedMembership
+        ? ` Va con su abono: le quedan ${created.membershipRemaining}.`
+        : "";
+      const aviso = created.notified
+        ? " Le mandamos la confirmación."
+        : " Sin email, no le llega confirmación.";
+      toast.success(base + abono + aviso);
       // The slot this turno just took is still in SWR's cache, and an owner
       // booking two clients in a row reopens this within seconds — they would
       // be offered the time they just filled, and the insert would come back

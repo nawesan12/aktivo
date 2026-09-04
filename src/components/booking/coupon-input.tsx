@@ -121,7 +121,7 @@ export function CouponInput({ slug, serviceId }: CouponInputProps) {
                     setCode(e.target.value.toUpperCase());
                     setError(null);
                   }}
-                  placeholder="Ingresa tu código"
+                  placeholder="Escribí tu código"
                   className="flex-1 px-3 py-2 text-sm rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
                 <button

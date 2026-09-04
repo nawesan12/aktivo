@@ -24,6 +24,12 @@ import { toast } from "sonner";
 import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { NewAppointmentDialog } from "./new-appointment-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PermissionGate } from "@/components/auth/permission-gate";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { APPOINTMENT_STATUS_OPTIONS, isTerminal } from "@/lib/appointment-status";
@@ -73,7 +79,6 @@ export function AppointmentsTable({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -134,7 +139,6 @@ export function AppointmentsTable({
         toast.success("Estado actualizado");
         mutate();
         setSelectedApt(null);
-        setOpenMenu(null);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Error al actualizar");
       } finally {
@@ -316,64 +320,69 @@ export function AppointmentsTable({
                       <StatusBadge status={apt.status} />
                     </td>
                     <td className="p-3">
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenMenu(openMenu === apt.id ? null : apt.id)}
-                          disabled={mutatingId === apt.id}
-                          className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50"
-                        >
-                          {mutatingId === apt.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <MoreHorizontal className="w-4 h-4" />
+                      {/*
+                        A portalled menu, not an absolutely positioned div.
+
+                        The old one lived inside the table's scroll container.
+                        `overflow-x: auto` clips vertically too — the spec turns
+                        the other axis into `auto` as well — so the menu opened
+                        underneath the row and was cut off by the bottom of the
+                        card. On a phone, where the card is short, that meant
+                        pressing the three dots appeared to do nothing at all:
+                        every action on every turno was unreachable.
+                      */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            disabled={mutatingId === apt.id}
+                            aria-label={`Acciones del turno de ${apt.clientName}`}
+                            className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center disabled:opacity-50"
+                          >
+                            {mutatingId === apt.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <MoreHorizontal className="w-4 h-4" />
+                            )}
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem onSelect={() => setSelectedApt(apt)}>
+                            <Eye className="w-3.5 h-3.5" /> Ver detalle
+                          </DropdownMenuItem>
+                          {(apt.status === "PENDING" || apt.status === "PENDING_PAYMENT") && (
+                            <DropdownMenuItem
+                              onSelect={() => handleStatusChange(apt.id, "CONFIRMED")}
+                              className="text-info-foreground"
+                            >
+                              <Check className="w-3.5 h-3.5" /> Confirmar
+                            </DropdownMenuItem>
                           )}
-                        </button>
-                        {openMenu === apt.id && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-                            <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border border-border bg-card shadow-lg py-1">
-                              <button
-                                onClick={() => { setSelectedApt(apt); setOpenMenu(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                          {apt.status === "CONFIRMED" && (
+                            <>
+                              <DropdownMenuItem
+                                onSelect={() => handleStatusChange(apt.id, "COMPLETED")}
+                                className="text-success-foreground"
                               >
-                                <Eye className="w-3.5 h-3.5" /> Ver detalle
-                              </button>
-                              {(apt.status === "PENDING" || apt.status === "PENDING_PAYMENT") && (
-                                <button
-                                  onClick={() => handleStatusChange(apt.id, "CONFIRMED")}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-info-foreground"
-                                >
-                                  <Check className="w-3.5 h-3.5" /> Confirmar
-                                </button>
-                              )}
-                              {apt.status === "CONFIRMED" && (
-                                <>
-                                  <button
-                                    onClick={() => handleStatusChange(apt.id, "COMPLETED")}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-success-foreground"
-                                  >
-                                    <CheckCheck className="w-3.5 h-3.5" /> Completar
-                                  </button>
-                                  <button
-                                    onClick={() => handleNoShow(apt.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-neutral-foreground"
-                                  >
-                                    <UserX className="w-3.5 h-3.5" /> No asistió
-                                  </button>
-                                </>
-                              )}
-                              {!isTerminal(apt.status) && (
-                                <button
-                                  onClick={() => handleStatusChange(apt.id, "CANCELLED")}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-danger-foreground"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" /> Cancelar
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
+                                <CheckCheck className="w-3.5 h-3.5" /> Completar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => handleNoShow(apt.id)}
+                                className="text-neutral-foreground"
+                              >
+                                <UserX className="w-3.5 h-3.5" /> No asistió
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {!isTerminal(apt.status) && (
+                            <DropdownMenuItem
+                              onSelect={() => handleStatusChange(apt.id, "CANCELLED")}
+                              className="text-danger-foreground"
+                            >
+                              <XCircle className="w-3.5 h-3.5" /> Cancelar
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))

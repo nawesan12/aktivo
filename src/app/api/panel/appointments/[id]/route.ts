@@ -57,6 +57,11 @@ export async function PATCH(
 
     // Send notification on cancellation
     if (status === "CANCELLED") {
+      // A visit paid with an abono goes back to the member. Without this they
+      // pay for the cancellation twice: they lose the slot and the visit.
+      const { refundVisit } = await import("@/lib/memberships");
+      await refundVisit(id);
+
       const clientName = appointment.user?.name || appointment.guestClient?.name || "Cliente";
       const clientEmail = appointment.user?.email || appointment.guestClient?.email;
 

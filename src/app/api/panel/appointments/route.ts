@@ -14,6 +14,7 @@ import { checkAppointmentLimit } from "@/lib/subscription/enforcement";
 import { normalisePhone, phoneLookupVariants } from "@/lib/phone";
 import { sendNotification } from "@/lib/notifications";
 import { logAction } from "@/lib/audit";
+import { getActiveMembership, spendVisit } from "@/lib/memberships";
 
 export async function GET(request: NextRequest) {
   try {
@@ -180,11 +181,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Does this person have visits on an abono? Read before the transaction so
+    // the write below stays short; the balance is re-checked inside it, which
+    // is what decides the last visit when two bookings arrive together.
+    const membership = await getActiveMembership(session.businessId, {
+      guestClientId: guestClient.id,
+    });
+
     // The write, on its own, so the exclusion constraint has the last word: if
     // someone booked this slot online a second ago, this insert loses and
     // `handleApiError` turns it into the same 409 the wizard shows.
-    const appointment = await db.$transaction((tx) =>
-      tx.appointment.create({
+    const { appointment, usedMembership } = await db.$transaction(async (tx) => {
+      const created = await tx.appointment.create({
         data: {
           businessId: session.businessId,
           serviceId: input.serviceId,
@@ -199,8 +207,27 @@ export async function POST(request: NextRequest) {
           reminder24hSentAt:
             slot.time.getTime() - Date.now() < 25 * 60 * 60 * 1000 ? new Date() : null,
         },
-      })
-    );
+      });
+
+      if (!membership || membership.remaining < 1) {
+        return { appointment: created, usedMembership: false };
+      }
+
+      const spent = await spendVisit(tx, {
+        businessId: session.businessId,
+        membershipId: membership.membershipId,
+        appointmentId: created.id,
+      });
+
+      if (spent) {
+        await tx.appointment.update({
+          where: { id: created.id },
+          data: { membershipId: membership.membershipId },
+        });
+      }
+
+      return { appointment: created, usedMembership: spent };
+    });
 
     await logAction({
       businessId: session.businessId,
@@ -235,6 +262,10 @@ export async function POST(request: NextRequest) {
         id: appointment.id,
         staffName: assignedStaff.name,
         clientName: guestClient.name,
+        // Whether the visit came off an abono, so the panel can say so instead
+        // of the owner charging someone who already paid for the month.
+        usedMembership,
+        membershipRemaining: usedMembership && membership ? membership.remaining - 1 : null,
         // Said back so the panel can tell the owner whether the client will
         // hear about it, instead of implying an email that never goes out.
         notified: Boolean(guestClient.email),

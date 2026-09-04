@@ -14,7 +14,8 @@ export function Topbar() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="h-16 border-b border-border bg-background/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6">
+    <header className="safe-top safe-x border-b border-border bg-background/80 backdrop-blur-xl px-4 lg:px-6">
+      <div className="h-16 flex items-center justify-between">
       {/* Left */}
       <div className="flex items-center gap-3">
         <Button
@@ -62,6 +63,7 @@ export function Topbar() {
             { label: "Configuración", href: "/panel/configuracion" },
           ]}
         />
+        </div>
       </div>
     </header>
   );

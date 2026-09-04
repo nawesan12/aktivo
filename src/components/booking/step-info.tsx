@@ -40,7 +40,7 @@ export function StepInfo() {
     <div>
       <h2 className="text-xl font-heading font-bold mb-1">Tus datos</h2>
       <p className="text-sm text-muted-foreground mb-6">
-        {isLoggedIn ? "Confirma tus datos de contacto" : "Necesitamos tus datos para confirmar el turno"}
+        {isLoggedIn ? "Confirmá tus datos de contacto" : "Necesitamos tus datos para confirmar el turno"}
       </p>
 
       {/* Login suggestion for guests */}

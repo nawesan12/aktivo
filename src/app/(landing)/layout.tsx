@@ -37,7 +37,7 @@ export default function LandingLayout({
           billingDuration: "P1M",
         },
         description:
-          "Hasta 3 profesionales, turnos ilimitados, confirmaciones por email, cobros con MercadoPago",
+          "Hasta 2 profesionales, 300 turnos por mes, confirmaciones por email, cobros con MercadoPago",
       },
       {
         "@type": "Offer",

@@ -184,7 +184,7 @@ export function RescheduleModal({
             {!selectedDate && (
               <div className="flex items-center justify-center h-full">
                 <p className="text-sm text-muted-foreground">
-                  Selecciona una fecha para ver los horarios
+                  Elegí un día y te muestro los horarios libres
                 </p>
               </div>
             )}

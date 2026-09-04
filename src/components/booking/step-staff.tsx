@@ -56,7 +56,7 @@ export function StepStaff({ slug }: { slug: string }) {
   return (
     <div>
       <h2 className="text-xl font-heading font-bold mb-1">Elegir profesional</h2>
-      <p className="text-sm text-muted-foreground mb-6">Selecciona quien te atendera</p>
+      <p className="text-sm text-muted-foreground mb-6">Elegí con quién te querés atender</p>
 
       <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* "Any professional" option */}

@@ -103,8 +103,16 @@ function Calendar({
           "text-[0.8rem] text-muted-foreground select-none",
           defaultClassNames.week_number
         ),
+        // An explicit height instead of `aspect-square h-full`.
+        //
+        // Safari resolved that pair differently from Chromium inside the flex
+        // week row: the cells came out taller than the row the container had
+        // sized itself for, so the last week of the month rendered below the
+        // card's bottom border, on top of the text underneath. Two engines, two
+        // layouts, and only one of them was ever looked at. `--cell-size` is
+        // already the unit everything else in here is measured in.
         day: cn(
-          "group/day relative aspect-square h-full w-full p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-md",
+          "group/day relative h-(--cell-size) min-w-0 flex-1 p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-md",
           props.showWeekNumber
             ? "[&:nth-child(2)[data-selected=true]_button]:rounded-l-md"
             : "[&:first-child[data-selected=true]_button]:rounded-l-md",
