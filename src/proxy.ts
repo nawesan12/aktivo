@@ -13,7 +13,7 @@ import { authConfig } from "@/lib/auth.config";
 const { auth } = NextAuth(authConfig);
 
 type AuthedRequest = NextRequest & {
-  auth?: { user?: { role?: string } };
+  auth?: { user?: { role?: string; businessId?: string | null } };
 };
 
 export default auth((request: NextRequest) => {
@@ -56,6 +56,16 @@ export default auth((request: NextRequest) => {
     return NextResponse.redirect(url);
   }
 
+  // The panel is a business's panel: everything under it reads the session's
+  // business. A platform administrator has none of their own, so landing them
+  // here after login only produced "algo salió mal" — the session was valid,
+  // there was simply nothing to show.
+  if (isOnPanel && isAuthenticated && !user?.businessId) {
+    const url = request.nextUrl.clone();
+    url.pathname = user?.role === "PLATFORM_ADMIN" ? "/admin" : "/mi-cuenta/negocios";
+    return NextResponse.redirect(url);
+  }
+
   // Redirect authenticated users away from auth pages
   const isOnAuth =
     pathname.startsWith("/iniciar-sesion") ||
@@ -65,7 +75,7 @@ export default auth((request: NextRequest) => {
 
   if (isOnAuth && isAuthenticated) {
     const url = request.nextUrl.clone();
-    url.pathname = "/panel";
+    url.pathname = user?.role === "PLATFORM_ADMIN" ? "/admin" : "/panel";
     return NextResponse.redirect(url);
   }
 

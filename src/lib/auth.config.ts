@@ -27,7 +27,8 @@ export const authConfig = {
       }
 
       if (isOnAuth && isLoggedIn) {
-        return Response.redirect(new URL("/panel", nextUrl));
+        const home = auth?.user?.role === "PLATFORM_ADMIN" ? "/admin" : "/panel";
+        return Response.redirect(new URL(home, nextUrl));
       }
 
       return true;
