@@ -7,7 +7,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import { getPlatformPreApproval, getAuthorizedPayment } from "@/lib/subscription/mp-platform";
 import { GRACE_PERIOD_DAYS } from "@/lib/subscription/config";
 import { addDays } from "date-fns";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { env } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 import { runInBackground } from "@/lib/background";
@@ -45,20 +45,39 @@ function verifyWebhookSignature(request: NextRequest, body: string): boolean {
   const v1 = parts["v1"];
   if (!ts || !v1) return false;
 
-  // Extract data.id from body for the manifest
-  let dataId = "";
+  // The id comes from the query string when MercadoPago puts it there, which is
+  // what its own documentation signs. Reading it only from the body meant a
+  // notification whose body shape differed at all — and MercadoPago has more
+  // than one — produced a manifest that could never match.
+  const queryId =
+    request.nextUrl.searchParams.get("data.id") ?? request.nextUrl.searchParams.get("id");
+
+  let bodyId = "";
   try {
     const parsed = JSON.parse(body);
-    dataId = parsed.data?.id ? String(parsed.data.id) : "";
+    bodyId = parsed.data?.id ? String(parsed.data.id) : "";
+  } catch {
+    // A body we cannot read is not automatically a failure: the manifest may
+    // still be built from the query string.
+  }
+
+  // Lowercased, as the documentation requires for alphanumeric ids.
+  const dataId = (queryId ?? bodyId).toLowerCase();
+
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+  const expected = createHmac("sha256", secret).update(manifest).digest();
+
+  let received: Buffer;
+  try {
+    received = Buffer.from(v1, "hex");
   } catch {
     return false;
   }
 
-  // Build manifest: id:[data.id];request-id:[x-request-id];ts:[ts];
-  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-  const hmac = createHmac("sha256", secret).update(manifest).digest("hex");
-
-  return hmac === v1;
+  // Constant time, so the comparison cannot leak the signature one byte at a
+  // time to somebody willing to send enough requests.
+  if (received.length !== expected.length) return false;
+  return timingSafeEqual(received, expected);
 }
 
 export async function POST(request: NextRequest) {
