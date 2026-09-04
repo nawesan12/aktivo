@@ -42,6 +42,8 @@ interface StaffMember {
 }
 
 export function StaffManager() {
+  const { data: settingsData } = useSWR<{ business?: { id: string } }>("/api/panel/settings");
+  const businessId = settingsData?.business?.id ?? "";
   const { data, isLoading, mutate } = useSWR("/api/panel/staff");
   const { data: servicesData } = useSWR("/api/panel/services");
 
@@ -236,8 +238,9 @@ export function StaffManager() {
                 <label className="text-sm font-medium mb-1.5 block">Foto</label>
                 <ImageUploader
                   value={staffImage || null}
-                  onChange={setStaffImage}
-                  folder="jiku/staff"
+                  onChange={(url) => setStaffImage(url ?? "")}
+                  ownerId={businessId}
+                  kind="staff"
                   aspectRatio="1:1"
                 />
               </div>

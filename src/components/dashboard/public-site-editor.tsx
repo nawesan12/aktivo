@@ -16,7 +16,6 @@ import {
   Copy,
 } from "lucide-react";
 import { ImageUploader } from "@/components/upload/image-uploader";
-import { getUploadFolder } from "@/lib/cloudinary";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { errorMessage, messageOf } from "@/lib/api-message";
 import { contrastColor, isHexColor } from "@/lib/utils";
@@ -48,6 +47,7 @@ interface Photo {
 }
 
 interface BusinessForm {
+  id: string;
   slug: string;
   name: string;
   logo: string;
@@ -63,6 +63,7 @@ interface BusinessForm {
 }
 
 const EMPTY: BusinessForm = {
+  id: "",
   slug: "",
   name: "",
   logo: "",
@@ -87,6 +88,7 @@ export function PublicSiteEditor() {
     if (!data?.business) return;
     const b = data.business;
     setForm({
+      id: b.id ?? "",
       slug: b.slug ?? "",
       name: b.name ?? "",
       logo: b.logo ?? "",
@@ -256,7 +258,8 @@ export function PublicSiteEditor() {
             <ImageUploader
               value={form.logo || null}
               onChange={(url) => set("logo", url ?? "")}
-              folder={getUploadFolder(form.slug || "default", "business")}
+              ownerId={form.id}
+              kind="logo"
               aspectRatio="1:1"
             />
           </div>
@@ -265,14 +268,15 @@ export function PublicSiteEditor() {
             <ImageUploader
               value={form.coverImage || null}
               onChange={(url) => set("coverImage", url ?? "")}
-              folder={getUploadFolder(form.slug || "default", "business")}
+              ownerId={form.id}
+              kind="cover"
               aspectRatio="16:9"
             />
           </div>
         </div>
       </div>
 
-      <Gallery slug={form.slug} />
+      <Gallery businessId={form.id} />
 
       {/* Words */}
       <div className="glass rounded-xl p-6 space-y-4">
@@ -496,7 +500,7 @@ function Preview({
   );
 }
 
-function Gallery({ slug }: { slug: string }) {
+function Gallery({ businessId }: { businessId: string }) {
   const { data, mutate } = useSWR<{ data: Photo[]; max: number }>("/api/panel/mi-web/galeria");
   const [busy, setBusy] = useState(false);
 
@@ -572,7 +576,8 @@ function Gallery({ slug }: { slug: string }) {
           <ImageUploader
             value={null}
             onChange={add}
-            folder={getUploadFolder(slug || "default", "gallery")}
+            ownerId={businessId}
+            kind="gallery"
             aspectRatio="1:1"
           />
         </div>

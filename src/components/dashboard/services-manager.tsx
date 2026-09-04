@@ -51,6 +51,9 @@ export function ServicesManager() {
   const { data: servicesData, isLoading: loadingServices, mutate: mutateServices } = useSWR("/api/panel/services");
   const { data: categoriesData, mutate: mutateCategories } = useSWR("/api/panel/categories");
   const { data: staffData } = useSWR("/api/panel/staff");
+  // The uploader writes under the business's own folder, so it needs its id.
+  const { data: settingsData } = useSWR<{ business?: { id: string } }>("/api/panel/settings");
+  const businessId = settingsData?.business?.id ?? "";
 
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -301,8 +304,9 @@ export function ServicesManager() {
                 <label className="text-sm font-medium mb-1.5 block">Imagen</label>
                 <ImageUploader
                   value={serviceImage || null}
-                  onChange={setServiceImage}
-                  folder="jiku/services"
+                  onChange={(url) => setServiceImage(url ?? "")}
+                  ownerId={businessId}
+                  kind="service"
                   aspectRatio="16:9"
                 />
               </div>

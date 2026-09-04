@@ -6,13 +6,15 @@ const nextConfig: NextConfig = {
     // Only these hosts may be optimised. An image from anywhere else makes
     // `next/image` throw, which takes the whole page down with it — so the list
     // has to cover every source the product actually stores:
-    //   res.cloudinary.com   uploads from the panel
+    //   *.public.blob…      uploads from the panel, via Vercel Blob
+    //   res.cloudinary.com   uploads from before the move to Blob
     //   lh3 / avatars        profile pictures from Google and GitHub sign-in
     //
     // `images.unsplash.com` used to be here for the demo seed. It is gone: it
     // never appears in a real business's data, and leaving it open meant paying
     // to optimise arbitrary images from someone else's CDN.
     remotePatterns: [
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },

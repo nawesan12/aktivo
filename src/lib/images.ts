@@ -4,10 +4,14 @@
  * Must stay in sync with `images.remotePatterns` in `next.config.ts`.
  */
 const ALLOWED_HOSTS = new Set([
+  // Kept for anything uploaded before the move to Vercel Blob.
   "res.cloudinary.com",
   "lh3.googleusercontent.com",
   "avatars.githubusercontent.com",
 ]);
+
+/** Uploads live on a per-store subdomain, so the host is matched by suffix. */
+const ALLOWED_HOST_SUFFIXES = [".public.blob.vercel-storage.com"];
 
 /**
  * Returns the URL only if `next/image` can render it, and null otherwise.
@@ -26,7 +30,10 @@ export function safeImageUrl(url: string | null | undefined): string | null {
   if (url.startsWith("/")) return url;
 
   try {
-    return ALLOWED_HOSTS.has(new URL(url).hostname) ? url : null;
+    const { hostname } = new URL(url);
+    if (ALLOWED_HOSTS.has(hostname)) return url;
+    if (ALLOWED_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))) return url;
+    return null;
   } catch {
     return null;
   }

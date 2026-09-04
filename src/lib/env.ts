@@ -86,8 +86,15 @@ const baseSchema = z.object({
   KV_REST_API_TOKEN: z.string().optional(),
 
   // ── Images ──────────────────────────────────────────────────────────────
-  NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().optional(),
-  NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: z.string().optional(),
+  /**
+   * Vercel Blob, where uploaded images live. Vercel injects it once a Blob
+   * store is attached to the project; nothing about uploads works without it.
+   *
+   * It replaced Cloudinary, which needed two public variables, a hosted widget
+   * bundled into everyone's JavaScript, and an account. The browser now
+   * compresses to WebP and puts the file in the store directly.
+   */
+  BLOB_READ_WRITE_TOKEN: secret().optional(),
 });
 
 type BaseEnv = z.infer<typeof baseSchema>;
@@ -111,13 +118,6 @@ const GROUPS: {
     keys: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
   },
   { name: "Upstash Redis (Vercel)", keys: ["KV_REST_API_URL", "KV_REST_API_TOKEN"] },
-  {
-    name: "Cloudinary",
-    keys: [
-      "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
-      "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET",
-    ],
-  },
   { name: "MercadoPago (appointment payments)", keys: ["MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_WEBHOOK_SECRET"] },
   {
     name: "Platform billing",
@@ -308,7 +308,7 @@ export function integrationStatus() {
     platformBilling: Boolean(e.MP_PLATFORM_ACCESS_TOKEN),
     googleAuth: Boolean(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET),
     redisRateLimit: Boolean(redisCredentials()),
-    cloudinary: Boolean(e.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME),
+    uploads: Boolean(e.BLOB_READ_WRITE_TOKEN),
     cron: Boolean(e.CRON_SECRET),
     customDomains: Boolean(e.VERCEL_API_TOKEN && e.VERCEL_PROJECT_ID),
   };
