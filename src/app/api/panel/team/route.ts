@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { db } from "@/lib/db";
 import { logAction } from "@/lib/audit";
 import { sendInviteEmail } from "@/lib/notifications/invite-email";
@@ -10,7 +9,7 @@ import { handleApiError } from "@/lib/api-errors";
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "team:read");
+    await requireBusinessPermission(session, "team:read");
 
     const members = await db.userBusiness.findMany({
       where: { businessId: session.businessId },
@@ -44,7 +43,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "team:invite");
+    await requireBusinessPermission(session, "team:invite");
 
     const body = await request.json();
     const { email, role } = body;

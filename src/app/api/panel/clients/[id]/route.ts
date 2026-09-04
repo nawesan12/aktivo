@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(
@@ -10,7 +9,7 @@ export async function GET(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "clients:read");
+    await requireBusinessPermission(session, "clients:read");
 
     const { id } = await params;
 

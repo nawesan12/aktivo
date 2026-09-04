@@ -48,6 +48,18 @@ export class ConflictError extends AppError {
   }
 }
 
+/**
+ * The trial ran out and nobody subscribed. 402 rather than 403: it is not a
+ * permissions problem, and the interface has to tell them apart — one sends the
+ * user to the payment screen, the other means they should not be here at all.
+ */
+export class SubscriptionRequiredError extends AppError {
+  constructor(message = "Tu prueba gratis terminó. Suscribite para seguir operando.") {
+    super(message, 402);
+    this.name = "SubscriptionRequiredError";
+  }
+}
+
 export class PlanLimitError extends AppError {
   constructor(
     message = "Tu plan actual no incluye esta funcionalidad",
@@ -89,6 +101,13 @@ export function handleApiError(error: unknown, scope?: string): NextResponse {
   if (error instanceof PlanLimitError) {
     return NextResponse.json(
       { error: error.message, requiredPlan: error.requiredPlan, code: "PLAN_LIMIT" },
+      { status: error.statusCode }
+    );
+  }
+
+  if (error instanceof SubscriptionRequiredError) {
+    return NextResponse.json(
+      { error: error.message, code: "SUBSCRIPTION_REQUIRED" },
       { status: error.statusCode }
     );
   }

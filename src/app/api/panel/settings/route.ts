@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError, ValidationError } from "@/lib/api-errors";
 import { settingsSchema } from "@/lib/validations";
@@ -9,7 +8,7 @@ import { settingsSchema } from "@/lib/validations";
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "settings:read");
+    await requireBusinessPermission(session, "settings:read");
 
     const business = await db.business.findUnique({
       where: { id: session.businessId },
@@ -48,7 +47,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "settings:update");
+    await requireBusinessPermission(session, "settings:update");
 
     const body = await request.json();
     const parsed = settingsSchema.safeParse(body);

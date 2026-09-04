@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "services:read");
+    await requireBusinessPermission(session, "services:read");
 
     const categories = await db.serviceCategory.findMany({
       where: { businessId: session.businessId },
@@ -25,7 +24,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "services:create");
+    await requireBusinessPermission(session, "services:create");
 
     const body = await request.json();
     const { name } = body;

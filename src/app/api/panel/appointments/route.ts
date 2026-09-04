@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError } from "@/lib/api-errors";
 import { listAppointments } from "@/lib/panel/appointments";
 import { runInBackground } from "@/lib/background";
@@ -9,7 +8,7 @@ import { maybeTick } from "@/lib/jobs/tick";
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "appointments:read");
+    await requireBusinessPermission(session, "appointments:read");
 
     const { searchParams } = request.nextUrl;
 

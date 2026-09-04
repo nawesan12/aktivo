@@ -4,15 +4,27 @@ import { PlanLimitError } from "@/lib/api-errors";
 import { PLAN_LIMITS, isAtLeast } from "./config";
 import { startOfMonth, endOfMonth } from "date-fns";
 
+/** What a business gets while its trial is running: everything. */
+const TRIAL_PLAN: BusinessPlan = "ENTERPRISE";
+
 /**
  * Returns the effective plan for a business.
- * Checks subscription status — if no active subscription, falls back to STARTER.
+ *
+ * A live trial outranks the column: the whole point of the week is to show the
+ * product working, and a trial capped at one professional shows the wrong
+ * product. It doubles as the courtesy mechanism — extending `trialEndsAt` is
+ * how an account gets a plan without paying, and it survives this function
+ * instead of being silently reverted to STARTER on the next read.
  */
 export async function getPlanForBusiness(businessId: string): Promise<BusinessPlan> {
   const business = await db.business.findUniqueOrThrow({
     where: { id: businessId },
-    select: { plan: true },
+    select: { plan: true, trialEndsAt: true },
   });
+
+  if (business.trialEndsAt && business.trialEndsAt.getTime() > Date.now()) {
+    return TRIAL_PLAN;
+  }
 
   // STARTER doesn't require a subscription
   if (business.plan === "STARTER") {

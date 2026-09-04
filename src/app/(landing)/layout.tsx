@@ -1,5 +1,7 @@
 import { appUrl } from "@/lib/env";
 import { Providers } from "@/components/providers";
+import { PLAN_PRICES } from "@/lib/subscription/config";
+import { TRIAL_DAYS } from "@/lib/subscription/access";
 export default function LandingLayout({
   children,
 }: {
@@ -25,31 +27,31 @@ export default function LandingLayout({
     offers: [
       {
         "@type": "Offer",
-        name: "Starter",
-        price: "4990",
-        priceCurrency: "ARS",
+        name: "Inicial",
+        price: String(PLAN_PRICES.PROFESSIONAL.amount),
+        priceCurrency: PLAN_PRICES.PROFESSIONAL.currency,
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "4990",
-          priceCurrency: "ARS",
+          price: String(PLAN_PRICES.PROFESSIONAL.amount),
+          priceCurrency: PLAN_PRICES.PROFESSIONAL.currency,
           billingDuration: "P1M",
         },
         description:
-          "Turnos ilimitados, recordatorios por email, pagos con MercadoPago",
+          "Hasta 3 profesionales, turnos ilimitados, recordatorios por email, cobros con MercadoPago",
       },
       {
         "@type": "Offer",
-        name: "Professional",
-        price: "9990",
-        priceCurrency: "ARS",
+        name: "Completo",
+        price: String(PLAN_PRICES.ENTERPRISE.amount),
+        priceCurrency: PLAN_PRICES.ENTERPRISE.currency,
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "9990",
-          priceCurrency: "ARS",
+          price: String(PLAN_PRICES.ENTERPRISE.amount),
+          priceCurrency: PLAN_PRICES.ENTERPRISE.currency,
           billingDuration: "P1M",
         },
         description:
-          "Todo de Starter, staff ilimitado, CRM avanzado, branding personalizado, API access",
+          "Todo lo del plan Inicial, profesionales ilimitados, multi-sucursal, marca blanca",
       },
     ],
   };
@@ -68,10 +70,10 @@ export default function LandingLayout({
       },
       {
         "@type": "Question",
-        name: "¿El plan gratuito es realmente gratis?",
+        name: "¿Cómo es la prueba gratis?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Sí, 100% gratis para siempre. Sin tarjeta de crédito, sin pruebas que vencen. Incluye hasta 50 turnos por mes y 1 profesional.",
+          text: `Son ${TRIAL_DAYS} días con todas las funcionalidades desbloqueadas y sin tarjeta de crédito. Al terminar elegís un plan; si no elegís ninguno, seguís viendo toda tu información y tu página de reservas sigue funcionando.`,
         },
       },
       {

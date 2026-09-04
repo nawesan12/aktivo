@@ -150,3 +150,41 @@ export function requirePermission(role: UserRole | undefined, permission: Permis
     throw new ForbiddenError(`Permisos insuficientes: requiere ${permission}`);
   }
 }
+
+/**
+ * Permissions that only read. Everything else changes something, and changing
+ * things is what a subscription pays for.
+ *
+ * Listed by what they do rather than by suffix so that adding a permission
+ * forces a decision here instead of silently defaulting to "free".
+ */
+const READ_ONLY_PERMISSIONS = new Set<Permission>([
+  "appointments:read",
+  "services:read",
+  "staff:read",
+  "clients:read",
+  "clients:export",
+  "schedule:read",
+  "payments:read",
+  "notifications:read",
+  "reports:read",
+  "reports:export",
+  "settings:read",
+  "team:read",
+  "billing:read",
+  // Billing has to stay reachable: it is where they go to stop being blocked.
+  "billing:manage",
+  "audit:read",
+  "reviews:read",
+  "campaigns:read",
+  "noshow:read",
+  "group:read",
+  "group:reports",
+  "analytics:read",
+  "coupons:read",
+  "referrals:read",
+]);
+
+export function isReadOnly(permission: Permission): boolean {
+  return READ_ONLY_PERMISSIONS.has(permission);
+}

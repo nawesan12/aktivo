@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { staffSchema } from "@/lib/validations";
 import { handleApiError } from "@/lib/api-errors";
@@ -12,7 +11,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "staff:update");
+    await requireBusinessPermission(session, "staff:update");
 
     const { id } = await params;
     const body = await request.json();
@@ -73,7 +72,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "staff:delete");
+    await requireBusinessPermission(session, "staff:delete");
 
     const { id } = await params;
     const existing = await db.staffMember.findFirst({

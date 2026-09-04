@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { staffSchema } from "@/lib/validations";
 import { handleApiError } from "@/lib/api-errors";
@@ -10,7 +9,7 @@ import { checkStaffLimit } from "@/lib/subscription/enforcement";
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "staff:read");
+    await requireBusinessPermission(session, "staff:read");
 
     const staff = await db.staffMember.findMany({
       where: { businessId: session.businessId },
@@ -37,7 +36,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "staff:create");
+    await requireBusinessPermission(session, "staff:create");
     await checkStaffLimit(session.businessId);
 
     const body = await request.json();

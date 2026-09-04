@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
 
 export async function GET(request: Request) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "reports:read");
+    await requireBusinessPermission(session, "reports:read");
 
     const { searchParams } = new URL(request.url);
     const range = searchParams.get("range") || "30d";

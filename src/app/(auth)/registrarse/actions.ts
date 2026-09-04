@@ -5,6 +5,7 @@ import { registerSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/lib/auth";
 import { createLogger } from "@/lib/logger";
+import { trialEndsAtFromNow } from "@/lib/subscription/access";
 
 const log = createLogger("auth:register");
 
@@ -61,6 +62,7 @@ export async function registerUser(formData: {
         data: {
           name: businessName,
           slug,
+          trialEndsAt: trialEndsAtFromNow(),
         },
       });
 

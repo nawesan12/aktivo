@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError, NotFoundError, ValidationError } from "@/lib/api-errors";
 import { noteSchema } from "@/lib/validations";
 
@@ -31,7 +30,7 @@ export async function GET(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "clients:read");
+    await requireBusinessPermission(session, "clients:read");
     const { id } = await params;
 
     const user = await db.user.findUnique({ where: { id } });
@@ -59,7 +58,7 @@ export async function POST(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "clients:update");
+    await requireBusinessPermission(session, "clients:update");
     const { id } = await params;
 
     const body = await request.json();

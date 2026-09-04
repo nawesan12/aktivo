@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TRIAL_DAYS } from "@/lib/subscription/access";
 
 /**
  * Above-the-fold pitch. Server-rendered, so the headline is in the HTML.
@@ -23,7 +24,7 @@ export function Hero() {
             </p>
             <div className="hero-ctas">
               <Link href="/registrarse" className="btn btn-jade">
-                Probar 15 días gratis →
+                Probar {TRIAL_DAYS} días gratis →
               </Link>
               <a
                 href="#features"

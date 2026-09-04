@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { UserRole } from "@/generated/prisma/client";
 import { AuthError } from "@/lib/api-errors";
+import { requirePermission, isReadOnly, type Permission } from "@/lib/auth/rbac";
+import { assertBusinessCanWrite } from "@/lib/subscription/access";
 
 export interface SessionBusiness {
   userId: string;
@@ -69,4 +71,27 @@ export async function getSessionGroup(): Promise<SessionGroup | null> {
     groupName: group.name,
     businesses: group.businesses,
   };
+}
+
+/**
+ * The single gate for a panel request: may this role do this, and is this
+ * business still allowed to operate?
+ *
+ * Every route under /api/panel already went through `requirePermission`, so
+ * folding the subscription check in here is what makes the block real instead
+ * of a message on a screen anyone can skip by calling the API directly.
+ *
+ * Reads always pass. A business whose trial ran out keeps full visibility of
+ * its own data — locking someone out of their agenda because they did not pay
+ * is not leverage, it is hostage-taking.
+ */
+export async function requireBusinessPermission(
+  session: SessionBusiness,
+  permission: Permission
+): Promise<void> {
+  requirePermission(session.role, permission);
+
+  if (!isReadOnly(permission)) {
+    await assertBusinessCanWrite(session.businessId);
+  }
 }

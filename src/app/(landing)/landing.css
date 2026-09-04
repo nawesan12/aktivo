@@ -659,9 +659,17 @@
 }
 .jiku-landing .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-top: 64px;
+  margin-top: 40px;
+  max-width: 760px;
+  margin-inline: auto;
+}
+.jiku-landing .pricing-trial {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-muted);
 }
 .jiku-landing .price-card {
   background: var(--surface);

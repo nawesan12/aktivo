@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError, NotFoundError } from "@/lib/api-errors";
 import { getPlatformPreApproval } from "@/lib/subscription/mp-platform";
 import { logAction } from "@/lib/audit";
@@ -9,7 +8,7 @@ import { logAction } from "@/lib/audit";
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "billing:manage");
+    await requireBusinessPermission(session, "billing:manage");
 
     const body = await request.json().catch(() => ({}));
 

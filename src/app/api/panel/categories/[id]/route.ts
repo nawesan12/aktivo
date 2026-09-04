@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
 
@@ -11,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "services:update");
+    await requireBusinessPermission(session, "services:update");
 
     const { id } = await params;
     const body = await request.json();
@@ -53,7 +52,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "services:delete");
+    await requireBusinessPermission(session, "services:delete");
 
     const { id } = await params;
     const existing = await db.serviceCategory.findFirst({

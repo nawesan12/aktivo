@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { paymentConfigSchema } from "@/lib/validations";
 import { getMPClient } from "@/lib/mercadopago";
@@ -12,7 +11,7 @@ import { requirePlan } from "@/lib/subscription/enforcement";
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "payments:read");
+    await requireBusinessPermission(session, "payments:read");
 
     const settings = await db.businessSettings.findUnique({
       where: { businessId: session.businessId },
@@ -50,7 +49,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "payments:configure");
+    await requireBusinessPermission(session, "payments:configure");
     await requirePlan(session.businessId, "PROFESSIONAL");
 
     const body = await request.json();

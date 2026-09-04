@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "notifications:read");
+    await requireBusinessPermission(session, "notifications:read");
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

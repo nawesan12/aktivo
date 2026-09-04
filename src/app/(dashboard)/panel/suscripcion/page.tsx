@@ -20,14 +20,15 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-const PLANS = [
-  {
-    key: "PROFESSIONAL",
-    name: "Pro",
-    price: 4990,
-    period: "mes",
-    features: [
-      "Hasta 5 profesionales",
+/**
+ * Presentation only. Prices, names and limits come from the API — this file
+ * used to carry its own copy of them and they drifted apart from the backend.
+ */
+const PLAN_PRESENTATION: Record<string, { icon: typeof Zap; popular?: boolean; extras: string[] }> = {
+  PROFESSIONAL: {
+    icon: Zap,
+    popular: true,
+    extras: [
       "Turnos ilimitados",
       "Cobros con Mercado Pago",
       "CRM + fidelización",
@@ -35,24 +36,24 @@ const PLANS = [
       "Widget de reservas",
       "Reportes avanzados",
     ],
-    icon: Zap,
-    popular: true,
   },
-  {
-    key: "ENTERPRISE",
-    name: "Business",
-    price: 9990,
-    period: "mes",
-    features: [
-      "Profesionales ilimitados",
-      "Todo lo de Pro",
+  ENTERPRISE: {
+    icon: Crown,
+    extras: [
+      "Todo lo del plan Inicial",
       "Multi-sucursal",
       "Marca blanca",
       "Soporte prioritario",
     ],
-    icon: Crown,
   },
-];
+};
+
+interface CatalogPlan {
+  key: string;
+  name: string;
+  price: number;
+  limits: { maxStaff: number | null };
+}
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   AUTHORIZED: { label: "Activa", color: "bg-success-muted text-success-foreground border-success/20" },
@@ -61,6 +62,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: "Cancelada", color: "bg-neutral-muted text-neutral-foreground border-neutral/20" },
   EXPIRED: { label: "Expirada", color: "bg-danger-muted text-danger-foreground border-danger/20" },
 };
+
+/** Two minutes of polling. Past that, MercadoPago is not coming back to us. */
+const MAX_CALLBACK_POLLS = 40;
 
 /** Local alias; the format itself lives in @/lib/format. */
 function formatPrice(amount: number) {
@@ -75,10 +79,24 @@ export default function SubscriptionPage() {
   const [cancelling, setCancelling] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
-  // Poll on callback until subscription is AUTHORIZED
+  // Poll on callback until the subscription is AUTHORIZED.
+  //
+  // Capped on purpose. Unbounded, a subscription that never gets authorised
+  // meant a request every three seconds for as long as the tab stayed open —
+  // 1200 an hour, from a user who is already stuck.
   useEffect(() => {
     if (!isCallback) return;
+
+    let attempts = 0;
     const interval = setInterval(() => {
+      attempts++;
+
+      if (attempts > MAX_CALLBACK_POLLS) {
+        clearInterval(interval);
+        toast.info("Todavía no nos llegó la confirmación. Recargá en un rato.");
+        return;
+      }
+
       mutate().then((res) => {
         if (res?.subscription?.status === "AUTHORIZED") {
           clearInterval(interval);
@@ -86,6 +104,7 @@ export default function SubscriptionPage() {
         }
       });
     }, 3000);
+
     return () => clearInterval(interval);
   }, [isCallback, mutate]);
 
@@ -137,9 +156,11 @@ export default function SubscriptionPage() {
     );
   }
 
-  const currentPlan = data?.plan || "STARTER";
   const usage = data?.usage;
   const subscription = data?.subscription;
+  const catalog: CatalogPlan[] = data?.catalog ?? [];
+  const trial = data?.trial;
+  const blocked = Boolean(data?.blocked);
   const statusInfo = subscription ? STATUS_LABELS[subscription.status] : null;
 
   return (
@@ -160,6 +181,36 @@ export default function SubscriptionPage() {
         <p className="text-muted-foreground text-sm mt-1">Administrá tu plan y facturación</p>
       </div>
 
+      {blocked && (
+        <div
+          role="alert"
+          className="rounded-xl border border-danger/20 bg-danger-muted px-6 py-4"
+        >
+          <p className="font-heading font-semibold text-danger-foreground">
+            Tu prueba gratis terminó
+          </p>
+          <p className="text-sm text-danger-foreground/80 mt-1">
+            Podés seguir viendo todo, pero no cargar ni modificar nada hasta que
+            elijas un plan. Tu página de reservas sigue funcionando y tus
+            clientes pueden seguir sacando turno.
+          </p>
+        </div>
+      )}
+
+      {!blocked && trial?.daysLeft > 0 && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-6 py-4">
+          <p className="font-heading font-semibold">
+            {trial.daysLeft === 1
+              ? "Te queda 1 día de prueba"
+              : `Te quedan ${trial.daysLeft} días de prueba`}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tenés todas las funcionalidades disponibles. Elegí un plan antes de
+            que termine para no quedarte sin poder operar.
+          </p>
+        </div>
+      )}
+
       {/* Current plan + status */}
       <div className="glass rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
@@ -169,7 +220,7 @@ export default function SubscriptionPage() {
             </div>
             <div>
               <h2 className="font-heading font-semibold">
-                Plan {currentPlan === "PROFESSIONAL" ? "Pro" : currentPlan === "ENTERPRISE" ? "Business" : "Starter"}
+                Plan {data?.planName ?? "Sin plan"}
               </h2>
               {statusInfo && (
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${statusInfo.color}`}>
@@ -221,23 +272,30 @@ export default function SubscriptionPage() {
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-        {PLANS.map((plan) => {
-          const isCurrent = currentPlan === plan.key && subscription?.status === "AUTHORIZED";
+        {catalog.map((plan) => {
+          const presentation = PLAN_PRESENTATION[plan.key];
+          const isCurrent = subscription?.plan === plan.key && subscription?.status === "AUTHORIZED";
           const showSubscribe = !isCurrent && (
             plan.key === "ENTERPRISE"
-              ? currentPlan !== "ENTERPRISE"
-              : currentPlan === "STARTER"
+              ? subscription?.plan !== "ENTERPRISE"
+              : !subscription || subscription.status !== "AUTHORIZED"
           );
-          const PlanIcon = plan.icon;
+          const PlanIcon = presentation.icon;
+          const features = [
+            plan.limits.maxStaff === null
+              ? "Profesionales ilimitados"
+              : `Hasta ${plan.limits.maxStaff} profesionales`,
+            ...presentation.extras,
+          ];
 
           return (
             <div
               key={plan.key}
               className={`glass rounded-xl p-6 flex flex-col ${
-                plan.popular ? "ring-2 ring-primary" : ""
+                presentation.popular ? "ring-2 ring-primary" : ""
               }`}
             >
-              {plan.popular && (
+              {presentation.popular && (
                 <div className="text-xs font-medium text-primary mb-2">Más popular</div>
               )}
               <div className="flex items-center gap-2 mb-2">
@@ -246,12 +304,12 @@ export default function SubscriptionPage() {
               </div>
               <div className="mb-1">
                 <span className="text-3xl font-heading font-bold">{formatPrice(plan.price)}</span>
-                <span className="text-sm text-muted-foreground ml-1">/{plan.period}</span>
+                <span className="text-sm text-muted-foreground ml-1">/mes</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-4">Prueba gratis por 14 días vía MercadoPago</p>
+              <p className="text-xs text-muted-foreground mb-4">Se renueva todos los meses. Cancelás cuando quieras.</p>
 
               <ul className="space-y-2 flex-1 mb-6">
-                {plan.features.map((f) => (
+                {features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
                     <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <span>{f}</span>
@@ -291,13 +349,13 @@ export default function SubscriptionPage() {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left px-6 py-3 font-medium text-muted-foreground">Funcionalidad</th>
-                <th className="text-center px-4 py-3 font-medium text-primary">Pro</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Business</th>
+                <th className="text-center px-4 py-3 font-medium text-primary">Inicial</th>
+                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Completo</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { name: "Profesionales", pro: "5", ent: "Ilimitados", icon: Users },
+                { name: "Profesionales", pro: "3", ent: "Ilimitados", icon: Users },
                 { name: "Turnos/mes", pro: "Ilimitados", ent: "Ilimitados", icon: Calendar },
                 { name: "Cobros MP", pro: true, ent: true, icon: CreditCard },
                 { name: "CRM y tags", pro: true, ent: true, icon: Shield },

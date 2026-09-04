@@ -32,3 +32,37 @@ export function getMPPlanId(plan: "PROFESSIONAL" | "ENTERPRISE"): string {
   }
   return id;
 }
+
+export interface AuthorizedPayment {
+  id: string;
+  preapproval_id?: string;
+  status?: string;
+  payment?: { status?: string };
+  transaction_amount?: number;
+  next_retry_date?: string;
+  debit_date?: string;
+}
+
+/**
+ * The monthly charge behind a subscription.
+ *
+ * Fetched over REST because the SDK has no wrapper for `/authorized_payments`,
+ * and this is the only signal that tells us a renewal was rejected — the
+ * preapproval itself may stay "authorized" while MercadoPago keeps retrying.
+ */
+export async function getAuthorizedPayment(id: string): Promise<AuthorizedPayment | null> {
+  const token = env.MP_PLATFORM_ACCESS_TOKEN;
+  if (!token) throw new Error("MP_PLATFORM_ACCESS_TOKEN no configurado");
+
+  const response = await fetch(`https://api.mercadopago.com/authorized_payments/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`MercadoPago respondió ${response.status} al leer el cobro ${id}`);
+  }
+
+  return (await response.json()) as AuthorizedPayment;
+}

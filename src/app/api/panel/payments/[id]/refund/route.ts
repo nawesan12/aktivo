@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
 import { sendNotification } from "@/lib/notifications";
 import { logAction } from "@/lib/audit";
@@ -13,7 +12,7 @@ export async function POST(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "payments:configure");
+    await requireBusinessPermission(session, "payments:configure");
 
     const { id } = await params;
 

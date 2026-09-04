@@ -4,7 +4,7 @@ import { getMPClient, getBusinessMPToken } from "@/lib/mercadopago";
 import { logAction } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications";
 import { sendEmail } from "@/lib/notifications/email";
-import { getPlatformPreApproval } from "@/lib/subscription/mp-platform";
+import { getPlatformPreApproval, getAuthorizedPayment } from "@/lib/subscription/mp-platform";
 import { GRACE_PERIOD_DAYS } from "@/lib/subscription/config";
 import { addDays } from "date-fns";
 import { createHmac } from "crypto";
@@ -79,6 +79,13 @@ export async function POST(request: NextRequest) {
 
     if (body.type === "subscription_preapproval" && body.data?.id) {
       return handleSubscriptionWebhook(String(body.data.id));
+    }
+
+    // The monthly charge itself. Without this, a rejected renewal only reached
+    // us if MercadoPago also happened to pause the preapproval — so a business
+    // could stop paying and keep the plan indefinitely.
+    if (body.type === "subscription_authorized_payment" && body.data?.id) {
+      return handleSubscriptionPaymentWebhook(String(body.data.id));
     }
 
     return NextResponse.json({ received: true });
@@ -385,6 +392,91 @@ async function handleSubscriptionWebhook(preapprovalId: string) {
     entity: "Subscription",
     entityId: subscription.id,
     details: { mpStatus, preapprovalId },
+  });
+
+  return NextResponse.json({ received: true });
+}
+
+// ── B2B: the monthly charge ───────────────────────────────
+
+/** MercadoPago's own words for a charge that went through. */
+const SETTLED = new Set(["processed", "approved", "accredited"]);
+
+/**
+ * A renewal was charged, or failed to be.
+ *
+ * The preapproval webhook only fires when the *subscription* changes state, and
+ * MercadoPago keeps a subscription "authorized" while it retries a card that
+ * keeps bouncing. Without listening here, a business that stopped paying kept
+ * its plan until somebody noticed by hand.
+ */
+async function handleSubscriptionPaymentWebhook(authorizedPaymentId: string) {
+  const authorized = await getAuthorizedPayment(authorizedPaymentId);
+
+  if (!authorized?.preapproval_id) {
+    log.warn("authorized payment without a preapproval", { authorizedPaymentId });
+    return NextResponse.json({ received: true });
+  }
+
+  const subscription = await db.subscription.findFirst({
+    where: { mpPreapprovalId: authorized.preapproval_id },
+  });
+
+  if (!subscription) {
+    log.warn("no subscription matches the authorized payment", {
+      authorizedPaymentId,
+      preapprovalId: authorized.preapproval_id,
+    });
+    return NextResponse.json({ received: true });
+  }
+
+  const settled =
+    SETTLED.has(String(authorized.status)) ||
+    SETTLED.has(String(authorized.payment?.status));
+
+  if (settled) {
+    await db.$transaction([
+      db.subscription.update({
+        where: { id: subscription.id },
+        data: {
+          status: "AUTHORIZED",
+          lastPaymentDate: new Date(),
+          nextPaymentDate: authorized.debit_date ? new Date(authorized.debit_date) : null,
+          gracePeriodEnd: null,
+        },
+      }),
+      db.business.update({
+        where: { id: subscription.businessId },
+        data: { plan: subscription.plan },
+      }),
+    ]);
+  } else {
+    // Not cancelled: MercadoPago retries a failed charge for a few days, and so
+    // do we. The grace period is what keeps a business working through a card
+    // that expired over the weekend.
+    await db.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        status: "PAUSED",
+        gracePeriodEnd:
+          subscription.gracePeriodEnd ?? addDays(new Date(), GRACE_PERIOD_DAYS),
+      },
+    });
+
+    log.warn("subscription charge did not settle", {
+      subscriptionId: subscription.id,
+      businessId: subscription.businessId,
+      status: authorized.status,
+      paymentStatus: authorized.payment?.status,
+    });
+  }
+
+  await logAction({
+    businessId: subscription.businessId,
+    action: "subscription:charge",
+    entity: "Subscription",
+    entityId: subscription.id,
+    details: { authorizedPaymentId, settled, status: authorized.status },
   });
 
   return NextResponse.json({ received: true });

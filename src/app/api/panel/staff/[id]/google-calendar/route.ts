@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError } from "@/lib/api-errors";
 import { db } from "@/lib/db";
 
@@ -11,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await getSessionBusiness();
-    requirePermission(session.role, "staff:read");
+    await requireBusinessPermission(session, "staff:read");
 
     const staff = await db.staffMember.findUnique({
       where: { id, businessId: session.businessId },
@@ -55,7 +54,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const session = await getSessionBusiness();
-    requirePermission(session.role, "staff:update");
+    await requireBusinessPermission(session, "staff:update");
 
     const body = await req.json();
     const { googleCalendarEnabled } = body as {

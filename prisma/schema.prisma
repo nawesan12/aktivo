@@ -192,6 +192,13 @@ model Business {
   primaryColor String       @default("#6366F1")
   accentColor  String       @default("#22D3EE")
   plan         BusinessPlan @default(STARTER)
+  /**
+   * End of the free trial. Until then the business gets the full feature set;
+   * after it, without an active subscription, the panel is read-only.
+   * Null means no trial: access then depends on the subscription alone, which
+   * is how a courtesy account works.
+   */
+  trialEndsAt  DateTime?
   isActive     Boolean      @default(true)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

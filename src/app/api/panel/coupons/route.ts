@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
 import type { CouponType } from "@/generated/prisma/client";
@@ -11,7 +10,7 @@ const VALID_COUPON_TYPES: CouponType[] = ["PERCENTAGE", "FIXED"];
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "coupons:read");
+    await requireBusinessPermission(session, "coupons:read");
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, Number(searchParams.get("page") || "1"));
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "coupons:manage");
+    await requireBusinessPermission(session, "coupons:manage");
 
     const body = await request.json();
     const { code, type, value, minAmount, maxUses, validFrom, validUntil } = body;

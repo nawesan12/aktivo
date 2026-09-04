@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
 
@@ -11,7 +10,7 @@ export async function GET(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "schedule:read");
+    await requireBusinessPermission(session, "schedule:read");
 
     const { id } = await params;
 
@@ -61,7 +60,7 @@ export async function PUT(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "schedule:update");
+    await requireBusinessPermission(session, "schedule:update");
 
     const { id } = await params;
     const body = await request.json();

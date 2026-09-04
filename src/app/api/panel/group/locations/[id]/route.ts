@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError } from "@/lib/api-errors";
 
 export async function PATCH(
@@ -10,7 +9,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "group:manage");
+    await requireBusinessPermission(session, "group:manage");
     const { id } = await params;
 
     // Verify location belongs to same group

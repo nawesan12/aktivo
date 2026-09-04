@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError, ValidationError } from "@/lib/api-errors";
 import { getPlanForBusiness } from "@/lib/subscription/enforcement";
-import { PLAN_LIMITS, PLAN_PRICES } from "@/lib/subscription/config";
+import { PLAN_LIMITS, PLAN_PRICES, PLAN_NAMES } from "@/lib/subscription/config";
+import { getBusinessAccess } from "@/lib/subscription/access";
 import { getPlatformPreApproval, getMPPlanId } from "@/lib/subscription/mp-platform";
 import { startOfMonth, endOfMonth } from "date-fns";
 import type { BusinessPlan } from "@/generated/prisma/client";
@@ -13,10 +13,11 @@ import { appUrl } from "@/lib/env";
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "billing:read");
+    await requireBusinessPermission(session, "billing:read");
 
     const effectivePlan = await getPlanForBusiness(session.businessId);
     const limits = PLAN_LIMITS[effectivePlan];
+    const access = await getBusinessAccess(session.businessId);
 
     // Get usage stats
     const now = new Date();
@@ -42,7 +43,22 @@ export async function GET() {
 
     return NextResponse.json({
       plan: effectivePlan,
+      planName: PLAN_NAMES[effectivePlan],
       limits,
+      // Sent so the interface never hardcodes a price of its own: it used to
+      // carry its own copy, and the two drifted apart.
+      catalog: (["PROFESSIONAL", "ENTERPRISE"] as const).map((key) => ({
+        key,
+        name: PLAN_NAMES[key],
+        price: PLAN_PRICES[key].amount,
+        currency: PLAN_PRICES[key].currency,
+        limits: PLAN_LIMITS[key],
+      })),
+      trial: {
+        endsAt: access.trialEndsAt,
+        daysLeft: access.trialDaysLeft,
+      },
+      blocked: access.blocked,
       usage: {
         staff: staffCount,
         staffLimit: limits.maxStaff,
@@ -78,7 +94,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "billing:manage");
+    await requireBusinessPermission(session, "billing:manage");
 
     const body = await request.json();
     const plan = body.plan as BusinessPlan;

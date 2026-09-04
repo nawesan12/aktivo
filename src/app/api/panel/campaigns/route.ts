@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError, ValidationError } from "@/lib/api-errors";
 import { campaignSchema } from "@/lib/validations";
 import { requirePlan } from "@/lib/subscription/enforcement";
@@ -9,7 +8,7 @@ import { requirePlan } from "@/lib/subscription/enforcement";
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "campaigns:read");
+    await requireBusinessPermission(session, "campaigns:read");
 
     const { searchParams } = request.nextUrl;
     const status = searchParams.get("status");
@@ -32,7 +31,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "campaigns:manage");
+    await requireBusinessPermission(session, "campaigns:manage");
     await requirePlan(session.businessId, "PROFESSIONAL");
 
     const body = await request.json();

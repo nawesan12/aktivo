@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-errors";
 import { formatCurrency } from "@/lib/format";
@@ -8,7 +7,7 @@ import { formatCurrency } from "@/lib/format";
 export async function GET(request: Request) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "appointments:read");
+    await requireBusinessPermission(session, "appointments:read");
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim() || "";

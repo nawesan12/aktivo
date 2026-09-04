@@ -884,31 +884,17 @@ export default function PresentacionPage() {
             <span className="jade">Sin letra chica.</span>
           </h2>
           <div className="pricing-cards">
-            <div className="pricing-card anim-card">
-              <div className="pc-tier">Starter</div>
-              <div className="pc-price">
-                <span className="pc-currency">$</span>
-                <span className="pc-amount">0</span>
-              </div>
-              <div className="pc-period">Gratis para siempre</div>
-              <ul className="pc-features">
-                <li>&#10003; 1 profesional</li>
-                <li>&#10003; Reservas 24/7</li>
-                <li>&#10003; Recordatorios WhatsApp</li>
-                <li>&#10003; Hasta 50 turnos/mes</li>
-              </ul>
-            </div>
             <div className="pricing-card featured anim-card">
               <div className="pc-badge">M&aacute;s elegido</div>
-              <div className="pc-tier">Pro</div>
+              <div className="pc-tier">Inicial</div>
               <div className="pc-price">
                 <span className="pc-currency">$</span>
-                <span className="pc-amount">4.990</span>
+                <span className="pc-amount">7.000</span>
                 <span className="pc-mo">/mes</span>
               </div>
               <div className="pc-period">ARS &middot; Facturaci&oacute;n mensual</div>
               <ul className="pc-features">
-                <li>&#10003; Hasta 5 profesionales</li>
+                <li>&#10003; Hasta 3 profesionales</li>
                 <li>&#10003; Turnos ilimitados</li>
                 <li>&#10003; Cobros con Mercado Pago</li>
                 <li>&#10003; CRM + fidelizaci&oacute;n</li>
@@ -916,19 +902,19 @@ export default function PresentacionPage() {
               </ul>
             </div>
             <div className="pricing-card anim-card">
-              <div className="pc-tier">Business</div>
+              <div className="pc-tier">Completo</div>
               <div className="pc-price">
                 <span className="pc-currency">$</span>
-                <span className="pc-amount">9.990</span>
+                <span className="pc-amount">15.000</span>
                 <span className="pc-mo">/mes</span>
               </div>
               <div className="pc-period">ARS &middot; Facturaci&oacute;n mensual</div>
               <ul className="pc-features">
+                <li>&#10003; Todo lo del plan Inicial</li>
                 <li>&#10003; Profesionales ilimitados</li>
                 <li>&#10003; Multi-sucursal</li>
-                <li>&#10003; API + integraciones</li>
-                <li>&#10003; Soporte prioritario</li>
                 <li>&#10003; Marca blanca</li>
+                <li>&#10003; Soporte prioritario</li>
               </ul>
             </div>
           </div>

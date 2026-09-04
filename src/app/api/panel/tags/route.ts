@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError, ValidationError } from "@/lib/api-errors";
 import { tagSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "clients:tags");
+    await requireBusinessPermission(session, "clients:tags");
 
     const tags = await db.clientTag.findMany({
       where: { businessId: session.businessId },
@@ -25,7 +24,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "clients:tags");
+    await requireBusinessPermission(session, "clients:tags");
 
     const body = await request.json();
     const parsed = tagSchema.safeParse(body);

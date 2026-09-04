@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSessionBusiness } from "@/lib/auth/session-business";
-import { requirePermission } from "@/lib/auth/rbac";
+import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { logAction } from "@/lib/audit";
 import { handleApiError } from "@/lib/api-errors";
 
 export async function POST(request: Request) {
   try {
     const session = await getSessionBusiness();
-    requirePermission(session.role, "reports:export");
+    await requireBusinessPermission(session, "reports:export");
 
     const { entity, details } = await request.json();
 
