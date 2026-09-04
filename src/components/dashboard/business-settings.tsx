@@ -28,6 +28,10 @@ export function BusinessSettings() {
     accentColor: "",
     logo: "",
     coverImage: "",
+    about: "",
+    instagram: "",
+    facebook: "",
+    tiktok: "",
   });
 
   const [settings, setSettings] = useState({
@@ -55,6 +59,10 @@ export function BusinessSettings() {
         accentColor: data.business.accentColor || "",
         logo: data.business.logo || "",
         coverImage: data.business.coverImage || "",
+        about: data.business.about || "",
+        instagram: data.business.instagram || "",
+        facebook: data.business.facebook || "",
+        tiktok: data.business.tiktok || "",
       });
       if (data.settings) {
         setSettings({
@@ -185,6 +193,52 @@ export function BusinessSettings() {
               id="website"
               value={business.website}
               onChange={(e) => setBusiness((p) => ({ ...p, website: e.target.value }))}
+              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="about" className="text-sm font-medium mb-1.5 block">
+              Sobre nosotros
+            </label>
+            <textarea
+              id="about"
+              rows={4}
+              value={business.about}
+              onChange={(e) => setBusiness((p) => ({ ...p, about: e.target.value }))}
+              placeholder="Contale a tus clientes quiénes son, desde cuándo y qué los hace distintos."
+              className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Aparece en tu página pública, debajo de los servicios.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="instagram" className="text-sm font-medium mb-1.5 block">Instagram</label>
+            <input
+              id="instagram"
+              value={business.instagram}
+              onChange={(e) => setBusiness((p) => ({ ...p, instagram: e.target.value }))}
+              placeholder="@tunegocio"
+              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="facebook" className="text-sm font-medium mb-1.5 block">Facebook</label>
+            <input
+              id="facebook"
+              value={business.facebook}
+              onChange={(e) => setBusiness((p) => ({ ...p, facebook: e.target.value }))}
+              placeholder="tunegocio"
+              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="tiktok" className="text-sm font-medium mb-1.5 block">TikTok</label>
+            <input
+              id="tiktok"
+              value={business.tiktok}
+              onChange={(e) => setBusiness((p) => ({ ...p, tiktok: e.target.value }))}
+              placeholder="@tunegocio"
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
           </div>

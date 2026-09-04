@@ -34,6 +34,10 @@ export const getBusinessProfile = cache(async (slug: string) => {
           },
         },
       },
+      gallery: {
+        orderBy: { sortOrder: "asc" },
+        take: 12,
+      },
     },
   });
 

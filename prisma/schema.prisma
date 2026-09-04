@@ -191,6 +191,14 @@ model Business {
   website      String?
   primaryColor String       @default("#6366F1")
   accentColor  String       @default("#22D3EE")
+  /** Longer text for the public page, where `description` is a one-liner. */
+  about        String?      @db.Text
+  instagram    String?
+  facebook     String?
+  tiktok       String?
+  /** Coordinates for the map. Filled from the address, or by the owner. */
+  latitude     Float?
+  longitude    Float?
   plan         BusinessPlan @default(STARTER)
   /**
    * End of the free trial. Until then the business gets the full feature set;
@@ -206,6 +214,7 @@ model Business {
   settings     BusinessSettings?
   config       BusinessConfig[]
   mercadoPago  MercadoPagoAccount?
+  gallery      BusinessPhoto[]
   members      UserBusiness[]
   staff        StaffMember[]
   categories   ServiceCategory[]
@@ -1096,4 +1105,24 @@ model MercadoPagoAccount {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
+}
+
+/**
+ * A photo of the place, for the public page.
+ *
+ * Separate from `logo` and `coverImage`, which are one each: a barbershop wants
+ * to show the shop, the chairs and a couple of haircuts, and one cover image
+ * does not do that.
+ */
+model BusinessPhoto {
+  id         String   @id @default(cuid())
+  businessId String
+  url        String
+  caption    String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, sortOrder])
 }

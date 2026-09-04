@@ -242,6 +242,10 @@ export default async function BusinessProfilePage({ params }: Props) {
         city: business.city,
         province: business.province,
         website: business.website,
+        about: business.about,
+        instagram: business.instagram,
+        facebook: business.facebook,
+        tiktok: business.tiktok,
         logoUrl: safeImageUrl(business.logo),
         coverUrl: safeImageUrl(business.coverImage),
         cancellationPolicy: business.settings?.cancellationPolicy ?? null,
@@ -250,6 +254,15 @@ export default async function BusinessProfilePage({ params }: Props) {
       }}
       categories={categories}
       staff={staffData}
+      gallery={business.gallery
+        .map((photo) => ({
+          id: photo.id,
+          url: safeImageUrl(photo.url),
+          caption: photo.caption,
+        }))
+        .filter((photo): photo is { id: string; url: string; caption: string | null } =>
+          photo.url !== null
+        )}
       reviews={reviews}
       averageRating={reviewAgg._avg.rating ?? 0}
       reviewCount={reviewAgg._count}

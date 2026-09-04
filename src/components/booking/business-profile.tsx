@@ -47,6 +47,10 @@ interface BusinessProfileProps {
     city: string | null;
     province: string | null;
     website: string | null;
+    about: string | null;
+    instagram: string | null;
+    facebook: string | null;
+    tiktok: string | null;
     logoUrl: string | null;
     coverUrl: string | null;
     primaryColor: string | null;
@@ -54,6 +58,7 @@ interface BusinessProfileProps {
     /** Shown to the visitor before they book, not hidden in the wizard. */
     cancellationPolicy: string | null;
   };
+  gallery: Array<{ id: string; url: string; caption: string | null }>;
   categories: Array<{
     id: string;
     name: string;
@@ -133,7 +138,7 @@ function formatRelativeDate(dateStr: string): string {
   return `Hace ${Math.floor(diffDays / 30)} meses`;
 }
 
-export function BusinessProfile({ business, categories, staff, reviews = [], averageRating = 0, reviewCount = 0 }: BusinessProfileProps) {
+export function BusinessProfile({ business, categories, staff, gallery = [], reviews = [], averageRating = 0, reviewCount = 0 }: BusinessProfileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const staffRef = useRef<HTMLDivElement>(null);
@@ -285,6 +290,31 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
       href: `/${business.slug}/mis-turnos`,
     },
   ].filter(Boolean) as Array<{ icon: typeof Phone; label: string; href: string }>;
+
+  const mapQuery = [business.address, business.city, business.province]
+    .filter(Boolean)
+    .join(", ");
+
+  const socials = [
+    business.instagram && {
+      label: "Instagram",
+      href: business.instagram.startsWith("http")
+        ? business.instagram
+        : `https://instagram.com/${business.instagram.replace(/^@/, "")}`,
+    },
+    business.facebook && {
+      label: "Facebook",
+      href: business.facebook.startsWith("http")
+        ? business.facebook
+        : `https://facebook.com/${business.facebook}`,
+    },
+    business.tiktok && {
+      label: "TikTok",
+      href: business.tiktok.startsWith("http")
+        ? business.tiktok
+        : `https://tiktok.com/@${business.tiktok.replace(/^@/, "")}`,
+    },
+  ].filter(Boolean) as Array<{ label: string; href: string }>;
 
   const allServices = categories.flatMap((c) => c.services);
 
@@ -629,6 +659,75 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
         </section>
       )}
 
+      {/* ─── Sobre nosotros ─── */}
+      {business.about && (
+        <section className="max-w-4xl mx-auto px-4 mb-16">
+          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-6">
+            <span style={gradientTextStyle}>Sobre nosotros</span>
+          </h2>
+          <p className="text-muted-foreground leading-relaxed whitespace-pre-line max-w-2xl">
+            {business.about}
+          </p>
+        </section>
+      )}
+
+      {/* ─── Galería ─── */}
+      {/*
+        A place people are deciding whether to walk into. One cover image cannot
+        show the shop, the chairs and a couple of haircuts.
+      */}
+      {gallery.length > 0 && (
+        <section className="max-w-4xl mx-auto px-4 mb-16">
+          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-8">
+            <span style={gradientTextStyle}>El lugar</span>
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {gallery.map((photo) => (
+              <figure
+                key={photo.id}
+                className="relative aspect-square rounded-xl overflow-hidden glass"
+              >
+                <Image
+                  src={photo.url}
+                  alt={photo.caption || `Foto de ${business.name}`}
+                  fill
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  className="object-cover"
+                />
+                {photo.caption && (
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-xs text-white">
+                    {photo.caption}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Dónde estamos ─── */}
+      {/*
+        An embedded map, not a link that throws the visitor onto another site
+        mid-decision. No API key: the plain Maps embed takes a query string.
+      */}
+      {mapQuery && (
+        <section className="max-w-4xl mx-auto px-4 mb-16">
+          <h2 className="text-2xl sm:text-3xl font-heading font-bold mb-6">
+            <span style={gradientTextStyle}>Dónde estamos</span>
+          </h2>
+          <p className="text-muted-foreground mb-4">{mapQuery}</p>
+          <div className="rounded-xl overflow-hidden glass aspect-[16/9]">
+            <iframe
+              title={`Ubicación de ${business.name}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full h-full border-0"
+            />
+          </div>
+        </section>
+      )}
+
       {/* ─── Política de cancelación ─── */}
       {/*
         Stored since the beginning and never rendered anywhere. It is exactly
@@ -656,7 +755,20 @@ export function BusinessProfile({ business, categories, staff, reviews = [], ave
             {business.name}
             {business.city ? ` · ${business.city}` : ""}
           </p>
-          <ShareButton name={business.name} />
+          <div className="flex items-center gap-4">
+            {socials.map((social) => (
+              <a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {social.label}
+              </a>
+            ))}
+            <ShareButton name={business.name} />
+          </div>
         </div>
       </footer>
 
