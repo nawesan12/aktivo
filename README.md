@@ -1,8 +1,10 @@
 # Jiku
 
 Plataforma de turnos y crecimiento para negocios de servicios en Argentina:
-barberías, salones, estética. Reservas online, recordatorios por WhatsApp,
-cobros con MercadoPago, CRM y campañas.
+barberías, salones, estética. Reservas online, recordatorios por email, cobros
+con MercadoPago, CRM y campañas.
+
+En producción: **https://jikuapp.com**
 
 ---
 
@@ -28,8 +30,8 @@ La app queda en http://localhost:3000. El seed deja dos negocios de ejemplo:
 
 `src/lib/env.ts` es el contrato: valida todo al arrancar y **el servidor no
 levanta** si falta algo esencial o si una integración quedó a medias (por
-ejemplo, WhatsApp con token pero sin `WHATSAPP_APP_SECRET`). En desarrollo eso
-es una advertencia; en producción, un error.
+ejemplo, el cobro de suscripciones con token pero sin los IDs de plan). En
+desarrollo eso es una advertencia; en producción, un error.
 
 Imprescindibles: `DATABASE_URL`, `AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`.
 En producción además `CRON_SECRET`, o los trabajos programados devuelven 401.
@@ -140,15 +142,30 @@ seed, así que corren igual contra un entorno desplegado. Limpiar después con
 
 ## Deploy
 
-Vercel. `npm run build` corre `prisma generate` y el chequeo de tipos.
-Las migraciones se aplican con `npx prisma migrate deploy` (ver
+Vercel, cuenta personal, plan Hobby. `npm run build` corre `prisma generate` y
+el chequeo de tipos; **no** corre migraciones. Se aplican aparte con
+`npx prisma migrate deploy` contra la URL no pooleada de Neon (ver
 `prisma/migrations/README.md`).
-
-Antes del primer deploy: cargar `CRON_SECRET` y `WHATSAPP_APP_SECRET`, o los
-trabajos programados y el webhook de WhatsApp responden 401/503 a propósito.
 
 `/api/health` informa el estado de la base y qué integraciones están
 configuradas.
+
+### Trabajo programado
+
+Hobby sólo permite un cron por día, así que la programación vive en la
+aplicación:
+
+- **Tráfico real** → `maybeTick()` por `after()`, con un candado en la tabla
+  `JobRun` para que no corran dos pasadas encima. Ver `src/lib/jobs/tick.ts`.
+- **`/api/cron/daily`** (única entrada de `vercel.json`, 09:00 ART) → corre todo
+  con `force`, y es el dueño del job de campañas: un saludo de cumpleaños tiene
+  que salir el día que es.
+- **`/api/tick`** → lo llama un workflow de GitHub Actions cada diez minutos
+  (`.github/workflows/tick.yml`). Es lo único que hace confiable el recordatorio
+  de una hora antes, cuya ventana cae justo cuando nadie está navegando.
+
+Los tres caminos usan el mismo `CRON_SECRET`. Si se rota, hay que actualizarlo
+en Vercel **y** en los secretos del repositorio.
 
 ---
 

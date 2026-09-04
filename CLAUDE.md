@@ -32,7 +32,15 @@ Ver [`README.md`](./README.md) para levantar el proyecto y
   ella (hora local del negocio). Los dos caminos están y hacen falta.
 - La protección contra doble reserva vive en la base. Si tocás la creación de
   turnos, mantené la escritura dentro de la transacción y dejá que el 409 salga
-  de `handleApiError`.
+  de `handleApiError`. La constraint no puede ver `expiresAt` —el predicado de un
+  índice parcial exige funciones `IMMUTABLE`— así que cualquier camino nuevo que
+  inserte un turno tiene que llamar antes a `releaseExpiredHolds()`, o el slot de
+  una reserva impaga vencida queda muerto para siempre.
+- No agregues crons a `vercel.json`: el plan gratis sólo permite uno por día y
+  una expresión más frecuente hace fallar el deploy. El trabajo programado se
+  registra en `src/lib/jobs/registry.ts` y lo dispara el tráfico real.
+- El email es el único canal de notificación. No hay WhatsApp: exigía plantillas
+  aprobadas por Meta.
 
 ## Verificación
 
@@ -40,6 +48,9 @@ Ver [`README.md`](./README.md) para levantar el proyecto y
 npx tsc --noEmit && npx eslint . && npx vitest run && npm run build
 npx playwright test        # requiere la app levantada y el seed cargado
 npx tsx scripts/e2e-cleanup.ts
+
+# Humo contra el sitio desplegado. Escribe en la base de producción.
+npx playwright test --config playwright.prod.config.ts
 ```
 
 El idioma del producto es español rioplatense (voseo), con acentos. Los

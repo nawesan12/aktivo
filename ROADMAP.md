@@ -21,7 +21,7 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Seed script con datos demo de barberia
 - [x] RBAC con 6 roles y permisos granulares
 - [x] Lib utilities: availability engine, rate limiting, audit logging
-- [x] Notifications: WhatsApp (Meta Cloud API) + Email (Resend) multi-tenant
+- [x] Notifications: Email (Resend) multi-tenant
 - [x] MercadoPago integration multi-business
 - [x] Zod validations
 
@@ -52,7 +52,6 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 ### Sprint 4 — Payments & Notifications (Semana 9-10) ✅
 - [x] MercadoPago: config per-business, 3 modos, webhook handler, preference creation
 - [x] UI de configuracion de pagos en el dashboard
-- [x] WhatsApp (Meta Cloud API): mensajes templated por tipo, verificación de firma
 - [x] Email (Resend): templates HTML con branding del negocio
 - [x] Preferencias de notificacion per-business
 - [x] Pagina de confirmacion post-booking con resumen
@@ -87,7 +86,7 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Notas de staff sobre clientes
 - [x] Sistema de reviews (1-5 estrellas + comentario, vinculado a turno)
 - [x] Review tokens con links tokenizados y expiración de 7 días
-- [x] Flujo automático: turno COMPLETED → crear ReviewToken → enviar email/WhatsApp
+- [x] Flujo automático: turno COMPLETED → crear ReviewToken → enviar email
 - [x] Delay configurable para solicitud de reviews (reviewRequestDelayHours)
 - [x] Filtro de clientes por tags en la lista de clientes
 - [x] Dashboard de gestión de reseñas (aprobar/ocultar/responder)
@@ -144,27 +143,44 @@ Sprint 10 (Widget + Analytics)
 
 ## Estado técnico
 
+En producción desde el 3 de septiembre de 2026 en **https://jikuapp.com**
+(Vercel Hobby, cuenta personal; base Neon del marketplace, región São Paulo;
+Upstash Redis para los límites de tasa).
+
 Lo que hay hoy, más allá de las funcionalidades:
 
 - **Integridad de reservas** garantizada en la base con una constraint de
-  exclusión; el perdedor de una carrera recibe 409 `SLOT_TAKEN`. Las reservas
-  impagas expiran y un cron las libera.
+  exclusión; el perdedor de una carrera recibe 409 `SLOT_TAKEN`. La constraint
+  no puede ver el tiempo, así que las reservas impagas se liberan en el momento
+  en que alguien intenta ocupar el slot (`releaseExpiredHolds`), no por reloj.
 - **Configuración validada al arrancar** (`src/lib/env.ts`): el deploy falla si
   falta algo, en vez de degradar en silencio.
 - **Logging estructurado** en JSON (`src/lib/logger.ts`) y `/api/health`.
-- **Los seis crons corren solos** (`vercel.json`), autenticados por header.
+- **El trabajo programado corre sin crons**: lo dispara el tráfico real con un
+  candado en base, más un cron diario de piso y un workflow de GitHub Actions
+  cada diez minutos para los recordatorios de una hora.
 - **Envíos que no se pierden**: `after()` para el trabajo en segundo plano,
   reintentos con backoff, y un job que reprocesa lo que quedó fallido.
+- **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
+  de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: ~100 unitarios y ~80 end-to-end, incluidos doble reserva
-  concurrente, flujo completo de reserva, widget y accesibilidad.
+- **Tests**: 120 unitarios y 83 end-to-end, incluidos doble reserva concurrente,
+  flujo completo de reserva, widget y accesibilidad, más un humo contra el sitio
+  desplegado (`e2e-prod/`).
 
 ### Pendiente
 
+- **Cloudinary sin configurar**: no se pueden subir imágenes desde el panel
+  hasta cargar `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y el upload preset.
+- **Sin tracker de errores**. Un 500 escribe una línea en los logs de Vercel,
+  que se retienen poco y no alertan a nadie.
+- **Notificaciones sólo por email**. WhatsApp se sacó porque exigía plantillas
+  aprobadas por Meta; volver a sumarlo significa redactarlas, aprobarlas y
+  escribir los mensajes como `type: "template"`.
+- Google sign-in sin credenciales: queda sólo email + contraseña.
 - Migrar `mercadopago` de 2.x a 3.x (cierra las últimas vulnerabilidades de
   `npm audit`; conviene hacerlo probando contra la API real).
 - Panel en Server Components: hoy casi todo el panel es cliente + SWR.
-- Sentry u otro agregador de errores.
 - Tokens semánticos de color para que el white-label por negocio alcance a toda
   la interfaz.
 
@@ -193,7 +209,6 @@ Lo que hay hoy, más allá de las funcionalidades:
 | State | Zustand + SWR |
 | Imagenes | Cloudinary + next-cloudinary |
 | Pagos | MercadoPago |
-| WhatsApp | Meta Cloud API |
 | Email | Resend |
 | Validacion | Zod |
 | Charts | Recharts |
