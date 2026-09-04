@@ -7,7 +7,7 @@
  * Set UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN to make limits global.
  */
 
-import { env } from "@/lib/env";
+import { redisCredentials } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 
 const log = createLogger("rate-limit");
@@ -17,9 +17,10 @@ export interface RateLimitResult {
   remaining: number;
 }
 
-const REDIS_URL = env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = env.UPSTASH_REDIS_REST_TOKEN;
-const usingRedis = Boolean(REDIS_URL && REDIS_TOKEN);
+const redis = redisCredentials();
+const REDIS_URL = redis?.url;
+const REDIS_TOKEN = redis?.token;
+const usingRedis = Boolean(redis);
 
 let warnedAboutMemory = false;
 

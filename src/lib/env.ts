@@ -61,6 +61,11 @@ const baseSchema = z.object({
   // ── Rate limiting ───────────────────────────────────────────────────────
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  // What Vercel's Upstash integration injects. Read directly instead of being
+  // copied into the two above: a copy would keep working after the credentials
+  // are rotated, right up until it didn't.
+  KV_REST_API_URL: z.string().optional(),
+  KV_REST_API_TOKEN: z.string().optional(),
 
   // ── Images ──────────────────────────────────────────────────────────────
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().optional(),
@@ -87,6 +92,7 @@ const GROUPS: {
     name: "Upstash Redis",
     keys: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
   },
+  { name: "Upstash Redis (Vercel)", keys: ["KV_REST_API_URL", "KV_REST_API_TOKEN"] },
   {
     name: "Cloudinary",
     keys: [
@@ -256,6 +262,21 @@ export function assertEnv(): void {
 }
 
 /**
+ * The Redis credentials, from whichever pair is configured.
+ *
+ * `UPSTASH_*` is what the code was written against; `KV_*` is what Vercel's
+ * Upstash integration injects. Both name the same service.
+ */
+export function redisCredentials(): { url: string; token: string } | null {
+  const e = loadEnv();
+
+  const url = e.UPSTASH_REDIS_REST_URL || e.KV_REST_API_URL;
+  const token = e.UPSTASH_REDIS_REST_TOKEN || e.KV_REST_API_TOKEN;
+
+  return url && token ? { url, token } : null;
+}
+
+/**
  * Which optional integrations are actually usable. Used by `/api/health` and
  * the admin system page instead of each one re-reading `process.env`.
  */
@@ -266,7 +287,7 @@ export function integrationStatus() {
     mercadopago: Boolean(e.MERCADOPAGO_ACCESS_TOKEN),
     platformBilling: Boolean(e.MP_PLATFORM_ACCESS_TOKEN),
     googleAuth: Boolean(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET),
-    redisRateLimit: Boolean(e.UPSTASH_REDIS_REST_URL && e.UPSTASH_REDIS_REST_TOKEN),
+    redisRateLimit: Boolean(redisCredentials()),
     cloudinary: Boolean(e.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME),
     cron: Boolean(e.CRON_SECRET),
   };
