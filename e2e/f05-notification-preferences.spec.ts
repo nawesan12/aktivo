@@ -22,13 +22,16 @@ test.describe("F5 — Notification Preferences", () => {
     await expect(page.getByText(/Configurá cómo querés recibir/i)).toBeVisible();
   });
 
-  test("mi-cuenta layout includes Notificaciones tab", async ({ page }) => {
+  test("las preferencias personales se alcanzan desde el panel", async ({ page }) => {
     await loginAsOwner(page);
     await page.goto("/mi-cuenta/perfil");
     await page.waitForLoadState("networkidle");
 
-    // Check tabs
-    await expect(page.getByRole("link", { name: "Notificaciones" })).toBeVisible();
+    // The account now lives inside the panel shell for anyone who runs a
+    // business, so its entries are in the sidebar rather than in a row of tabs
+    // in a separate header. "Mis avisos" is the person's own preferences;
+    // "Envíos" is the business's log of what it sent.
+    await expect(page.getByRole("link", { name: "Mis avisos" }).first()).toBeVisible();
   });
 
   test("mis-turnos has settings gear icon", async ({ page }) => {

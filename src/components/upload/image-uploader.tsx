@@ -37,15 +37,21 @@ export function ImageUploader({
 
   if (!isCloudinaryConfigured) {
     return (
+      // `overflow-hidden`, because the caller decides the size: the avatar slot
+      // on the profile page is 64px and this message is wider than that, so it
+      // spilled out of its own box and pushed the row it was in off the screen.
       <div
+        title="Falta configurar Cloudinary para poder subir imágenes"
         className={cn(
-          "relative rounded-xl border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 text-muted-foreground",
+          "relative overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-1 text-muted-foreground",
           isSquare ? "w-32 h-32" : "w-full h-40",
           className
         )}
       >
-        <CloudOff className="w-5 h-5 opacity-50" />
-        <span className="text-xs text-center px-2">Cloudinary no configurado</span>
+        <CloudOff className="w-5 h-5 shrink-0 opacity-50" />
+        <span className="text-[10px] leading-tight text-center px-1 line-clamp-2">
+          Sin Cloudinary
+        </span>
       </div>
     );
   }

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
-import { PANEL_NAVIGATION as navigation } from "./navigation";
+import { PANEL_SECTIONS } from "./navigation";
 import { useUIStore } from "@/stores/ui-store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -50,8 +50,19 @@ export function Sidebar() {
 
       {/* Navigation */}
       <ScrollArea className="flex-1 py-4">
-        <nav className="space-y-1 px-2">
-          {navigation.map((item) => {
+        <nav className="px-2">
+          {PANEL_SECTIONS.map((section) => (
+            <div key={section.title} className="mb-4 last:mb-0">
+              {/* The heading disappears when the rail is collapsed to icons,
+                  where there is no room for it and the grouping is carried by
+                  the gaps instead. */}
+              {!sidebarCollapsed && (
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {section.title}
+                </p>
+              )}
+              <div className="space-y-1">
+          {section.items.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/panel" && pathname.startsWith(item.href));
@@ -89,6 +100,9 @@ export function Sidebar() {
 
             return link;
           })}
+              </div>
+            </div>
+          ))}
         </nav>
       </ScrollArea>
 

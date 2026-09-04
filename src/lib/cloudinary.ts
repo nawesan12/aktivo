@@ -10,6 +10,9 @@ export const cloudinaryConfig = {
  * Get the Cloudinary upload URL for a business image.
  * Organizes by business slug for easy management.
  */
-export function getUploadFolder(businessSlug: string, type: "services" | "staff" | "business" = "business") {
+export function getUploadFolder(
+  businessSlug: string,
+  type: "services" | "staff" | "business" | "gallery" = "business"
+) {
   return `jiku/${businessSlug}/${type}`;
 }

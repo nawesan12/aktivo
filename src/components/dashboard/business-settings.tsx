@@ -5,8 +5,7 @@ import useSWR from "swr";
 import { Loader2, Save, Building2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
-import { ImageUploader } from "@/components/upload/image-uploader";
-import { getUploadFolder } from "@/lib/cloudinary";
+import Link from "next/link";
 
 
 export function BusinessSettings() {
@@ -82,7 +81,21 @@ export function BusinessSettings() {
       const res = await fetch("/api/panel/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business, settings }),
+        // Only what this screen still edits. Sending the appearance fields back
+        // untouched would let a stale tab here undo what "Mi web" just saved.
+        body: JSON.stringify({
+          business: {
+            name: business.name,
+            description: business.description,
+            phone: business.phone,
+            whatsapp: business.whatsapp,
+            email: business.email,
+            address: business.address,
+            city: business.city,
+            province: business.province,
+          },
+          settings,
+        }),
       });
 
       if (!res.ok) {
@@ -109,26 +122,18 @@ export function BusinessSettings() {
           <Building2 className="w-4 h-4" /> Perfil del negocio
         </h3>
 
-        <div className="flex flex-wrap gap-6 mb-4">
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Logo</label>
-            <ImageUploader
-              value={business.logo || null}
-              onChange={(url) => setBusiness((p) => ({ ...p, logo: url }))}
-              folder={getUploadFolder(business.slug || "default", "business")}
-              aspectRatio="1:1"
-            />
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-sm font-medium mb-1.5 block">Imagen de portada</label>
-            <ImageUploader
-              value={business.coverImage || null}
-              onChange={(url) => setBusiness((p) => ({ ...p, coverImage: url }))}
-              folder={getUploadFolder(business.slug || "default", "business")}
-              aspectRatio="16:9"
-            />
-          </div>
-        </div>
+        {/* Logo, portada, colores, redes y textos viven en "Mi web", donde se
+            ven aplicados sobre una vista previa. Acá quedaban al pie de una
+            página de ajustes operativos, entre el intervalo de turnos y los
+            minutos de buffer, con dos campos hex sin nada que mostrara qué
+            hacían. */}
+        <p className="text-sm text-muted-foreground">
+          El logo, los colores, las fotos y tus redes se editan en{" "}
+          <Link href="/panel/mi-web" className="text-primary hover:underline">
+            Mi web
+          </Link>
+          .
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -213,36 +218,6 @@ export function BusinessSettings() {
             </p>
           </div>
           <div>
-            <label htmlFor="instagram" className="text-sm font-medium mb-1.5 block">Instagram</label>
-            <input
-              id="instagram"
-              value={business.instagram}
-              onChange={(e) => setBusiness((p) => ({ ...p, instagram: e.target.value }))}
-              placeholder="@tunegocio"
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="facebook" className="text-sm font-medium mb-1.5 block">Facebook</label>
-            <input
-              id="facebook"
-              value={business.facebook}
-              onChange={(e) => setBusiness((p) => ({ ...p, facebook: e.target.value }))}
-              placeholder="tunegocio"
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="tiktok" className="text-sm font-medium mb-1.5 block">TikTok</label>
-            <input
-              id="tiktok"
-              value={business.tiktok}
-              onChange={(e) => setBusiness((p) => ({ ...p, tiktok: e.target.value }))}
-              placeholder="@tunegocio"
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
             <label htmlFor="direccion" className="text-sm font-medium mb-1.5 block">Dirección</label>
             <input
               id="direccion"
@@ -268,40 +243,6 @@ export function BusinessSettings() {
               onChange={(e) => setBusiness((p) => ({ ...p, province: e.target.value }))}
               className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
             />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Color primario</label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={business.primaryColor || "#6366f1"}
-                onChange={(e) => setBusiness((p) => ({ ...p, primaryColor: e.target.value }))}
-                className="w-10 h-10 rounded-lg border border-border cursor-pointer"
-              />
-              <input
-                value={business.primaryColor}
-                onChange={(e) => setBusiness((p) => ({ ...p, primaryColor: e.target.value }))}
-                placeholder="#6366f1"
-                className="flex-1 h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Color acentuado</label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={business.accentColor || "#8b5cf6"}
-                onChange={(e) => setBusiness((p) => ({ ...p, accentColor: e.target.value }))}
-                className="w-10 h-10 rounded-lg border border-border cursor-pointer"
-              />
-              <input
-                value={business.accentColor}
-                onChange={(e) => setBusiness((p) => ({ ...p, accentColor: e.target.value }))}
-                placeholder="#8b5cf6"
-                className="flex-1 h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { cn } from "@/lib/utils";
-import { PANEL_NAVIGATION as navigation } from "./navigation";
+import { PANEL_SECTIONS } from "./navigation";
 import { useUIStore } from "@/stores/ui-store";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { InstallPWAButton } from "@/components/dashboard/install-pwa-button";
@@ -29,8 +29,14 @@ export function MobileNav() {
         </div>
 
         {/* Navigation */}
-        <nav className="space-y-1 p-3 flex-1 overflow-y-auto">
-          {navigation.map((item) => {
+        <nav className="p-3 flex-1 overflow-y-auto safe-bottom">
+          {PANEL_SECTIONS.map((section) => (
+            <div key={section.title} className="mb-4 last:mb-0">
+              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                {section.title}
+              </p>
+              <div className="space-y-1">
+          {section.items.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/panel" && pathname.startsWith(item.href));
@@ -52,6 +58,9 @@ export function MobileNav() {
               </Link>
             );
           })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Install PWA */}
