@@ -130,7 +130,23 @@ async function handlePaymentWebhook(paymentId: string) {
 
   // Use the business-specific token to query MP
   const mpClient = getMPClient(businessMpToken);
-  const mpPayment = await mpClient.payment.get({ id: paymentId });
+
+  // A payment MercadoPago cannot hand us is not a transient failure, and
+  // answering 500 to one is: they retry a 500, forever, on a notification that
+  // is never going to succeed. Only a real outage should ask them to come back.
+  let mpPayment;
+  try {
+    mpPayment = await mpClient.payment.get({ id: paymentId });
+  } catch (error) {
+    const status = (error as { status?: number })?.status;
+
+    if (status === 404 || status === 400) {
+      log.warn("MercadoPago does not know this payment", { paymentId, status });
+      return NextResponse.json({ received: true, skipped: "unknown_payment" });
+    }
+
+    throw error;
+  }
 
   if (!mpPayment || !mpPayment.external_reference) {
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
