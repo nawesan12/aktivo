@@ -52,6 +52,13 @@ const baseSchema = z.object({
   MP_CLIENT_ID: z.string().optional(),
   MP_CLIENT_SECRET: z.string().optional(),
 
+  // ── Custom domains ──────────────────────────────────────────────────────
+  /** Lets a business point its own domain at its page. */
+  VERCEL_API_TOKEN: secret().optional(),
+  VERCEL_PROJECT_ID: z.string().optional(),
+  /** Only needed when the project lives under a team rather than a personal account. */
+  VERCEL_TEAM_ID: z.string().optional(),
+
   // ── Email ───────────────────────────────────────────────────────────────
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),
@@ -113,6 +120,7 @@ const GROUPS: {
     ],
   },
   { name: "MercadoPago OAuth", keys: ["MP_CLIENT_ID", "MP_CLIENT_SECRET"] },
+  { name: "Dominios propios", keys: ["VERCEL_API_TOKEN", "VERCEL_PROJECT_ID"] },
 ];
 
 /**
@@ -295,6 +303,7 @@ export function integrationStatus() {
     redisRateLimit: Boolean(redisCredentials()),
     cloudinary: Boolean(e.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME),
     cron: Boolean(e.CRON_SECRET),
+    customDomains: Boolean(e.VERCEL_API_TOKEN && e.VERCEL_PROJECT_ID),
   };
 }
 

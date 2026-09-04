@@ -2,6 +2,20 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authConfig } from "@/lib/auth.config";
+import { businessSlugForHost } from "@/lib/custom-domain";
+
+/** Our own host, plus the deployment URLs Vercel gives every build. */
+function isOwnHost(host: string): boolean {
+  const hostname = host.toLowerCase().split(":")[0];
+  const appHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://jikuapp.com").hostname;
+
+  return (
+    hostname === appHost ||
+    hostname === `www.${appHost}` ||
+    hostname === "localhost" ||
+    hostname.endsWith(".vercel.app")
+  );
+}
 
 /**
  * Runs before every matched request.
@@ -16,8 +30,27 @@ type AuthedRequest = NextRequest & {
   auth?: { user?: { role?: string; businessId?: string | null } };
 };
 
-export default auth((request: NextRequest) => {
+export default auth(async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
+
+  // ── Custom domains ──────────────────────────────────────────────────────
+  // A request that did not arrive on our own host came in on a business's
+  // domain, and everything on it belongs to that business's page. The matcher
+  // below is what keeps this from costing anything: normal traffic on
+  // jikuapp.com never reaches this file for these paths.
+  const host = request.headers.get("host");
+  if (host && !isOwnHost(host)) {
+    const slug = await businessSlugForHost(host);
+
+    // An unknown host is a domain someone pointed at us without connecting it,
+    // or a preview deployment. Neither should render a business's page.
+    if (!slug) return NextResponse.next();
+
+    const url = request.nextUrl.clone();
+    url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   const user = (request as AuthedRequest).auth?.user;
   const isAuthenticated = !!user;
 
@@ -96,6 +129,13 @@ export default auth((request: NextRequest) => {
  */
 export const config = {
   matcher: [
+    // Every path, but only when the request did not arrive on our own host.
+    // Custom domains need the host to be inspected on each request; putting the
+    // condition in the matcher means a visit to jikuapp.com never pays for it.
+    {
+      source: "/((?!_next/|favicon.ico|.*\\.[a-z0-9]+$).*)",
+      missing: [{ type: "host", value: "jikuapp.com" }],
+    },
     "/panel/:path*",
     "/admin/:path*",
     "/api/admin/:path*",

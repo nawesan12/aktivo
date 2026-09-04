@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BusinessSettings } from "@/components/dashboard/business-settings";
+import { CustomDomain } from "@/components/dashboard/custom-domain";
 
 export const metadata: Metadata = {
   title: "Configuración",
@@ -15,6 +16,7 @@ export default function ConfiguracionPage() {
         </p>
       </div>
       <BusinessSettings />
+      <CustomDomain />
     </div>
   );
 }
