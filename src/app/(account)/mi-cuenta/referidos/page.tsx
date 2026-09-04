@@ -2,48 +2,73 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import Link from "next/link";
 import { Users, Copy, Check, Share2, Loader2, Gift } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/format";
+import { messageOf } from "@/lib/api-message";
+
+interface ReferralBusiness {
+  id: string;
+  slug: string;
+  name: string;
+  logo: string | null;
+  rewardType: "PERCENTAGE" | "FIXED" | null;
+  rewardValue: number | null;
+}
+
+/** What the friend gets, said out loud instead of left to guess. */
+function rewardLabel(business: ReferralBusiness | undefined) {
+  if (!business?.rewardValue || !business.rewardType) return null;
+  return business.rewardType === "PERCENTAGE"
+    ? `${business.rewardValue}% de descuento`
+    : `${formatCurrency(business.rewardValue)} de descuento`;
+}
 
 export default function ReferralsPage() {
-  const [selectedBusiness, setSelectedBusiness] = useState<string | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Fetch user businesses
-  const { data: businesses } = useSWR("/api/account/businesses");
-  const businessList = businesses?.data || businesses || [];
+  const { data: businessesData, isLoading: loadingBusinesses } =
+    useSWR("/api/account/businesses");
+  const businessList: ReferralBusiness[] = businessesData?.data ?? [];
 
-  // Select first business if none selected
-  if (!selectedBusiness && businessList.length > 0) {
-    setSelectedBusiness(businessList[0].slug || businessList[0].business?.slug);
-  }
+  // Falling back to the first business instead of setting state during render,
+  // which React warns about and which fought the user's own choice.
+  const slug = selectedSlug ?? businessList[0]?.slug ?? null;
+  const business = businessList.find((b) => b.slug === slug);
 
-  const slug = selectedBusiness;
-  const { data: referral, mutate } = useSWR(
+  const { data: referralData, mutate } = useSWR(
     slug ? `/api/businesses/${slug}/referrals` : null
   );
+  // The route answers { data: … }; the page used to read the code off the
+  // envelope, so a generated code never showed up.
+  const referral: { code: string; totalReferrals: number } | null =
+    referralData?.data ?? null;
+
+  const link =
+    referral && slug
+      ? `${window.location.origin}/${slug}/reservar?ref=${referral.code}`
+      : null;
 
   const generateCode = async () => {
     if (!slug) return;
     setGenerating(true);
     try {
-      const res = await fetch(`/api/businesses/${slug}/referrals`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error();
+      const res = await fetch(`/api/businesses/${slug}/referrals`, { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
       toast.success("Código de referido generado");
       mutate();
-    } catch {
-      toast.error("Error al generar código");
+    } catch (error) {
+      toast.error(messageOf(error, "No pudimos generar el código"));
     } finally {
       setGenerating(false);
     }
   };
 
   const copyLink = () => {
-    if (!referral?.code || !slug) return;
-    const link = `${window.location.origin}/${slug}/reservar?ref=${referral.code}`;
+    if (!link) return;
     navigator.clipboard.writeText(link);
     setCopied(true);
     toast.success("Link copiado");
@@ -51,8 +76,7 @@ export default function ReferralsPage() {
   };
 
   const shareLink = () => {
-    if (!referral?.code || !slug) return;
-    const link = `${window.location.origin}/${slug}/reservar?ref=${referral.code}`;
+    if (!link) return;
     if (navigator.share) {
       navigator.share({ title: "Reservá un turno", url: link }).catch(() => {});
     } else {
@@ -60,93 +84,127 @@ export default function ReferralsPage() {
     }
   };
 
+  const reward = rewardLabel(business);
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-heading font-bold">Programa de Referidos</h1>
+        <h1 className="text-2xl font-heading font-bold">Referí a un amigo</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Compartí tu código y referí nuevos clientes
+          Pasales tu link. Cuando reservan, les hacen un descuento.
         </p>
       </div>
 
-      {businessList.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {businessList.map((b: Record<string, unknown>) => {
-            const bSlug = (b.slug || (b.business as Record<string, unknown>)?.slug) as string;
-            const bName = (b.name || (b.business as Record<string, unknown>)?.name) as string;
-            return (
-              <button
-                key={bSlug}
-                onClick={() => setSelectedBusiness(bSlug)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedBusiness === bSlug
-                    ? "brand-gradient text-white"
-                    : "glass text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {bName}
-              </button>
-            );
-          })}
+      {loadingBusinesses ? (
+        <div className="glass rounded-xl p-12 flex justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
-      )}
-
-      {!referral || !referral.code ? (
+      ) : businessList.length === 0 ? (
         <div className="glass rounded-xl p-12 text-center">
           <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
-          <p className="text-muted-foreground text-sm mb-4">
-            Generá tu código de referido para compartir con amigos
+          <p className="font-heading font-semibold">Todavía no hay nada para referir</p>
+          <p className="text-muted-foreground text-sm mt-2 max-w-sm mx-auto">
+            Los códigos son de cada negocio. Cuando reserves en uno que tenga
+            programa de referidos, te va a aparecer acá.
           </p>
-          <button
-            onClick={generateCode}
-            disabled={generating || !slug}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50"
+          <Link
+            href="/explorar"
+            className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
           >
-            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-            Generar código
-          </button>
+            Buscar un negocio
+          </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Code card */}
-          <div className="glass rounded-xl p-6 text-center">
-            <p className="text-sm text-muted-foreground mb-2">Tu código de referido</p>
-            <p className="text-3xl font-heading font-bold tracking-widest brand-text mb-4">
-              {referral.code}
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={copyLink}
-                aria-label="Copiar el link de referido"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4 text-success-foreground" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copiado" : "Copiar link"}
-              </button>
-              <button
-                onClick={shareLink}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm"
-              >
-                <Share2 className="w-4 h-4" />
-                Compartir
-              </button>
+        <>
+          {businessList.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {businessList.map((b) => (
+                <button
+                  key={b.slug}
+                  onClick={() => setSelectedSlug(b.slug)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    slug === b.slug
+                      ? "brand-gradient text-white"
+                      : "glass text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {b.name}
+                </button>
+              ))}
             </div>
-          </div>
+          )}
 
-          {/* Stats */}
-          <div className="glass rounded-xl p-6">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-heading font-bold">{referral.totalReferrals || 0}</p>
-                <p className="text-sm text-muted-foreground">Referidos totales</p>
+          {!referral ? (
+            <div className="glass rounded-xl p-12 text-center">
+              <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+              <p className="text-muted-foreground text-sm mb-4 max-w-sm mx-auto">
+                {reward
+                  ? `Generá tu código de ${business?.name}: quien lo use se lleva ${reward} en su primer turno.`
+                  : `Generá tu código de ${business?.name} para compartir con amigos.`}
+              </p>
+              <button
+                onClick={generateCode}
+                disabled={generating}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50"
+              >
+                {generating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Users className="w-4 h-4" />
+                )}
+                Generar código
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="glass rounded-xl p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Tu código de {business?.name}
+                </p>
+                <p className="text-3xl font-heading font-bold tracking-widest brand-text mb-4">
+                  {referral.code}
+                </p>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <button
+                    onClick={copyLink}
+                    aria-label="Copiar el link de referido"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 text-success-foreground" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                    {copied ? "Copiado" : "Copiar link"}
+                  </button>
+                  <button
+                    onClick={shareLink}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Compartir
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-heading font-bold">{referral.totalReferrals || 0}</p>
-                <p className="text-sm text-muted-foreground">Reservas realizadas</p>
+
+              {/* One number, said once. The card used to print the same count
+                  under two different labels, as if they were two figures. */}
+              <div className="glass rounded-xl p-6 text-center">
+                <p className="text-3xl font-heading font-bold">{referral.totalReferrals}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {referral.totalReferrals === 1
+                    ? "persona reservó con tu código"
+                    : "personas reservaron con tu código"}
+                </p>
+                {reward && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Cada una se llevó {reward}.
+                  </p>
+                )}
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

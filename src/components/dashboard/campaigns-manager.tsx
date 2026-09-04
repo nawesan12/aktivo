@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   Plus, Megaphone, Play, Pause, Trash2, Loader2,
-  Mail, MessageSquare, Users, BarChart2,
+  Mail, Users, BarChart2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
@@ -131,8 +131,18 @@ export function CampaignsManager() {
       const res = await fetch(`/api/panel/campaigns/${id}/execute`, { method: "POST" });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error);
-      toast.success(`Enviados: ${result.sent}, Errores: ${result.errors}`);
+      // The send now happens after the response, so there is no final count to
+      // report here — only how many people it is going out to.
+      toast.success(
+        result.queued
+          ? `Enviando a ${result.audience} ${result.audience === 1 ? "cliente" : "clientes"}. Los resultados aparecen acá abajo.`
+          : result.message || "No hay a quién enviarle todavía."
+      );
       mutate();
+      // The counter below comes from the database, which the background send is
+      // still writing to. One more read a few seconds later so the owner sees
+      // it move without having to reload the page.
+      if (result.queued) setTimeout(() => mutate(), 5000);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al ejecutar");
     } finally {
@@ -247,17 +257,7 @@ export function CampaignsManager() {
             {errors.messageBody && <p className="text-xs text-destructive mt-1">{errors.messageBody.message}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="channel" className="text-sm text-muted-foreground">Canal</label>
-              <select
-                id="channel"
-                {...register("channel")}
-                className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm"
-              >
-                <option value="EMAIL">Email</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="text-sm text-muted-foreground">Filtrar por tags (opcional)</label>
               <div className="flex flex-wrap gap-1.5 mt-1">
@@ -320,11 +320,13 @@ export function CampaignsManager() {
                 <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{campaign.messageBody}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    {campaign.channel === "EMAIL" ? <Mail className="w-3 h-3" /> : <MessageSquare className="w-3 h-3" />}
-                    {campaign.channel}
+                    <Mail className="w-3 h-3" />
+                    Email
                   </span>
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
+                    {/* Only the ones that actually went out. The count used to
+                        include failures under the word "enviados". */}
                     {campaign._count.executions} enviados
                   </span>
                   <span>

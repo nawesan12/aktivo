@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
 
     const campaigns = await db.campaign.findMany({
       where,
-      include: { _count: { select: { executions: true } } },
+      // Counting only what left: the card labels this number "enviados", and a
+      // failed attempt is not one.
+      include: { _count: { select: { executions: { where: { status: "SENT" } } } } },
       orderBy: { updatedAt: "desc" },
     });
 

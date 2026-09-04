@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
 import { handleApiError } from "@/lib/api-errors";
 import { runCampaign } from "@/lib/campaigns/run";
+import { resolveAudience } from "@/lib/campaigns/audience";
+import { runInBackground } from "@/lib/background";
 
 /**
  * Runs a campaign on demand.
@@ -12,6 +14,12 @@ import { runCampaign } from "@/lib/campaigns/run";
  * of the logic which ignored the campaign type — a birthday campaign greeted
  * every client of the business on whatever day the button was pressed — and
  * always sent email even when the campaign's channel was WhatsApp.
+ *
+ * The sending happens after the response. It used to run inside it: with a few
+ * hundred clients the owner watched a spinner for a minute and the browser gave
+ * up before the send did, leaving them with no idea how many mails went out.
+ * Now they get the audience size straight away and the progress shows up in the
+ * campaign's own counters as it goes.
  */
 export async function POST(
   _request: NextRequest,
@@ -30,23 +38,34 @@ export async function POST(
       return NextResponse.json({ error: "Campaña no encontrada" }, { status: 404 });
     }
 
-    const result = await runCampaign(campaign);
+    const audience = await resolveAudience(campaign);
 
-    // A one-off blast is done once it has run. The automated ones stay active:
-    // they are meant to keep firing on their trigger.
-    if (campaign.type === "CUSTOM" && result.sent > 0) {
-      await db.campaign.update({
-        where: { id: campaign.id },
-        data: { status: "COMPLETED" },
+    if (audience.length === 0) {
+      return NextResponse.json({
+        queued: false,
+        audience: 0,
+        message: "Ningún cliente entra en esta campaña todavía.",
       });
     }
 
-    return NextResponse.json({
-      sent: result.sent,
-      errors: result.failed,
-      skipped: result.skipped,
-      audience: result.audience,
-    });
+    runInBackground(
+      "campaigns:execute",
+      async () => {
+        const result = await runCampaign(campaign);
+
+        // A one-off blast is done once it has run. The automated ones stay
+        // active: they are meant to keep firing on their trigger.
+        if (campaign.type === "CUSTOM" && result.sent > 0) {
+          await db.campaign.update({
+            where: { id: campaign.id },
+            data: { status: "COMPLETED" },
+          });
+        }
+      },
+      { campaignId: campaign.id, businessId: session.businessId }
+    );
+
+    return NextResponse.json({ queued: true, audience: audience.length }, { status: 202 });
   } catch (error) {
     return handleApiError(error, "panel:campaigns:execute");
   }

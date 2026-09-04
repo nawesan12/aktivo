@@ -29,7 +29,7 @@ test.describe("F10 — Referral Program", () => {
       await page.goto("/mi-cuenta/referidos");
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByRole("heading", { name: "Programa de Referidos" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Referí a un amigo" })).toBeVisible();
     });
 
     test("mi-cuenta layout shows Referidos tab", async ({ page }) => {
@@ -40,15 +40,22 @@ test.describe("F10 — Referral Program", () => {
       await expect(page.getByRole("link", { name: "Referidos" })).toBeVisible();
     });
 
-    test("referral page shows generate button when no code exists", async ({ page }) => {
+    test("la página siempre dice qué sigue", async ({ page }) => {
       await loginAsOwner(page);
       await page.goto("/mi-cuenta/referidos");
       await page.waitForLoadState("networkidle");
 
-      // Should show either the code or the generate button
-      const hasCode = await page.getByText(/Tu código de referido/i).isVisible().catch(() => false);
+      // Three legitimate outcomes, and the third used to be missing: someone
+      // who has not booked anywhere with a referral programme got the generate
+      // button anyway, permanently disabled, with no business behind it.
+      const hasCode = await page.getByText(/Tu código de/i).isVisible().catch(() => false);
       const hasGenerate = await page.getByText(/Generar código/i).isVisible().catch(() => false);
-      expect(hasCode || hasGenerate).toBe(true);
+      const hasEmptyState = await page
+        .getByText(/Todavía no hay nada para referir/i)
+        .isVisible()
+        .catch(() => false);
+
+      expect(hasCode || hasGenerate || hasEmptyState).toBe(true);
     });
   });
 });

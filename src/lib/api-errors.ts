@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { createLogger } from "@/lib/logger";
 
 const log = createLogger("api");
@@ -145,6 +146,20 @@ export function handleApiError(error: unknown, scope?: string): NextResponse {
         code: "SLOT_TAKEN",
       },
       { status: 409 }
+    );
+  }
+
+  // A schema rejected the body. Without this, `schema.parse()` anywhere in a
+  // route produced "Error interno" with a 500 — the caller was told the server
+  // broke when in fact they had sent an invalid field, and the message
+  // explaining which one was thrown away.
+  if (error instanceof ZodError) {
+    // The first issue's message only, matching what every hand-rolled
+    // `safeParse` branch in the routes already returns. The field name stays
+    // out of it: they are English identifiers and the product speaks Spanish.
+    return NextResponse.json(
+      { error: error.issues[0]?.message ?? "Datos inválidos", code: "VALIDATION" },
+      { status: 400 }
     );
   }
 
