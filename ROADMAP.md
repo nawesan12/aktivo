@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 227 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 231 unitarios y 101 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -283,6 +283,28 @@ abriera el panel.
   sin eso, cada visita al sitio entre las siete y la medianoche sería otro correo
   igual.
 - [x] Se apaga desde Configuración → Recordatorios y envíos.
+
+### Sprint 16 — Gastar menos, y el modal del mostrador ✅
+
+- [x] **Nada se podaba.** Ni `Notification` ni `AuditLog` se limpiaban nunca, y
+  las dos crecen con el uso: un negocio con diez turnos por día produce unas mil
+  notificaciones por mes —confirmación, dos recordatorios y el pedido de
+  reseña— y una fila de auditoría por cada cosa que se toca en el panel. En una
+  base que se paga por almacenamiento eso es plata por filas que nadie vuelve a
+  leer. Hay un trabajo diario (`src/lib/jobs/purge.ts`): 60 días de envíos, 180
+  de auditoría, y los códigos de acceso a las 24 horas.
+- [x] Con índice por `createdAt` en las dos tablas. Los que había lo tienen como
+  segunda columna, así que el barrido diario habría leído la tabla entera.
+- [x] **El modal de cargar un turno, reordenado.** Empezaba por el cliente —con
+  un buscador y tres campos de alta abiertos a la vez, sin que quedara claro si
+  había que buscar o cargar— y recién abajo preguntaba el servicio, del que
+  dependen los horarios: se llenaba la ficha de la persona antes de saber si
+  quedaba lugar. Ahora va en el orden de la conversación real: qué, cuándo, para
+  quién, y cada paso aparece cuando el anterior está resuelto.
+- [x] Y consulta menos: el personal se pide sólo cuando ya hay servicio elegido,
+  las listas casi estáticas se cachean media hora, la búsqueda de clientes
+  arranca en tres letras y la grilla de horarios conserva la anterior mientras
+  llega la nueva.
 
 ### Pendiente
 

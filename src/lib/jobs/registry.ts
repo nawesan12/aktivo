@@ -5,6 +5,7 @@ import { redeliverFailedNotifications } from "@/lib/notifications/redelivery";
 import { sendPendingReviewRequests } from "@/lib/reviews/requests";
 import { renewMercadoPagoLinks } from "@/lib/mercadopago-renewal";
 import { sendDailyDigests } from "@/lib/jobs/daily-digest";
+import { purgeOldRows } from "@/lib/jobs/purge";
 
 export interface Job {
   /** Matches the primary key of the `JobRun` row. */
@@ -78,6 +79,19 @@ export const JOBS: Job[] = [
     intervalSeconds: 1800,
     opportunistic: true,
     run: sendDailyDigests,
+  },
+  {
+    /*
+      Podar lo que ya nadie lee.
+
+      Ninguna de esas tablas se limpiaba y las tres crecen con el uso: mil
+      notificaciones por mes por negocio, y una fila de auditoría por cada cosa
+      que se toca en el panel. Una vez por día alcanza de sobra.
+    */
+    name: "purge",
+    intervalSeconds: 86400,
+    opportunistic: true,
+    run: purgeOldRows,
   },
   {
     // Once an hour is plenty for something with a month of runway, and it keeps

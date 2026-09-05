@@ -644,6 +644,10 @@ model Notification {
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([businessId, createdAt])
+  /// La poda diaria filtra sólo por fecha, sin negocio: con `createdAt` como
+  /// segunda columna de otro índice, ese barrido termina siendo un scan de toda
+  /// la tabla. Ver src/lib/jobs/purge.ts.
+  @@index([createdAt])
   @@index([appointmentId])
   // The retry job scans exactly this: what failed and is still worth retrying.
   @@index([status, attempts])
@@ -668,6 +672,8 @@ model AuditLog {
 
   @@index([businessId, createdAt])
   @@index([entity, createdAt])
+  /// Igual que en Notification: la poda barre por fecha y nada más.
+  @@index([createdAt])
   @@index([userId])
 }
 
