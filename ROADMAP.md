@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 213 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 216 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -251,6 +251,17 @@ Hecho el 5 de septiembre de 2026, mirando el otro lado del mismo recorrido.
   de Río Gallegos (2966) se leía como uno de Bahía Blanca (296). Los códigos de
   2, 3 y 4 dígitos no se distinguen por ninguna regla —el total es siempre
   diez—, así que ahora hay lista.
+
+### Sprint 14 — El correo dice dónde queda el local ✅
+
+- [x] La confirmación y los dos recordatorios llevan la dirección. Decían
+  servicio, quién atiende, día y hora — y nada de a dónde ir, que es lo que
+  hace falta para llegar y lo que la persona abre antes de salir de la casa. No
+  va en la cancelación ni en el turno perdido, donde ya no hay a dónde ir.
+- [x] Se resuelve en `sendNotification`, no en cada llamada: son siete los
+  lugares que mandan una notificación y todos tienen el `businessId` a mano.
+  `redelivery.ts` —el camino de los reintentos, que ya se quedó atrás una vez—
+  se actualizó en el mismo commit.
 
 ### Pendiente del recorrido del dueño
 

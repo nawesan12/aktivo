@@ -70,6 +70,19 @@ export async function sendNotification(data: NotificationData) {
 
   if (data.clientEmail && emailEnabled) {
     try {
+      /*
+        Resuelta acá y no en cada llamada.
+
+        Son siete los lugares que mandan una notificación y todos tienen el
+        `businessId` a mano; pedirles la dirección a los siete es como se
+        terminan olvidando seis. Una consulta, y el correo la lleva siempre.
+      */
+      const business = await db.business.findUnique({
+        where: { id: data.businessId },
+        select: { address: true, city: true },
+      });
+      const address = [business?.address, business?.city].filter(Boolean).join(", ") || null;
+
       await sendEmail({
         to: data.clientEmail,
         type: baseType,
@@ -79,6 +92,7 @@ export async function sendNotification(data: NotificationData) {
         staffName: data.staffName,
         dateTime: data.dateTime,
         businessSlug: data.businessSlug,
+        businessAddress: address,
       });
 
       await db.notification.create({

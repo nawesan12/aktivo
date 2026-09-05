@@ -56,7 +56,10 @@ async function pendingNotifications(limit: number) {
 }
 
 const NOTIFICATION_INCLUDE = {
-  business: { select: { name: true, slug: true } },
+  // `address` y `city`: el reintento manda el mismo correo que el camino
+  // principal, y este archivo ya se quedó atrás una vez —el recordatorio de
+  // una hora siguió diciendo "mañana" acá después de arreglarlo allá.
+  business: { select: { name: true, slug: true, address: true, city: true } },
   appointment: {
     include: {
       service: { select: { name: true } },
@@ -98,6 +101,10 @@ async function redeliverOne(notification: PendingNotification): Promise<Redelive
       type: toBaseType(notification.type),
       businessName: notification.business.name,
       businessSlug: notification.business.slug,
+      businessAddress:
+        [notification.business.address, notification.business.city]
+          .filter(Boolean)
+          .join(", ") || null,
       clientName,
       serviceName: appointment.service.name,
       staffName: appointment.staff.name,

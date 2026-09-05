@@ -22,6 +22,7 @@ const base = {
   serviceName: "Corte + Color",
   staffName: "Martín",
   dateTime: new Date("2026-09-12T13:30:00.000Z"),
+  businessAddress: "Av. Colón 1234, Mar del Plata",
 };
 
 const everyEmail = () => [
@@ -190,6 +191,38 @@ describe("el botón de acción", () => {
     expect(html).toContain("<!DOCTYPE");
     expect(html).toContain("/mis-turnos");
     expect(html).not.toContain("undefined");
+    expect(text).not.toContain("undefined");
+  });
+});
+
+/*
+  Dónde queda el local.
+
+  El correo del turno es lo que la persona abre antes de salir de la casa, y
+  decía servicio, quién atiende, día y hora — nada de a dónde ir.
+*/
+describe("la dirección del local", () => {
+  it("va en los correos que se leen para ir", () => {
+    for (const type of ["confirmation", "reminder", "reminder_soon"] as const) {
+      const { html, text } = buildAppointmentEmail({ ...base, type });
+      expect(html, type).toContain("Av. Colón 1234");
+      expect(text, type).toContain("Av. Colón 1234");
+    }
+  });
+
+  it("no va donde ya no hay a dónde ir", () => {
+    const { text } = buildAppointmentEmail({ ...base, type: "cancellation" });
+    expect(text).not.toContain("Av. Colón 1234");
+  });
+
+  it("y un negocio sin dirección cargada manda el correo igual", () => {
+    const { html, text } = buildAppointmentEmail({
+      ...base,
+      type: "confirmation",
+      businessAddress: null,
+    });
+    expect(html).toContain("<!DOCTYPE");
+    expect(html).not.toContain("Dónde");
     expect(text).not.toContain("undefined");
   });
 });

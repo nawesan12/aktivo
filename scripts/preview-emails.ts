@@ -28,6 +28,7 @@ const base = {
   staffName: "Martín",
   dateTime: when,
   businessSlug: "el-corte",
+  businessAddress: "Av. Colón 1234, Mar del Plata",
 };
 
 const emails = [

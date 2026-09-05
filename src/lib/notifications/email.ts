@@ -46,6 +46,14 @@ interface EmailData {
    * `select` away rather than a query.
    */
   businessSlug?: string;
+  /**
+   * Dónde queda el local, ya armada como una línea.
+   *
+   * Es lo que hace falta para llegar, y el correo del turno es lo que la
+   * persona abre antes de salir de la casa. Hasta acá decía servicio, quién
+   * atiende, día y hora, y nada de a dónde ir.
+   */
+  businessAddress?: string | null;
 }
 
 /**
@@ -132,12 +140,26 @@ function buildEmail(data: EmailData): { subject: string; html: string; text: str
   const blocks: Block[] = [paragraph(`Hola ${data.clientName},`)];
   if (leadLine) blocks.push(lead(leadLine));
 
+  /*
+    La dirección va con el resto del turno, no aparte.
+
+    Sale en los que se leen para ir —la confirmación y los dos recordatorios— y
+    no en la cancelación ni en el turno perdido, donde ya no hay a dónde ir.
+  */
+  const vaAlLocal =
+    data.type === "confirmation" ||
+    data.type === "reminder" ||
+    data.type === "reminder_soon";
+
   blocks.push(
     details([
       { label: "Servicio", value: data.serviceName },
       { label: "Profesional", value: data.staffName },
       { label: "Fecha", value: dateStr },
       { label: "Hora", value: timeStr, strong: true },
+      ...(vaAlLocal && data.businessAddress
+        ? [{ label: "Dónde", value: data.businessAddress }]
+        : []),
     ])
   );
 
