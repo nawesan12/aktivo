@@ -42,6 +42,18 @@ export function Nav() {
               {section.label}
             </a>
           ))}
+          {/*
+            The landing sells the panel to shop owners, so both of these used to
+            be about running one. Somebody who books here is a different person
+            with a different errand, and until now the front door had nothing
+            for them.
+          */}
+          <Link href="/explorar" className="transition-colors hover:text-foreground">
+            Explorar
+          </Link>
+          <Link href="/mis-turnos" className="transition-colors hover:text-foreground">
+            Mis turnos
+          </Link>
           <Link href="/iniciar-sesion" className="transition-colors hover:text-foreground">
             Iniciar sesión
           </Link>
@@ -81,6 +93,20 @@ export function Nav() {
               {section.label}
             </a>
           ))}
+          <Link
+            href="/explorar"
+            onClick={() => setOpen(false)}
+            className="rounded-lg px-2 py-2.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            Explorar
+          </Link>
+          <Link
+            href="/mis-turnos"
+            onClick={() => setOpen(false)}
+            className="rounded-lg px-2 py-2.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            Mis turnos
+          </Link>
           <Link
             href="/iniciar-sesion"
             onClick={() => setOpen(false)}

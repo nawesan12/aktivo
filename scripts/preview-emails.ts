@@ -14,7 +14,7 @@ import { buildAppointmentEmail } from "@/lib/notifications/email";
 import { buildReviewRequestEmail } from "@/lib/notifications/review-request-email";
 import { buildInviteEmail } from "@/lib/notifications/invite-email";
 import { buildPasswordResetEmail } from "@/lib/notifications/password-reset-email";
-import { buildVerificationEmail } from "@/lib/notifications/verification-email";
+import { buildAccessLinkEmail } from "@/lib/notifications/access-link-email";
 import { buildMercadoPagoExpiringEmail } from "@/lib/notifications/mercadopago-email";
 
 const OUT = "design/emails";
@@ -56,7 +56,7 @@ const emails = [
   ],
   ["invitacion", buildInviteEmail("https://jikuapp.com/invitacion?token=abc123", base.businessName)],
   ["contrasena", buildPasswordResetEmail("https://jikuapp.com/recuperar-contrasena?token=abc123")],
-  ["codigo", buildVerificationEmail("482913", base.businessName)],
+  ["acceso", buildAccessLinkEmail("https://jikuapp.com/api/client/auth/link?t=abc123")],
   [
     "mercadopago",
     buildMercadoPagoExpiringEmail(base.businessName, "https://jikuapp.com/panel/pagos", "20 de septiembre"),

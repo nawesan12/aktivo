@@ -173,10 +173,52 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 196 unitarios y 90 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 210 unitarios y 99 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
+
+### Sprint 11 — La cartera de turnos del cliente ✅
+
+Hecho el 5 de septiembre de 2026. El cliente final —quien saca el turno, sin
+local ni plan— no tenía producto: existían dos carteras de turnos y ninguna se
+alcanzaba desde el recorrido real.
+
+- [x] **Una sola identidad de cliente**, con el email como llave
+  (`src/lib/client-identity.ts`). Antes eran dos mitades que no se hablaban:
+  `GuestClient` (por negocio, buscado por teléfono) y `User` (con sesión).
+  Reservar con sesión iniciada no creaba ninguna fila de invitado, así que el
+  portal contestaba "No se encontraron turnos con este número" a alguien a
+  quien nunca se le había pedido un número.
+- [x] **`/mis-turnos`**: una cartera para todos los locales, con o sin cuenta.
+  `/{negocio}/mis-turnos` redirige ahí, para que los correos ya enviados sigan
+  andando.
+- [x] **Sin códigos.** Reservar deja la sesión en el navegador; volver desde
+  otro teléfono es un link en el correo. Nadie transcribe seis dígitos.
+- [x] Header público compartido (`components/layout/public-header.tsx`), con la
+  marca del local sobre su portada y sin nada de Jiku en marca blanca.
+- [x] Salidas en la confirmación: cambiar el turno, volver al local, explorar.
+- [x] Al reservar con sesión se pide el teléfono y queda en el perfil.
+- [x] Alta de cuenta de cliente sin negocio (`/api/client/claim`), ofrecida
+  después de reservar y nunca antes.
+- [x] Los turnos reservados como invitado pasan a la cuenta al iniciar sesión
+  con el mismo email.
+
+De paso, arreglado en el camino:
+
+- Reprogramar desde "Mi cuenta" **nunca funcionó**: el modal mandaba
+  `newDateTime` y el endpoint leía `newDate` + `newTime`.
+- El modal mostraba la fecha cruda en UTC (`2026-09-08T14:00:00.000Z`), tres
+  horas corrida de la hora reservada.
+- Los campos del formulario de reserva se renderizan dos veces —barra fija y
+  columna— con los mismos `id`, así que cada `<label for>` apuntaba a dos.
+- `GuestClient.phone` pasó a nullable: con `""` y el unique `(businessId,
+  phone)`, el segundo cliente sin teléfono cargado a mano rompía con P2002.
+- La dirección del local estaba al pie de un formulario largo y la nota de
+  arriba mandaba a "Mi web", donde no está. Ahora abre la sección, dice para
+  qué sirve y ofrece ver dónde cae el punto en el mapa.
+- Lista de slugs reservados: un negocio llamado "Explorar" se quedaba sin
+  página pública, porque una ruta estática le gana a `/[businessSlug]`.
 
 ### Pendiente
 

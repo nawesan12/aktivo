@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { verifyGuestToken } from "@/lib/guest-auth";
+import { clientAppointmentWhere, resolveClientIdentity } from "@/lib/client-identity";
 import { getAvailableSlots } from "@/lib/availability";
 import { releaseExpiredHolds } from "@/lib/bookings/expiry";
 import { parseDateInArgentina } from "@/lib/timezone";
@@ -10,37 +10,21 @@ import { handleApiError } from "@/lib/api-errors";
 import { runInBackground } from "@/lib/background";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { slug } = await params;
-    const token = request.cookies.get("guest-token")?.value;
-
-    if (!token) {
+    const identity = await resolveClientIdentity();
+    if (!identity) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
-    const guest = await verifyGuestToken(token);
-    if (!guest) {
-      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-    }
+    const { id } = await params;
+    const { newDate, newTime } = await request.json();
 
-    // Verify business slug matches
-    const business = await db.business.findUnique({
-      where: { slug },
-      select: { id: true, name: true, slug: true, settings: true },
-    });
-
-    if (!business || business.id !== guest.businessId) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-    }
-
-    const { appointmentId, newDate, newTime } = await request.json();
-
-    if (!appointmentId || !newDate || !newTime) {
+    if (!newDate || !newTime) {
       return NextResponse.json(
-        { error: "Datos incompletos. Se requiere appointmentId, newDate y newTime" },
+        { error: "Datos incompletos. Se requiere newDate y newTime" },
         { status: 400 }
       );
     }
@@ -48,16 +32,26 @@ export async function POST(
     // Find the existing appointment
     const appointment = await db.appointment.findFirst({
       where: {
-        id: appointmentId,
-        guestClientId: guest.guestClientId,
-        businessId: guest.businessId,
+        id,
+        // Ownership is the identity's, not the session's: a guest who verified
+        // their inbox reschedules the same way somebody with an account does.
+        AND: [clientAppointmentWhere(identity)],
         status: { in: ["PENDING", "CONFIRMED"] },
         dateTime: { gt: new Date() },
       },
       include: {
-        service: { select: { id: true, name: true, duration: true, businessId: true } },
+        service: {
+          select: { id: true, name: true, duration: true, businessId: true },
+        },
         staff: { select: { id: true, name: true } },
-        guestClient: { select: { name: true, phone: true, email: true } },
+        business: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            settings: true,
+          },
+        },
       },
     });
 
@@ -70,14 +64,14 @@ export async function POST(
 
     // Parse new date and check slot availability
     const date = parseDateInArgentina(newDate);
-    const settings = business.settings;
+    const settings = appointment.business.settings;
 
     // Expired unpaid holds still occupy the slot for the database constraint,
     // so they have to go before we read availability or write into it.
-    await releaseExpiredHolds({ businessId: business.id });
+    await releaseExpiredHolds({ businessId: appointment.businessId });
 
     const slots = await getAvailableSlots({
-      businessId: business.id,
+      businessId: appointment.businessId,
       staffId: appointment.staffId,
       date,
       serviceDuration: appointment.service.duration,
@@ -98,7 +92,7 @@ export async function POST(
     // Transaction: cancel old + create new
     const result = await db.$transaction(async (tx) => {
       await tx.appointment.update({
-        where: { id: appointmentId },
+        where: { id },
         data: {
           status: "CANCELLED",
           notes: `Reprogramado → ${newDate} ${newTime}`,
@@ -107,15 +101,17 @@ export async function POST(
 
       const newAppointment = await tx.appointment.create({
         data: {
-          businessId: business.id,
+          businessId: appointment.businessId,
           serviceId: appointment.serviceId,
           staffId: appointment.staffId,
+          // Carried over from the appointment being replaced rather than from
+          // the identity: whichever half it was booked into, it stays there.
           userId: appointment.userId,
           guestClientId: appointment.guestClientId,
           dateTime: slot.time,
           endTime: addMinutes(slot.time, appointment.service.duration),
           status: "CONFIRMED",
-          rescheduledFromId: appointmentId,
+          rescheduledFromId: id,
         },
       });
 
@@ -125,17 +121,17 @@ export async function POST(
     // Send reschedule notification
     runInBackground("reschedule-notice", () =>
       sendNotification({
-        businessId: business.id,
-        businessName: business.name,
-        businessSlug: business.slug,
+        businessId: appointment.businessId,
+        businessName: appointment.business.name,
+        businessSlug: appointment.business.slug,
         appointmentId: result.id,
-        clientName: appointment.guestClient?.name ?? "Cliente",
-        clientEmail: appointment.guestClient?.email ?? undefined,
+        clientName: identity.name ?? "Cliente",
+        clientEmail: identity.email ?? undefined,
         serviceName: appointment.service.name,
         staffName: appointment.staff.name,
         dateTime: slot.time,
         type: "reschedule",
-        guestClientId: guest.guestClientId,
+        userId: appointment.userId ?? undefined,
       }));
 
     return NextResponse.json({
@@ -143,6 +139,6 @@ export async function POST(
       dateTime: result.dateTime,
     });
   } catch (error) {
-    return handleApiError(error, "businesses:slug:guest-appointments:reschedule");
+    return handleApiError(error, "client:appointments:id:reschedule");
   }
 }

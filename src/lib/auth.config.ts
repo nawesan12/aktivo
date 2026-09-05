@@ -27,7 +27,15 @@ export const authConfig = {
       }
 
       if (isOnAuth && isLoggedIn) {
-        const home = auth?.user?.role === "PLATFORM_ADMIN" ? "/admin" : "/panel";
+        // A customer has no panel. Sending them to one landed them on "algo
+        // salió mal": the session was fine, there was simply no business to
+        // show. Same rule as `homeFor` in src/proxy.ts.
+        const home =
+          auth?.user?.role === "PLATFORM_ADMIN"
+            ? "/admin"
+            : auth?.user?.businessId
+              ? "/panel"
+              : "/mi-cuenta";
         return Response.redirect(new URL(home, nextUrl));
       }
 

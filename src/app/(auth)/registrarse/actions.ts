@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
+import { isReservedSlug } from "@/lib/reserved-slugs";
 import { signIn } from "@/lib/auth";
 import { createLogger } from "@/lib/logger";
 import { trialEndsAtFromNow } from "@/lib/subscription/access";
@@ -39,10 +40,11 @@ export async function registerUser(formData: {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    // Ensure unique slug
+    // Unique, and not one of ours. A shop's page lives at the root, so a name
+    // that resolves to a platform route would leave it without a public page.
     let slug = baseSlug;
     let counter = 1;
-    while (await db.business.findUnique({ where: { slug } })) {
+    while (isReservedSlug(slug) || (await db.business.findUnique({ where: { slug } }))) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }

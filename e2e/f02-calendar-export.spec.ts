@@ -29,33 +29,24 @@ test.describe("F2 — Add to Calendar", () => {
     }
   });
 
-  test("mis-turnos page renders phone input for guest lookup", async ({ page }) => {
-    // Navigate to guest turnos page (will show phone input)
-    await page.goto(`/${SEED.business.slug}/mis-turnos`);
+  test("el portal pide el email y ofrece explorar si todavía no reservaste", async ({ page }) => {
+    await page.goto("/mis-turnos");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Mis turnos")).toBeVisible();
-    // Verify the phone input state renders
-    await expect(page.getByPlaceholder(/1155667788/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tus turnos" })).toBeVisible();
+    await expect(page.getByLabel(/email o tu teléfono/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /Explorá los locales/i })).toBeVisible();
   });
 
-  test("mis-turnos shows appointments after phone lookup", async ({ page }) => {
-    await page.goto(`/${SEED.business.slug}/mis-turnos`);
-    await page.waitForLoadState("networkidle");
-
-    // Enter the seed guest phone
-    const phoneInput = page.getByPlaceholder(/1155667788/);
-    await expect(phoneInput).toBeVisible();
-    await phoneInput.fill(SEED.guest.phone);
-
-    // Submit the phone lookup
-    const submitBtn = page.getByRole("button", { name: /buscar|ver turnos/i });
-    if (await submitBtn.isVisible().catch(() => false)) {
-      await submitBtn.click();
-      await page.waitForLoadState("networkidle");
-    }
-
-    // After lookup the page should show either appointments or an empty state
-    await expect(page.locator("body")).toBeVisible();
+  test("un dato desconocido no acusa al número que escribiste", async ({ request }) => {
+    // El mensaje viejo era "No se encontraron turnos con este número", y salía
+    // aunque el turno existiera: sólo miraba invitados de ese negocio.
+    const res = await request.post("/api/client/auth/send-link", {
+      data: { identifier: "nadie-en-absoluto@example.com" },
+    });
+    expect(res.ok()).toBeTruthy();
+    const data = await res.json();
+    expect(data.sent).toBe(true);
+    expect(data.email).toBeNull();
   });
 });

@@ -88,11 +88,22 @@ export function RescheduleModal({
     setSubmitting(true);
 
     try {
-      const newDateTime = `${format(selectedDate, "yyyy-MM-dd")}T${selectedDisplay}`;
+      /*
+        The day and the time, apart.
+
+        This used to send a single `newDateTime`, which the guest endpoint read
+        and the account one did not — it destructures `newDate` and `newTime`,
+        got two undefineds, and answered "Datos incompletos". Rescheduling from
+        "Mi cuenta" has never once worked.
+      */
       const res = await fetch(rescheduleUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appointmentId, newDateTime }),
+        body: JSON.stringify({
+          appointmentId,
+          newDate: format(selectedDate, "yyyy-MM-dd"),
+          newTime: selectedDisplay,
+        }),
       });
 
       if (!res.ok) {
@@ -145,9 +156,16 @@ export function RescheduleModal({
           </button>
         </div>
 
-        {/* Current datetime info */}
+        {/*
+          Rendered raw until now — "2026-09-07T18:00:00.000Z" — so the one line
+          telling somebody which appointment they were about to move showed a
+          machine timestamp, in UTC, three hours off the time they had booked.
+        */}
         <p className="text-sm text-muted-foreground mb-4">
-          Turno actual: <span className="font-medium text-foreground">{currentDateTime}</span>
+          Turno actual:{" "}
+          <span className="font-medium text-foreground">
+            {format(new Date(currentDateTime), "EEEE d 'de' MMMM · HH:mm", { locale: es })}
+          </span>
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

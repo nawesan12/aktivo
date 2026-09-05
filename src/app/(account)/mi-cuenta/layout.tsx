@@ -54,7 +54,18 @@ export default async function AccountLayout({ children }: { children: ReactNode 
           <Link href="/mi-cuenta/perfil" aria-label="Mi cuenta">
             <JikuLogo size="sm" />
           </Link>
-          <UserMenu />
+          {/*
+            The menu was rendered with no links at all, so the avatar opened on
+            a single "cerrar sesión" — the only way out of the account was to
+            leave the session entirely.
+          */}
+          <UserMenu
+            links={[
+              { label: "Mis turnos", href: "/mi-cuenta/turnos" },
+              { label: "Mi perfil", href: "/mi-cuenta/perfil" },
+              { label: "Explorar locales", href: "/explorar" },
+            ]}
+          />
         </div>
         <AccountTabs />
       </header>

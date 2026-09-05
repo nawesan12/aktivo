@@ -162,7 +162,7 @@ test("un negocio se registra, configura y recibe una reserva", async ({ page }) 
   // vio nadie: el build pasa —no hay negocios para prerenderizar— y el servidor
   // de desarrollo no aplica la regla que falla en producción. La única forma de
   // enterarse es pedir las páginas.
-  for (const path of [`/${slug}`, `/${slug}/reservar`, `/${slug}/mis-turnos`]) {
+  for (const path of [`/${slug}`, `/${slug}/reservar`, "/mis-turnos"]) {
     const response = await page.request.get(path);
     expect(response.status(), `${path} respondió ${response.status()}`).toBe(200);
   }

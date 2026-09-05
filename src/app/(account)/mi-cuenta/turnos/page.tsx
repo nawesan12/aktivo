@@ -11,6 +11,7 @@ import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { Input } from "@/components/ui/input";
 import { downloadICS } from "@/lib/ics-generator";
 import { RescheduleModal } from "@/components/booking/reschedule-modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { APPOINTMENT_STATUS_OPTIONS } from "@/lib/appointment-status";
 import { NextAppointmentCard } from "@/components/account/next-appointment";
 
@@ -32,6 +33,7 @@ export default function AppointmentsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [rescheduleAppt, setRescheduleAppt] = useState<Appointment | null>(null);
+  const [cancelAppt, setCancelAppt] = useState<Appointment | null>(null);
 
   const params = new URLSearchParams({ page: String(page), limit: "20" });
   if (statusFilter) params.set("status", statusFilter);
@@ -39,7 +41,7 @@ export default function AppointmentsPage() {
   if (dateFrom) params.set("from", dateFrom);
   if (dateTo) params.set("to", dateTo);
 
-  const { data, isLoading, mutate } = useSWR(`/api/account/appointments?${params}`);
+  const { data, isLoading, mutate } = useSWR(`/api/client/appointments?${params}`);
 
   if (isLoading) return <TableSkeleton />;
 
@@ -74,7 +76,13 @@ export default function AppointmentsPage() {
         </p>
       </div>
 
-      {upcoming && <NextAppointmentCard appointment={upcoming} />}
+      {upcoming && (
+        <NextAppointmentCard
+          appointment={upcoming}
+          onReschedule={() => setRescheduleAppt(upcoming)}
+          onCancel={() => setCancelAppt(upcoming)}
+        />
+      )}
 
       {/* Filters */}
       <div className="glass rounded-xl p-4 space-y-3">
@@ -233,7 +241,7 @@ export default function AppointmentsPage() {
           serviceDuration={rescheduleAppt.service.duration}
           serviceId={rescheduleAppt.serviceId}
           staffId={rescheduleAppt.staffId}
-          rescheduleUrl={`/api/account/appointments/${rescheduleAppt.id}/reschedule`}
+          rescheduleUrl={`/api/client/appointments/${rescheduleAppt.id}/reschedule`}
           onClose={() => setRescheduleAppt(null)}
           onSuccess={() => {
             setRescheduleAppt(null);
@@ -241,6 +249,30 @@ export default function AppointmentsPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(cancelAppt)}
+        onOpenChange={(open) => !open && setCancelAppt(null)}
+        title="¿Cancelar este turno?"
+        description={
+          cancelAppt
+            ? `${cancelAppt.service.name} en ${cancelAppt.business.name}, ${format(
+                new Date(cancelAppt.dateTime),
+                "EEEE d 'de' MMMM 'a las' HH:mm",
+                { locale: es }
+              )}. Le avisamos al local.`
+            : ""
+        }
+        confirmLabel="Sí, cancelar"
+        cancelLabel="No, dejarlo"
+        destructive
+        onConfirm={async () => {
+          if (!cancelAppt) return;
+          await fetch(`/api/client/appointments/${cancelAppt.id}`, { method: "PATCH" });
+          setCancelAppt(null);
+          mutate();
+        }}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { buildAppointmentEmail } from "@/lib/notifications/email";
 import { buildReviewRequestEmail } from "@/lib/notifications/review-request-email";
 import { buildInviteEmail } from "@/lib/notifications/invite-email";
 import { buildPasswordResetEmail } from "@/lib/notifications/password-reset-email";
-import { buildVerificationEmail } from "@/lib/notifications/verification-email";
+import { buildAccessLinkEmail } from "@/lib/notifications/access-link-email";
 import { buildMercadoPagoExpiringEmail } from "@/lib/notifications/mercadopago-email";
 import { toBaseType } from "@/lib/notifications/redelivery";
 
@@ -50,7 +50,7 @@ const everyEmail = () => [
   },
   { name: "invite", mail: buildInviteEmail("https://jikuapp.com/invitacion?token=a", "El Corte") },
   { name: "reset", mail: buildPasswordResetEmail("https://jikuapp.com/recuperar-contrasena?token=a") },
-  { name: "verification", mail: buildVerificationEmail("482913", base.businessName) },
+  { name: "access-link", mail: buildAccessLinkEmail("https://jikuapp.com/api/client/auth/link?t=a") },
   {
     name: "mercadopago",
     mail: buildMercadoPagoExpiringEmail("El Corte", "https://jikuapp.com/panel/pagos", "20 de septiembre"),
@@ -173,18 +173,22 @@ describe("las estrellas de la reseña", () => {
 });
 
 describe("el botón de acción", () => {
-  it("aparece cuando se conoce el negocio", () => {
+  it("lleva a la cartera de turnos, no al portal del negocio", () => {
     const { html } = buildAppointmentEmail({ ...base, type: "confirmation" });
-    expect(html).toContain("/el-corte/mis-turnos");
+    expect(html).toContain("/mis-turnos");
+    // El portal por negocio pedía un teléfono que quien reservó con sesión
+    // iniciada nunca dio, y respondía que no encontraba nada con ese número.
+    expect(html).not.toContain("/el-corte/mis-turnos");
   });
 
-  it("no rompe el correo cuando falta el slug", () => {
+  it("sigue llevando a algún lado cuando falta el slug", () => {
     const { html, text } = buildAppointmentEmail({
       ...base,
       type: "confirmation",
       businessSlug: undefined,
     });
     expect(html).toContain("<!DOCTYPE");
+    expect(html).toContain("/mis-turnos");
     expect(html).not.toContain("undefined");
     expect(text).not.toContain("undefined");
   });

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { differenceInMinutes, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarPlus } from "lucide-react";
@@ -34,7 +33,15 @@ function countdown(target: Date, now: Date) {
  * appointment as one row among twenty — the same weight as something from
  * eighteen months ago. This is the only thing on the page anybody opens it for.
  */
-export function NextAppointmentCard({ appointment }: { appointment: NextAppointment }) {
+export function NextAppointmentCard({
+  appointment,
+  onReschedule,
+  onCancel,
+}: {
+  appointment: NextAppointment;
+  onReschedule?: () => void;
+  onCancel?: () => void;
+}) {
   const when = new Date(appointment.dateTime);
   const now = new Date();
   const remaining = Math.max(appointment.service.price - (appointment.paid ?? 0), 0);
@@ -89,12 +96,31 @@ export function NextAppointmentCard({ appointment }: { appointment: NextAppointm
           <CalendarPlus className="size-3.5" aria-hidden />
           Agregar al calendario
         </button>
-        <Link
-          href={`/${appointment.business.slug}/mis-turnos`}
-          className="rounded-[9px] border border-border px-5 py-2.5 text-center text-xs text-muted-foreground transition-colors hover:border-faint"
-        >
-          Reprogramar o cancelar
-        </Link>
+        {/*
+          These used to be one link to the shop's guest portal — which asked a
+          signed-in customer for a phone number in order to reach the very
+          appointment they were already looking at, and then told them it could
+          not find it. The screen that shows the booking is the screen that
+          changes it.
+        */}
+        {onReschedule && (
+          <button
+            type="button"
+            onClick={onReschedule}
+            className="rounded-[9px] border border-border px-5 py-2.5 text-center text-xs text-muted-foreground transition-colors hover:border-faint"
+          >
+            Reprogramar
+          </button>
+        )}
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-[9px] px-5 py-2.5 text-center text-xs text-muted-foreground transition-colors hover:text-danger-foreground"
+          >
+            Cancelar turno
+          </button>
+        )}
       </div>
     </article>
   );

@@ -171,6 +171,13 @@ export function BookingFlow({
       : null
   );
 
+  // Only asked of somebody signed in who has no number on file; once saved,
+  // this never appears again.
+  const { data: profile } = useSWR<{ phone: string | null }>(
+    session?.user ? "/api/account/profile" : null
+  );
+  const needsPhone = Boolean(session?.user) && profile !== undefined && !profile?.phone;
+
   const availableDates = useMemo(() => {
     const withSlots = new Set(
       (availability ?? [])
@@ -215,6 +222,15 @@ export function BookingFlow({
       toast.error("Necesitamos tu nombre y tu teléfono para reservar.");
       return;
     }
+    /*
+      Booking with a session used to send no phone number at all — the field was
+      only rendered for guests — so the shop had no way of reaching whoever was
+      coming. Asked once, then remembered on the profile.
+    */
+    if (session?.user && needsPhone && !guestPhone) {
+      toast.error("Necesitamos tu teléfono para que el local pueda avisarte.");
+      return;
+    }
 
     setSubmitting(true);
     setPaymentFailed(false);
@@ -231,7 +247,7 @@ export function BookingFlow({
           couponCode: store.couponCode || undefined,
           referralCode: store.referralCode || undefined,
           ...(session?.user
-            ? {}
+            ? { phone: guestPhone || undefined }
             : {
                 guest: {
                   name: guestName,
@@ -530,6 +546,7 @@ export function BookingFlow({
           slug={slug}
           cancellationPolicy={cancellationPolicy}
           isGuest={!session?.user}
+          needsPhone={needsPhone}
           onConfirm={confirm}
         />
       </div>
@@ -556,6 +573,7 @@ function BookingSummary({
   slug,
   cancellationPolicy,
   isGuest,
+  needsPhone,
   onConfirm,
 }: {
   ready: boolean;
@@ -568,6 +586,7 @@ function BookingSummary({
   slug: string;
   cancellationPolicy: string | null;
   isGuest: boolean;
+  needsPhone: boolean;
   onConfirm: () => void;
 }) {
   const store = useBookingStore();
@@ -616,6 +635,7 @@ function BookingSummary({
             anything in return.
           */}
           {isGuest && ready && <GuestFields />}
+          {!isGuest && needsPhone && ready && <SignedInPhoneField />}
 
           <div className="mb-[18px] border-t border-dashed border-border pt-3.5">
             {discount > 0 && (
@@ -658,6 +678,11 @@ function BookingSummary({
         {isGuest && ready && (
           <div className="mb-2.5">
             <GuestFields compact />
+          </div>
+        )}
+        {!isGuest && needsPhone && ready && (
+          <div className="mb-2.5">
+            <SignedInPhoneField compact />
           </div>
         )}
         <div className="mb-2.5 flex items-center justify-between gap-3">
@@ -703,6 +728,40 @@ function Row({ label, value }: { label: string; value: string | null }) {
 }
 
 /**
+ * The one thing a signed-in customer's account does not already know.
+ *
+ * Their name and their address come from the session; a phone number never did,
+ * because the form that asks for one was only ever rendered for guests. The
+ * shop was left unable to call whoever was coming.
+ */
+function SignedInPhoneField({ compact }: { compact?: boolean }) {
+  const store = useBookingStore();
+  const id = compact ? "reserva-telefono-cuenta-movil" : "reserva-telefono-cuenta";
+
+  return (
+    <div className={cn("flex flex-col gap-1", compact ? "mb-0" : "mb-4")}>
+      <label className="sr-only" htmlFor={id}>
+        Tu teléfono
+      </label>
+      <input
+        id={id}
+        className={cn(
+          "w-full rounded-[10px] border border-border bg-background px-3 text-[12.5px] outline-none transition-colors focus:border-primary",
+          compact ? "h-9" : "h-10"
+        )}
+        placeholder="Tu teléfono, por si el local necesita avisarte"
+        inputMode="tel"
+        autoComplete="tel"
+        value={store.guestPhone ?? ""}
+        onChange={(event) =>
+          store.setGuestInfo(store.guestName ?? "", event.target.value, store.guestEmail ?? "")
+        }
+      />
+    </div>
+  );
+}
+
+/**
  * Asked for at the end, not at the start.
  *
  * The wizard collected the name, phone and email as step four of five — before
@@ -711,6 +770,12 @@ function Row({ label, value }: { label: string; value: string | null }) {
  */
 function GuestFields({ compact }: { compact?: boolean }) {
   const store = useBookingStore();
+  /*
+    Both copies of this block are in the DOM at once — the sidebar for desktop
+    and the fixed bar for phones — and they shared their ids, so each `<label
+    for>` pointed at two elements and a screen reader was told the wrong one.
+  */
+  const suffix = compact ? "-movil" : "";
   const field = cn(
     "w-full rounded-[10px] border border-border bg-background px-3 text-[12.5px] outline-none transition-colors focus:border-primary",
     compact ? "h-9" : "h-10"
@@ -725,22 +790,22 @@ function GuestFields({ compact }: { compact?: boolean }) {
         compact && "mb-0 grid grid-cols-2 gap-2 [&>input]:min-w-0"
       )}
     >
-      <label className="sr-only" htmlFor="reserva-nombre">
+      <label className="sr-only" htmlFor={`reserva-nombre${suffix}`}>
         Tu nombre
       </label>
       <input
-        id="reserva-nombre"
+        id={`reserva-nombre${suffix}`}
         className={field}
         placeholder="Tu nombre"
         autoComplete="name"
         value={store.guestName ?? ""}
         onChange={(e) => store.setGuestInfo(e.target.value, store.guestPhone ?? "", store.guestEmail ?? "")}
       />
-      <label className="sr-only" htmlFor="reserva-telefono">
+      <label className="sr-only" htmlFor={`reserva-telefono${suffix}`}>
         Tu teléfono
       </label>
       <input
-        id="reserva-telefono"
+        id={`reserva-telefono${suffix}`}
         className={field}
         placeholder="Tu teléfono"
         inputMode="tel"
@@ -748,11 +813,11 @@ function GuestFields({ compact }: { compact?: boolean }) {
         value={store.guestPhone ?? ""}
         onChange={(e) => store.setGuestInfo(store.guestName ?? "", e.target.value, store.guestEmail ?? "")}
       />
-      <label className="sr-only" htmlFor="reserva-email">
+      <label className="sr-only" htmlFor={`reserva-email${suffix}`}>
         Tu email
       </label>
       <input
-        id="reserva-email"
+        id={`reserva-email${suffix}`}
         className={cn(field, compact && "col-span-2")}
         placeholder="Tu email (para la confirmación)"
         type="email"

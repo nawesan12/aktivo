@@ -42,7 +42,7 @@ export default async function CityPage({
   const label = [city.city, city.province].filter(Boolean).join(", ");
 
   return (
-    <main id="contenido" className="min-h-screen">
+    <div className="min-h-screen">
       <div className="bg-gradient-to-b from-primary/5 to-transparent py-16">
         <div className="max-w-6xl mx-auto px-4">
           <Link
@@ -90,7 +90,7 @@ export default async function CityPage({
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

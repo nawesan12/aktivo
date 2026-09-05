@@ -29,7 +29,13 @@ function initials(name: string) {
  * landed on a blank page — and `?pending=true`, a payment still being
  * processed, announced "¡Turno confirmado!" regardless.
  */
-export function ConfirmationContent({ appointment }: { appointment: Confirmation }) {
+export function ConfirmationContent({
+  appointment,
+  whiteLabel,
+}: {
+  appointment: Confirmation;
+  whiteLabel?: boolean;
+}) {
   const when = new Date(appointment.dateTime);
   const logo = safeImageUrl(appointment.business.logo);
   const pending = appointment.awaitingPayment;
@@ -137,11 +143,15 @@ export function ConfirmationContent({ appointment }: { appointment: Confirmation
       <div className="mt-5 flex flex-col gap-2.5">
         <AddToCalendar appointment={appointment} />
         <div className="flex gap-2.5">
-          <Link
-            href={`/${appointment.business.slug}/mis-turnos`}
-            className={action}
-          >
-            Reprogramar
+          {/*
+            Straight into the appointment, with nothing to type. Booking leaves
+            a session in this browser, so "mis turnos" opens on the ticket that
+            was just bought. This link used to point at the shop's guest portal,
+            which asked for a phone number and then said it had never heard of
+            it.
+          */}
+          <Link href="/mis-turnos" className={action}>
+            Cambiar o cancelar
           </Link>
           <ShareButton name={appointment.business.name} className={action} />
         </div>
@@ -149,6 +159,25 @@ export function ConfirmationContent({ appointment }: { appointment: Confirmation
           {appointment.business.cancellationPolicy ?? "Cancelación gratis hasta 24 h antes."}
         </p>
       </div>
+
+      {/*
+        The way onward. This screen used to end the session: three buttons, two
+        of which acted on this one appointment and one of which shared the shop.
+        Nothing led back to the shop's own page, to the customer's other
+        appointments, or anywhere else to book.
+      */}
+      <nav aria-label="Seguir navegando" className="mt-4 flex gap-2.5">
+        <Link href={`/${appointment.business.slug}`} className={action}>
+          Volver a {appointment.business.name}
+        </Link>
+        {/* A shop paying for white label does not need us pointing its own
+            customers at the competition from its confirmation screen. */}
+        {!whiteLabel && (
+          <Link href="/explorar" className={action}>
+            Ver otros locales
+          </Link>
+        )}
+      </nav>
 
       <Kanji size={120} opacity={0.06} className="left-1/2 top-auto bottom-4" />
     </div>

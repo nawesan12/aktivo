@@ -22,6 +22,7 @@ export async function getConfirmation(appointmentId: string, businessSlug: strin
       dateTime: true,
       endTime: true,
       status: true,
+      userId: true,
       service: { select: { name: true, duration: true, price: true } },
       staff: { select: { name: true } },
       user: { select: { name: true, email: true } },
@@ -56,6 +57,8 @@ export async function getConfirmation(appointmentId: string, businessSlug: strin
     staffName: appointment.staff.name,
     clientName: appointment.user?.name ?? appointment.guestClient?.name ?? null,
     clientEmail: appointment.user?.email ?? appointment.guestClient?.email ?? null,
+    /** Already tied to an account, so there is nothing to offer them. */
+    clientHasAccount: Boolean(appointment.userId),
     business: {
       name: appointment.business.name,
       slug: appointment.business.slug,

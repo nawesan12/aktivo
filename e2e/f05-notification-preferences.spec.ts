@@ -35,9 +35,9 @@ test.describe("F5 — Notification Preferences", () => {
     await expect(page.getByRole("menuitem", { name: "Mis avisos" })).toBeVisible();
   });
 
-  test("mis-turnos has settings gear icon", async ({ page }) => {
-    await page.goto(`/${SEED.business.slug}/mis-turnos`);
+  test("el portal del cliente se abre sin sesión", async ({ page }) => {
+    await page.goto("/mis-turnos");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Mis turnos")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tus turnos" })).toBeVisible();
   });
 });

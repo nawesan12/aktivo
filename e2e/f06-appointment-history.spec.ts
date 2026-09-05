@@ -3,18 +3,18 @@ import { loadBookingFixture } from "./fixtures";
 import { SEED, loginAsOwner } from "./helpers";
 
 test.describe("F6 — Appointment History Improvements", () => {
-  test("account appointments API returns 401 without auth", async ({ request }) => {
+  test("los turnos del cliente no se leen sin identidad", async ({ request }) => {
     const res = await request.get(
-      "/api/account/appointments?status=CONFIRMED&page=1&limit=5"
+      "/api/client/appointments?status=CONFIRMED&page=1&limit=5"
     );
     expect(res.status()).toBe(401);
   });
 
-  test("account appointments API with search returns 401 without auth", async ({
+  test("tampoco con un filtro de búsqueda", async ({
     request,
   }) => {
     const res = await request.get(
-      "/api/account/appointments?search=corte&page=1"
+      "/api/client/appointments?search=corte&page=1"
     );
     expect(res.status()).toBe(401);
   });

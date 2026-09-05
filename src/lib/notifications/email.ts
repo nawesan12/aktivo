@@ -151,7 +151,9 @@ function buildEmail(data: EmailData): { subject: string; html: string; text: str
     if (slug) blocks.push(button(appUrl(`/${slug}/reservar`), "Reservar otro turno"));
     else blocks.push(note("Podés elegir otro horario en nuestra web cuando quieras."));
   } else {
-    if (slug) blocks.push(button(appUrl(`/${slug}/mis-turnos`), "Ver o cambiar mi turno"));
+    // Not the shop's own portal: that one only knew about guests of that shop
+    // and looked them up by a phone number the customer may never have given.
+    blocks.push(button(appUrl("/mis-turnos"), "Ver o cambiar mi turno"));
     blocks.push(note("¡Te esperamos!"));
   }
 

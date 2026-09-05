@@ -44,6 +44,17 @@ export async function findOverflows(page: Page): Promise<Overflow[]> {
       // about the layout.
       if (el.clientWidth < 40) continue;
 
+      /*
+        A text field is not a layout defect for holding more text than fits.
+
+        Typing past the right edge scrolls the caret into view — that is what
+        an input does, on every site — and the box itself stays put. Counting
+        it made this check depend on how long the seed's description happens to
+        be, so it failed for a shop whose text was wordy and passed for the
+        same layout with a shorter one.
+      */
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") continue;
+
       // More than a couple of pixels: sub-pixel rounding on borders is noise.
       if (el.scrollWidth > el.clientWidth + 2) {
         results.push({

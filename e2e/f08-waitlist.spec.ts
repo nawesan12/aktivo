@@ -24,11 +24,12 @@ test.describe("F8 — Waitlist UX Improvements", () => {
     expect(Array.isArray(data.entries)).toBe(true);
   });
 
-  test("waitlist section appears on mis-turnos page", async ({ page }) => {
-    await page.goto(`/${SEED.business.slug}/mis-turnos`);
-    await page.waitForLoadState("networkidle");
-    // The page loads with phone verification
-    await expect(page.getByText("Mis turnos")).toBeVisible();
+  test("la lista de espera no se lee sin identidad", async ({ request }) => {
+    // Answers an empty list rather than an error: the booking page reads this
+    // for anybody, signed in or not.
+    const res = await request.get(`/api/businesses/${SEED.business.slug}/waitlist`);
+    expect(res.ok()).toBeTruthy();
+    expect((await res.json()).entries).toEqual([]);
   });
 
   test("waitlist form in booking flow includes email field", async ({ page }) => {

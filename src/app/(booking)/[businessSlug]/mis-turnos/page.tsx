@@ -1,16 +1,13 @@
-import { MisTurnosClient } from "./mis-turnos-client";
+import { redirect } from "next/navigation";
 
 /**
- * A shell with nothing of its own to fetch: the portal asks for a phone, gets a
- * code by email, and only then reads anything. It was rendered on demand for
- * every visitor anyway, so it may as well come from the CDN.
+ * The shop-scoped portal is now the platform-wide one.
+ *
+ * Kept as a redirect rather than deleted: this URL is in every confirmation and
+ * reminder email already sent, and the appointment somebody is looking for is
+ * on the other side of it either way — along with the ones they booked
+ * elsewhere.
  */
-export const revalidate = 3600;
-
-export function generateStaticParams() {
-  return [];
-}
-
-export default function MisTurnosPage() {
-  return <MisTurnosClient />;
+export default function BusinessMisTurnosPage() {
+  redirect("/mis-turnos");
 }

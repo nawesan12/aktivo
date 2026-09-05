@@ -169,8 +169,9 @@ export async function POST(request: NextRequest) {
           businessId: session.businessId,
           name: input.name!,
           // A walk-in may not want to leave a number, and refusing the booking
-          // over it would send them back to pen and paper.
-          phone: input.phone ? normalisePhone(input.phone) : "",
+          // over it would send them back to pen and paper. Null rather than "",
+          // or the unique on (businessId, phone) allows only one of them.
+          phone: input.phone ? normalisePhone(input.phone) : null,
           email: input.email || null,
         },
       });

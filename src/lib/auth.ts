@@ -158,4 +158,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
   },
+  events: {
+    /*
+      Appointments booked before the account existed become the account's.
+
+      Somebody books as a guest on Tuesday and signs up on Friday: without this
+      those bookings stay in the guest half of the database and "mis turnos"
+      shows an empty list to a person who plainly has appointments. Matched on
+      the verified email, and never overwriting an appointment that already has
+      an owner.
+    */
+    async signIn({ user }) {
+      if (!user.id || !user.email) return;
+      const { claimGuestAppointments } = await import("@/lib/client-identity");
+      await claimGuestAppointments(user.id, user.email).catch(() => {
+        // Never block a sign-in over this: the appointments are still there,
+        // and the next sign-in tries again.
+      });
+    },
+  },
 });

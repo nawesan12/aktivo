@@ -19,7 +19,9 @@ import { PLAN_LIMITS } from "@/lib/subscription/config";
 import { appUrl } from "@/lib/env";
 import { runInBackground } from "@/lib/background";
 import { maybeTick } from "@/lib/jobs/tick";
-import { normalisePhone, phoneLookupVariants } from "@/lib/phone";
+import { isValidArgentinePhone, normalisePhone, phoneLookupVariants } from "@/lib/phone";
+import { CLIENT_TOKEN_COOKIE } from "@/lib/client-identity";
+import { createClientToken } from "@/lib/client-auth";
 import { createLogger } from "@/lib/logger";
 
 const log = createLogger("appointments");
@@ -86,6 +88,34 @@ export async function POST(request: Request) {
     const session = await auth();
     const userId: string | null = session?.user?.id ?? null;
     let guestClientId: string | null = null;
+    /** Kept for the session handed back at the end of a guest booking. */
+    let guestEmail: string | null = null;
+    let guestName: string | undefined;
+
+    /*
+      A signed-in customer's phone number.
+
+      Booking with a session used to record nothing but the `userId`: the form
+      never asked for a number, so the shop had no way of calling whoever was
+      coming, and the customer's own booking existed in a half of the database
+      that nothing indexed by phone could reach. It goes on the profile, once,
+      and is offered back on the next booking.
+    */
+    if (userId && typeof body.phone === "string" && body.phone.trim()) {
+      if (!isValidArgentinePhone(body.phone)) {
+        return NextResponse.json({ error: "Teléfono argentino inválido" }, { status: 400 });
+      }
+      const stored = await db.user.findUnique({
+        where: { id: userId },
+        select: { phone: true },
+      });
+      if (!stored?.phone) {
+        await db.user.update({
+          where: { id: userId },
+          data: { phone: normalisePhone(body.phone) },
+        });
+      }
+    }
 
     // If no session, validate guest info
     if (!userId) {
@@ -126,6 +156,8 @@ export async function POST(request: Request) {
       }
 
       guestClientId = guestClient.id;
+      guestEmail = guest.email ?? guestClient.email ?? null;
+      guestName = guest.name;
     }
 
     // Verify staff exists and belongs to this business.
@@ -541,7 +573,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       id: appointment.id,
       status: appointment.status,
       dateTime: appointment.dateTime,
@@ -551,6 +583,34 @@ export async function POST(request: Request) {
         recurringIds: [appointment.id, ...recurringIds],
       }),
     }, { status: 201 });
+
+    /*
+      Booking is signing in, for a customer.
+
+      Whoever just reserved gets a session for the address they reserved with,
+      so "Mis turnos" simply works from here on. Nothing to type, nothing to
+      remember, no code to fetch out of an inbox — the shortest path between
+      finishing a booking and being able to change it.
+
+      Unverified: typing an address into a booking form proves nothing about
+      reading it, so this deliberately cannot reach the appointments of somebody
+      who holds an account on it. Getting those still takes the emailed link.
+    */
+    if (!userId && guestEmail) {
+      response.cookies.set(
+        CLIENT_TOKEN_COOKIE,
+        await createClientToken(guestEmail, { name: guestName, verified: false }),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7,
+          path: "/",
+        }
+      );
+    }
+
+    return response;
   } catch (error) {
     // handleApiError maps PlanLimitError to 403 + requiredPlan (the upsell moment),
     // and still hides unexpected errors behind a generic message.

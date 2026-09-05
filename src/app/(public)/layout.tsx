@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
+import { PublicHeader } from "@/components/layout/public-header";
 
 /**
  * Session, theme, SWR, tooltips, toasts and the service worker — everything the
@@ -13,5 +14,14 @@ import { Providers } from "@/components/providers";
  * function invocation per visitor.
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
-  return <Providers>{children}</Providers>;
+  return (
+    <Providers>
+      <div className="bg-dots flex min-h-screen flex-col">
+        <PublicHeader />
+        <main id="contenido" className="flex-1">
+          {children}
+        </main>
+      </div>
+    </Providers>
+  );
 }

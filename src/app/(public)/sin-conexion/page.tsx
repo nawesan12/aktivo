@@ -17,10 +17,7 @@ export const metadata: Metadata = {
  */
 export default function OfflinePage() {
   return (
-    <main
-      id="contenido"
-      className="min-h-screen flex items-center justify-center px-4 text-center"
-    >
+    <div className="min-h-screen flex items-center justify-center px-4 text-center">
       <div className="max-w-sm space-y-4">
         <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
           <WifiOff className="w-6 h-6 text-muted-foreground" />
@@ -34,6 +31,6 @@ export default function OfflinePage() {
           Los turnos que ya tomaste están guardados: no se pierde nada.
         </p>
       </div>
-    </main>
+    </div>
   );
 }

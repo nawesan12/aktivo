@@ -65,10 +65,7 @@ export function ExplorePageClient({
   const pagination = data?.pagination;
 
   return (
-    <main
-      id="contenido"
-      className="min-h-screen bg-[radial-gradient(800px_380px_at_50%_-5%,rgba(74,222,128,0.12),transparent_60%)] pb-11"
-    >
+    <div className="min-h-screen bg-[radial-gradient(800px_380px_at_50%_-5%,rgba(74,222,128,0.12),transparent_60%)] pb-11">
       <div className="bg-dots absolute inset-0 -z-10" aria-hidden />
 
       <div className="px-6 pb-7 pt-12 text-center sm:px-10">
@@ -185,6 +182,6 @@ export function ExplorePageClient({
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

@@ -557,7 +557,11 @@ model GuestClient {
   id         String   @id @default(cuid())
   businessId String
   name       String
-  phone      String
+  /// Optional because a walk-in booked from the panel may not leave a number.
+  /// It has to be null rather than "": Postgres does not consider two nulls
+  /// equal, so `@@unique([businessId, phone])` allowed exactly one numberless
+  /// client per business and the second one failed with a constraint violation.
+  phone      String?
   email      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -578,6 +582,10 @@ model GuestClient {
 
   @@unique([businessId, phone])
   @@index([businessId])
+  /// The portal looks a client up across every business by email, which is the
+  /// only identifier they share: `phone` is scoped to one shop and a customer
+  /// with an account never had one recorded at all.
+  @@index([email])
 }
 
 // ──────────────────────────────────────────
@@ -964,7 +972,11 @@ model ReferralRedemption {
 
 model GuestVerification {
   id        String   @id @default(cuid())
-  phone     String
+  /// Kept for the rows written by the per-business portal, which keyed the code
+  /// by whatever phone string was typed. Nothing writes it any more: a phone
+  /// only ever resolves an email, and the email is what the code is sent to.
+  phone     String?
+  email     String?
   code      String
   /// Failed verification attempts; the code is burned past a threshold.
   attempts  Int      @default(0)
@@ -973,6 +985,7 @@ model GuestVerification {
 
   @@index([phone, code])
   @@index([phone, expiresAt])
+  @@index([email, expiresAt])
 }
 
 // ──────────────────────────────────────────

@@ -54,9 +54,14 @@ export async function goToProfile(page: Page, slug = SEED.business.slug) {
   await page.waitForLoadState("networkidle");
 }
 
-/** Navigate to guest "mis turnos" portal */
-export async function goToMisTurnos(page: Page, slug = SEED.business.slug) {
-  await page.goto(`/${slug}/mis-turnos`);
+/**
+ * Navigate to the customer's appointments.
+ *
+ * One address for everybody now: the per-shop portal redirects here, and the
+ * page decides between a session, a verified code and the form on its own.
+ */
+export async function goToMisTurnos(page: Page) {
+  await page.goto("/mis-turnos");
   await page.waitForLoadState("networkidle");
 }
 

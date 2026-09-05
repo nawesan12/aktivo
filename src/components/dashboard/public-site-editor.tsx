@@ -175,6 +175,22 @@ export function PublicSiteEditor() {
         </Link>
       </div>
 
+      {/*
+        The other half of the public page.
+
+        This screen is titled "cómo te ven tus clientes", so it is where an
+        owner comes looking for anything on it — including the address and the
+        map, which live in Configuración. Without this line they simply do not
+        find them.
+      */}
+      <p className="text-xs text-muted-foreground -mt-3">
+        La dirección, el teléfono y los horarios que salen en tu web se editan en{" "}
+        <Link href="/panel/configuracion" className="text-primary hover:underline">
+          Configuración
+        </Link>
+        .
+      </p>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Colours */}
         <div className="glass rounded-xl p-6 space-y-4">

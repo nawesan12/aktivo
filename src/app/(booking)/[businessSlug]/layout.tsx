@@ -3,6 +3,7 @@ import { getBusinessProfile } from "@/lib/booking/business-page";
 import { notFound } from "next/navigation";
 import { contrastColor, isHexColor } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/subscription/config";
+import { PublicHeader } from "@/components/layout/public-header";
 
 export default async function BookingLayout({
   children,
@@ -46,10 +47,18 @@ export default async function BookingLayout({
   return (
     <div style={brandStyle} className="bg-dots flex min-h-screen flex-col">
       {/*
-        No app header any more: every screen under this route opens on the
-        shop's own cover photo, and a 56px bar with a 28px logo above it was a
-        second, smaller identity competing with the real one.
+        Not an app header: a translucent bar carrying the shop's own name, so
+        the cover photo still opens the page and there is no second, smaller
+        identity competing with the real one. What it adds is the way out —
+        without it, finishing a booking was a dead end, and the shop's own
+        customers had nowhere to reach the appointment they had just made.
       */}
+      <PublicHeader
+        brand={{ name: business.name, href: `/${businessSlug}`, logo: business.logo }}
+        transparent
+        whiteLabel={PLAN_LIMITS[business.plan].whiteLabel}
+      />
+
       <main id="contenido" className="flex-1">
         {children}
       </main>

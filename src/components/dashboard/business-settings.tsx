@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import useSWR from "swr";
-import { Loader2, Save, Building2, Settings } from "lucide-react";
+import { Loader2, Save, Building2, MapPin, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
@@ -121,6 +121,12 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
     }
   }
 
+  // The same string the public page hands Google, so what the preview shows is
+  // the pin a customer will get.
+  const mapQuery = [business.address, business.city, business.province]
+    .filter(Boolean)
+    .join(", ");
+
   if (isLoading) return <FormSkeleton />;
 
   return (
@@ -136,8 +142,14 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
             página de ajustes operativos, entre el intervalo de turnos y los
             minutos de buffer, con dos campos hex sin nada que mostrara qué
             hacían. */}
+        {/*
+          Says what is here, not only what is elsewhere. Naming Mi web on its
+          own sent anybody looking for their address off to the screen that does
+          not have it, and left them with no reason to scroll this one.
+        */}
         <p className="text-sm text-muted-foreground">
-          El logo, los colores, las fotos y tus redes se editan en{" "}
+          Acá van el nombre, la dirección y los datos de contacto de tu local. El logo, los
+          colores y las fotos se editan en{" "}
           <Link href="/panel/mi-web" className="text-primary hover:underline">
             Mi web
           </Link>
@@ -173,6 +185,77 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
               className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
+          {/*
+            Where the shop is, right under its name.
+
+            These three sat at the bottom of the form, below a four-row textarea
+            — so the one thing every customer needs in order to turn up was the
+            last thing an owner could find, and the note at the top of this
+            screen sends anybody looking for "how my shop looks" to Mi web,
+            where the address is not.
+          */}
+          <div className="md:col-span-2 pt-1">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-jade-link" aria-hidden /> Dónde estás
+            </h4>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sale en tu página pública, en el mapa y en el email de cada turno.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="direccion" className="text-sm font-medium mb-1.5 block">
+              Dirección
+            </label>
+            <input
+              id="direccion"
+              value={business.address}
+              onChange={(e) => setBusiness((p) => ({ ...p, address: e.target.value }))}
+              placeholder="Av. Colón 1234"
+              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="ciudad" className="text-sm font-medium mb-1.5 block">Ciudad</label>
+              <input
+                id="ciudad"
+                value={business.city}
+                onChange={(e) => setBusiness((p) => ({ ...p, city: e.target.value }))}
+                placeholder="Mar del Plata"
+                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="provincia" className="text-sm font-medium mb-1.5 block">
+                Provincia
+              </label>
+              <input
+                id="provincia"
+                value={business.province}
+                onChange={(e) => setBusiness((p) => ({ ...p, province: e.target.value }))}
+                placeholder="Buenos Aires"
+                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+          {/*
+            The pin is placed by Google from this text — there are no
+            coordinates to correct — so the only way to know it lands on the
+            right door is to look. Better here, once, than from a customer.
+          */}
+          {mapQuery && (
+            <div className="md:col-span-2 -mt-1">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-jade-link hover:underline"
+              >
+                <MapPin className="w-3.5 h-3.5" aria-hidden />
+                Ver dónde cae el punto en el mapa
+              </a>
+            </div>
+          )}
           <div>
             <label htmlFor="telefono" className="text-sm font-medium mb-1.5 block">Teléfono</label>
             <input
@@ -225,33 +308,6 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
             <p className="text-xs text-muted-foreground mt-1">
               Aparece en tu página pública, debajo de los servicios.
             </p>
-          </div>
-          <div>
-            <label htmlFor="direccion" className="text-sm font-medium mb-1.5 block">Dirección</label>
-            <input
-              id="direccion"
-              value={business.address}
-              onChange={(e) => setBusiness((p) => ({ ...p, address: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="ciudad" className="text-sm font-medium mb-1.5 block">Ciudad</label>
-            <input
-              id="ciudad"
-              value={business.city}
-              onChange={(e) => setBusiness((p) => ({ ...p, city: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="provincia" className="text-sm font-medium mb-1.5 block">Provincia</label>
-            <input
-              id="provincia"
-              value={business.province}
-              onChange={(e) => setBusiness((p) => ({ ...p, province: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
           </div>
         </div>
       </div>
