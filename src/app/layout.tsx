@@ -85,7 +85,7 @@ export const metadata: Metadata = {
     "sistema de citas",
     "calendario de turnos",
     "gestión de negocios de servicios",
-    "turnos ilimitados",
+    "agenda online para barberias",
     "multi sucursal turnos",
     "barberías argentina",
     "salones argentina",
@@ -144,11 +144,12 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className={`${sora.variable} ${cormorantGaramond.variable} ${ibmPlexMono.variable} ${inter.variable} scroll-smooth`}>
       {/*
-        No providers here on purpose. The embeddable widget renders inside this
-        same root layout, on our customers' own websites — the app-wide
-        providers (and the service worker registration that came with them) have
-        no business running there. Each route group brings its own, and
-        `(widget)` deliberately brings almost none.
+        No providers here on purpose, and it is load-bearing. The panel groups
+        resolve the session on the server before mounting theirs, which means
+        calling `auth()`; a layout that reads cookies opts every page under it
+        out of static rendering. Keeping this root free of providers is what
+        lets the landing stay static and the shops' public pages stay on ISR —
+        one render every ten minutes instead of one per visitor.
       */}
       <head>
         {/*

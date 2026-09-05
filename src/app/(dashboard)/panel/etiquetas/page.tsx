@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <div className="space-y-4">
-      <PanelHeader title="Etiquetas" subtitle="Agrupá clientes para segmentar campañas" />
+      <PanelHeader title="Etiquetas" subtitle="Agrupá clientes para encontrarlos rápido: los del abono, los que faltaron, los de siempre" />
       <PlanGate feature="Etiquetas de clientes" requiredPlan="PROFESSIONAL">
         <ClientTagsManager />
       </PlanGate>

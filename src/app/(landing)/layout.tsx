@@ -1,7 +1,9 @@
 import { appUrl } from "@/lib/env";
 import { Providers } from "@/components/providers";
-import { PLAN_PRICES } from "@/lib/subscription/config";
+import { PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES } from "@/lib/subscription/config";
 import { TRIAL_DAYS } from "@/lib/subscription/access";
+const inicial = PLAN_LIMITS.PROFESSIONAL;
+
 export default function LandingLayout({
   children,
 }: {
@@ -36,8 +38,7 @@ export default function LandingLayout({
           priceCurrency: PLAN_PRICES.PROFESSIONAL.currency,
           billingDuration: "P1M",
         },
-        description:
-          "Hasta 2 profesionales, 300 turnos por mes, confirmaciones por email, cobros con MercadoPago",
+        description: `Hasta ${inicial.maxStaff} profesionales, ${inicial.maxAppointmentsPerMonth} turnos por mes, confirmaciones por email, cobros con MercadoPago`,
       },
       {
         "@type": "Offer",
@@ -97,7 +98,12 @@ export default function LandingLayout({
         name: "¿Hay límite de turnos en los planes pagos?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "No. Los planes Starter y Professional incluyen turnos ilimitados.",
+          // Interpolated, and named as the customer sees them. This answer used
+          // to promise unlimited turnos on "Starter y Professional" — a ceiling
+          // the code enforces at 300 and two plan names that appear nowhere in
+          // the product. It is structured data: Google can print it as the
+          // answer, so a shop can arrive already believing it.
+          text: `El plan ${PLAN_NAMES.PROFESSIONAL} incluye ${inicial.maxAppointmentsPerMonth} turnos por mes, que alcanzan para un local trabajando todos los días. El plan ${PLAN_NAMES.ENTERPRISE} no tiene tope.`,
         },
       },
       {
@@ -105,7 +111,7 @@ export default function LandingLayout({
         name: "¿Puedo gestionar múltiples sucursales?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Sí, con el plan Professional podés gestionar todas tus sucursales desde una sola cuenta, cada una con su configuración independiente.",
+          text: `Sí, con el plan ${PLAN_NAMES.ENTERPRISE} gestionás todas tus sucursales desde una sola cuenta, cada una con su configuración independiente.`,
         },
       },
       {

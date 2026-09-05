@@ -16,11 +16,11 @@ interface PlanGateProps {
 /**
  * Says "this needs a bigger plan" instead of showing an empty screen.
  *
- * The API already refuses these features — every analytics endpoint answers 403
- * to a STARTER business — but nothing in the panel read that. The components
- * fell back to `data || {}` and rendered four counters in zero and "no hay
- * datos suficientes". A business paying for the product was being shown, in
- * good faith, that the product was empty.
+ * The API already refuses these features — the gated endpoints answer 403 to a
+ * business whose plan does not include them — but nothing in the panel read
+ * that. The components fell back to `data || {}` and rendered four counters in
+ * zero and "no hay datos suficientes". A business paying for the product was
+ * being shown, in good faith, that the product was empty.
  */
 export function PlanGate({ feature, requiredPlan, children }: PlanGateProps) {
   const { data } = useSWR<{ plan: BusinessPlan }>("/api/panel/access");

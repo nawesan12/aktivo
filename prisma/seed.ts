@@ -130,8 +130,6 @@ async function main() {
       depositPercentage: 30,
       cancellationPolicy:
         "Las cancelaciones con menos de 2 horas de anticipación pueden tener cargo.",
-      // The demo business shows every feature, the embeddable widget included.
-      widgetEnabled: true,
     },
   });
 

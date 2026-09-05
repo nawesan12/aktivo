@@ -12,12 +12,13 @@ import {
   Calendar,
   BarChart2,
   MapPin,
-  Megaphone,
+  BadgeCheck,
   Shield,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format";
+import { PLAN_LIMITS } from "@/lib/subscription/config";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PanelHeader } from "@/components/dashboard/panel-header";
 
@@ -32,7 +33,6 @@ const PLAN_PRESENTATION: Record<string, { icon: typeof Zap; popular?: boolean; e
     extras: [
       "Cobros con Mercado Pago",
       "Ficha de cada cliente",
-      "Botón de reservas en tu web",
       "Reseñas de tus clientes",
     ],
   },
@@ -41,13 +41,45 @@ const PLAN_PRESENTATION: Record<string, { icon: typeof Zap; popular?: boolean; e
     extras: [
       "Todo lo del plan Inicial",
       "Membresías: cobrales un abono mensual",
-      "Campañas para traerlos de vuelta",
+      "Cupones y referidos para traerlos de vuelta",
       "Turnos y profesionales sin tope",
       "Reportes avanzados",
       "Varias sucursales y marca blanca",
     ],
   },
 };
+
+/**
+ * The comparison table, read off the limits the backend enforces.
+ *
+ * It used to be eight rows typed by hand, and by the time anybody looked they
+ * disagreed with the code on half of them: three professionals and unlimited
+ * turnos on a plan capped at two and three hundred, advanced reports ticked for
+ * a plan that has them off, and a row for Campañas, a section that no longer
+ * exists. This is the page where somebody decides to pay — the numbers on it
+ * have to be the numbers they will actually run into.
+ */
+const inicial = PLAN_LIMITS.PROFESSIONAL;
+const completo = PLAN_LIMITS.ENTERPRISE;
+
+const countLabel = (value: number | null) => (value === null ? "Ilimitados" : String(value));
+
+const COMPARISON_ROWS: { name: string; pro: boolean | string; ent: boolean | string; icon: typeof Users }[] = [
+  { name: "Profesionales", pro: countLabel(inicial.maxStaff), ent: countLabel(completo.maxStaff), icon: Users },
+  {
+    name: "Turnos/mes",
+    pro: countLabel(inicial.maxAppointmentsPerMonth),
+    ent: countLabel(completo.maxAppointmentsPerMonth),
+    icon: Calendar,
+  },
+  { name: "Cobros MP", pro: inicial.mpPayments, ent: completo.mpPayments, icon: CreditCard },
+  { name: "CRM y tags", pro: inicial.crm, ent: completo.crm, icon: Shield },
+  // The reason to move up, so it belongs on the table and not only in the pitch.
+  { name: "Membresías", pro: inicial.memberships, ent: completo.memberships, icon: BadgeCheck },
+  { name: "Reportes avanzados", pro: inicial.advancedReports, ent: completo.advancedReports, icon: BarChart2 },
+  { name: "Multi-sucursal", pro: inicial.multiLocation, ent: completo.multiLocation, icon: MapPin },
+  { name: "Marca blanca", pro: inicial.whiteLabel, ent: completo.whiteLabel, icon: Crown },
+];
 
 interface CatalogPlan {
   key: string;
@@ -352,16 +384,7 @@ export default function SubscriptionPage() {
               </tr>
             </thead>
             <tbody>
-              {[
-                { name: "Profesionales", pro: "3", ent: "Ilimitados", icon: Users },
-                { name: "Turnos/mes", pro: "Ilimitados", ent: "Ilimitados", icon: Calendar },
-                { name: "Cobros MP", pro: true, ent: true, icon: CreditCard },
-                { name: "CRM y tags", pro: true, ent: true, icon: Shield },
-                { name: "Campañas", pro: true, ent: true, icon: Megaphone },
-                { name: "Reportes avanzados", pro: true, ent: true, icon: BarChart2 },
-                { name: "Multi-sucursal", pro: false, ent: true, icon: MapPin },
-                { name: "Marca blanca", pro: false, ent: true, icon: Crown },
-              ].map((row) => (
+              {COMPARISON_ROWS.map((row) => (
                 <tr key={row.name} className="border-b border-border/50">
                   <td className="px-6 py-3 flex items-center gap-2">
                     <row.icon className="w-4 h-4 text-muted-foreground" />
