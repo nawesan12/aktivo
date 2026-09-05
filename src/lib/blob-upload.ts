@@ -12,17 +12,21 @@
  * The trade is that the wire format is ours to keep up with now. It is the
  * store's, not a public contract:
  *
- *   PUT https://vercel.com/api/blob/<pathname>
+ *   PUT https://vercel.com/api/blob/?pathname=<url-encoded pathname>
  *   authorization: Bearer <client token>
  *   x-api-version: 12
  *   x-vercel-blob-store-id: <store>
  *   x-vercel-blob-access: public
  *   x-content-type: <type>
  *
- * `x-api-version` is the one to watch: if Vercel moves it, uploads start
- * failing with a clear message from the store, and this constant is what has to
- * follow. Everything about *who may write where* stays on the server, in
- * `/api/panel/uploads` — the token is issued there and carries the path, the
+ * The pathname travels as a query parameter, not as a path segment — putting it
+ * in the path reaches a route that does not exist and answers 404 to everything,
+ * which is a confusing way to fail. `x-api-version` is the other thing to watch:
+ * if Vercel moves it, uploads start failing with a clear message from the store,
+ * and this constant is what has to follow.
+ *
+ * Everything about *who may write where* stays on the server, in
+ * `/api/panel/uploads`: the token is issued there and carries the path, the
  * size ceiling and the allowed types, so nothing here can widen them.
  */
 
@@ -55,6 +59,24 @@ export interface UploadedBlob {
 function storeIdFromToken(clientToken: string): string {
   const [, , , storeId = ""] = clientToken.split("_");
   return storeId;
+}
+
+/**
+ * Names the step a network failure happened in.
+ *
+ * A `fetch` that never reaches the other side throws with only the browser's
+ * own wording — "Load failed" in Safari, "Failed to fetch" in Chrome — and no
+ * status and no body. Which of the two requests died is the whole diagnosis, and
+ * without this the two are indistinguishable in the toast and in the log.
+ */
+async function withStep<T>(step: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`No se pudo ${step}: la conexión falló (${detail})`);
+  }
 }
 
 /** Whatever the store said went wrong, in words the owner can act on. */
@@ -93,15 +115,17 @@ export async function uploadToBlob({
   handleUploadUrl: string;
   signal?: AbortSignal;
 }): Promise<UploadedBlob> {
-  const tokenResponse = await fetch(handleUploadUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    signal,
-    body: JSON.stringify({
-      type: "blob.generate-client-token",
-      payload: { pathname, clientPayload: kind, multipart: false },
-    }),
-  });
+  const tokenResponse = await withStep("pedir permiso", () =>
+    fetch(handleUploadUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      signal,
+      body: JSON.stringify({
+        type: "blob.generate-client-token",
+        payload: { pathname, clientPayload: kind, multipart: false },
+      }),
+    })
+  );
 
   if (!tokenResponse.ok) {
     // The route refuses with a plain message — plan, permission, or a path that
@@ -119,18 +143,21 @@ export async function uploadToBlob({
   const { clientToken } = (await tokenResponse.json()) as ClientTokenResponse;
   if (!clientToken) throw new Error("El permiso para subir volvió vacío");
 
-  const response = await fetch(`${BLOB_API_URL}/${pathname}`, {
-    method: "PUT",
-    signal,
-    headers: {
-      authorization: `Bearer ${clientToken}`,
-      "x-api-version": BLOB_API_VERSION,
-      "x-vercel-blob-store-id": storeIdFromToken(clientToken),
-      "x-vercel-blob-access": "public",
-      "x-content-type": file.type,
-    },
-    body: file,
-  });
+  const url = `${BLOB_API_URL}/?pathname=${encodeURIComponent(pathname)}`;
+  const response = await withStep("guardar la imagen", () =>
+    fetch(url, {
+      method: "PUT",
+      signal,
+      headers: {
+        authorization: `Bearer ${clientToken}`,
+        "x-api-version": BLOB_API_VERSION,
+        "x-vercel-blob-store-id": storeIdFromToken(clientToken),
+        "x-vercel-blob-access": "public",
+        "x-content-type": file.type,
+      },
+      body: file,
+    })
+  );
 
   if (!response.ok) throw new Error(await describeFailure(response));
 
