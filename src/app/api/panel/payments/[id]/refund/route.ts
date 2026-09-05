@@ -25,7 +25,7 @@ export async function POST(
             staff: true,
             user: { select: { name: true, email: true, phone: true } },
             guestClient: { select: { name: true, email: true, phone: true } },
-            business: { select: { name: true } },
+            business: { select: { name: true, slug: true } },
           },
         },
       },
@@ -82,6 +82,7 @@ export async function POST(
       await sendNotification({
         businessId: session.businessId,
         businessName: payment.appointment.business.name,
+        businessSlug: payment.appointment.business.slug,
         appointmentId: payment.appointmentId,
         clientName: client.name || "Cliente",
         clientEmail: client.email || undefined,

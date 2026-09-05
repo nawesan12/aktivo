@@ -69,6 +69,7 @@ export async function PATCH(
         sendNotification({
           businessId: session.businessId,
           businessName: appointment.business.name,
+          businessSlug: appointment.business.slug,
           appointmentId: id,
           clientName,
           clientEmail: clientEmail || undefined,

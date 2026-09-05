@@ -25,7 +25,7 @@ const BATCH_SIZE = 100;
 const APPOINTMENT_INCLUDE = {
   service: { select: { name: true } },
   staff: { select: { name: true } },
-  business: { select: { name: true } },
+  business: { select: { name: true, slug: true } },
   user: { select: { name: true, email: true } },
   guestClient: { select: { name: true, email: true } },
 } as const;
@@ -119,6 +119,7 @@ async function sendReminder(
     await sendNotification({
       businessId: appointment.businessId,
       businessName: appointment.business.name,
+      businessSlug: appointment.business.slug,
       appointmentId: appointment.id,
       clientName: client.name ?? "Cliente",
       clientEmail: client.email ?? undefined,

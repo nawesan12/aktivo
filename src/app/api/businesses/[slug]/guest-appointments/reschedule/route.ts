@@ -127,6 +127,7 @@ export async function POST(
       sendNotification({
         businessId: business.id,
         businessName: business.name,
+        businessSlug: business.slug,
         appointmentId: result.id,
         clientName: appointment.guestClient?.name ?? "Cliente",
         clientEmail: appointment.guestClient?.email ?? undefined,

@@ -245,6 +245,7 @@ export async function POST(request: NextRequest) {
           sendNotification({
             businessId: session.businessId,
             businessName: business.name,
+            businessSlug: business.slug,
             appointmentId: appointment.id,
             clientName: guestClient.name,
             clientEmail: guestClient.email ?? undefined,

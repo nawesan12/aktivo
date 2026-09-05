@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useSearchParams } from "next/navigation";
 import { Star, Loader2, CheckCircle, XCircle } from "lucide-react";
 
 interface ReviewData {
@@ -13,9 +14,19 @@ interface ReviewData {
 
 export default function PublicReviewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
+  const search = useSearchParams();
   const [data, setData] = useState<ReviewData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [rating, setRating] = useState(0);
+  /*
+    The stars in the review-request email each link here with `?estrellas=N`,
+    so somebody who just wants to give four stars arrives with four stars
+    already lit and one button left to press. Anything outside 1–5 is ignored
+    rather than trusted: it arrives from a URL.
+  */
+  const [rating, setRating] = useState(() => {
+    const n = Number(search.get("estrellas"));
+    return Number.isInteger(n) && n >= 1 && n <= 5 ? n : 0;
+  });
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);

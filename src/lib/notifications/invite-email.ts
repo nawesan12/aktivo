@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { appUrl, emailFrom, env } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
+import { button, fallbackLink, note, paragraph, renderEmail } from "./layout";
 
 const log = createLogger("email:invite");
 
@@ -17,42 +18,23 @@ function getResend(): Resend | null {
   return cachedResend;
 }
 
+export function buildInviteEmail(inviteUrl: string, businessName: string) {
+  const { html, text } = renderEmail({
+    preheader: `Sumate al equipo de ${businessName} en Jiku.`,
+    eyebrow: "Invitación",
+    heading: `Te sumaron al equipo de ${businessName}`,
+    blocks: [
+      paragraph(
+        `Alguien de ${businessName} te invitó a manejar la agenda con ellos. Aceptá la invitación y creás tu cuenta en el mismo paso.`
+      ),
+      button(inviteUrl, "Aceptar la invitación"),
+      note("El enlace vence en 7 días. Si no esperabas esta invitación, ignorá este mensaje."),
+      fallbackLink(inviteUrl),
+    ],
+    senderName: "Jiku",
+  });
 
-
-function getInviteEmailHtml(inviteUrl: string, businessName: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background-color:#09090b;font-family:system-ui,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <h1 style="background:linear-gradient(135deg,#4ADE80,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:28px;margin:0;">
-        Jiku
-      </h1>
-    </div>
-    <div style="background-color:#18181b;border-radius:12px;padding:32px;border:1px solid rgba(255,255,255,0.1);">
-      <h2 style="color:#fafafa;font-size:20px;margin:0 0 16px 0;">
-        Te invitaron a ${businessName}
-      </h2>
-      <p style="color:#a1a1aa;font-size:16px;line-height:1.6;margin:0 0 24px 0;">
-        Te invitaron a unirte al equipo de <strong style="color:#fafafa;">${businessName}</strong> en Jiku. Hace click en el boton de abajo para aceptar la invitacion.
-      </p>
-      <div style="text-align:center;margin-bottom:24px;">
-        <a href="${inviteUrl}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#4ADE80,#22c55e);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">
-          Aceptar invitacion
-        </a>
-      </div>
-      <p style="color:#71717a;font-size:13px;line-height:1.5;margin:0;">
-        Este enlace expira en 7 dias. Si no esperabas esta invitacion, podes ignorar este email.
-      </p>
-    </div>
-    <p style="text-align:center;color:#52525b;font-size:12px;margin-top:24px;">
-      Jiku &middot; Plataforma de gestión para negocios de servicios
-    </p>
-  </div>
-</body>
-</html>`;
+  return { subject: `Te invitaron a ${businessName} — Jiku`, html, text };
 }
 
 export async function sendInviteEmail(email: string, token: string, businessName: string) {
@@ -64,12 +46,13 @@ export async function sendInviteEmail(email: string, token: string, businessName
     return;
   }
 
-  const result = await resend.emails.send({
+  const { subject, html, text } = buildInviteEmail(inviteUrl, businessName);
+
+  return resend.emails.send({
     from: emailFrom(),
     to: email,
-    subject: `Te invitaron a ${businessName} — Jiku`,
-    html: getInviteEmailHtml(inviteUrl, businessName),
+    subject,
+    html,
+    text,
   });
-
-  return result;
 }

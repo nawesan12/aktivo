@@ -496,6 +496,7 @@ export async function POST(request: Request) {
       sendNotification({
         businessId: business.id,
         businessName: business.name,
+        businessSlug: business.slug,
         appointmentId: appointment.id,
         clientName,
         clientEmail: clientEmail ?? undefined,

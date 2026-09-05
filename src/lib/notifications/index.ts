@@ -23,6 +23,8 @@ interface NotificationData {
   userId?: string | null;
   /** Guest client ID — used to check notification preferences */
   guestClientId?: string | null;
+  /** Lets the mail carry a link back to the turno. See `EmailData`. */
+  businessSlug?: string;
 }
 
 async function getPreferences(
@@ -57,11 +59,14 @@ export async function sendNotification(data: NotificationData) {
   const emailEnabled = prefs?.emailEnabled !== false;
 
   // Map extended types to the base types the email templates know about
-  const baseType = (data.type === "reminder_24h" || data.type === "reminder_1h")
-    ? "reminder" as const
-    : data.type === "reschedule"
-      ? "confirmation" as const
-      : data.type;
+  const baseType =
+    data.type === "reminder_24h" || data.type === "reminder"
+      ? ("reminder" as const)
+      : data.type === "reminder_1h"
+        ? ("reminder_soon" as const)
+        : data.type === "reschedule"
+          ? ("confirmation" as const)
+          : data.type;
 
   if (data.clientEmail && emailEnabled) {
     try {
@@ -73,6 +78,7 @@ export async function sendNotification(data: NotificationData) {
         serviceName: data.serviceName,
         staffName: data.staffName,
         dateTime: data.dateTime,
+        businessSlug: data.businessSlug,
       });
 
       await db.notification.create({
