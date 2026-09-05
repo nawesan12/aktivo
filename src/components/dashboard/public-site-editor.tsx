@@ -454,6 +454,12 @@ function Preview({
     "--primary-foreground": contrastColor(primary),
   } as React.CSSProperties;
 
+  // `unoptimized` acá y en la galería no es sólo para no pagar una
+  // transformación de una imagen que ya subimos en WebP al tamaño que se ve:
+  // `next/image` tira si el host no está en `remotePatterns`, y esa excepción
+  // sube hasta el error boundary y se lleva puesta la sección entera. Un negocio
+  // con una imagen vieja de un host que ya no está en la lista se quedaba sin
+  // poder editar su web, ni siquiera para cambiar esa imagen.
   return (
     <div style={style} className="rounded-xl border border-border overflow-hidden bg-background">
       <div
@@ -461,13 +467,20 @@ function Preview({
         style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}
       >
         {cover && (
-          <Image src={cover} alt="" fill sizes="400px" className="object-cover opacity-60" />
+          <Image src={cover} alt="" fill sizes="400px" unoptimized className="object-cover opacity-60" />
         )}
       </div>
       <div className="p-4 -mt-8 relative">
         <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-background bg-muted flex items-center justify-center">
           {logo ? (
-            <Image src={logo} alt="" width={56} height={56} className="object-cover w-full h-full" />
+            <Image
+              src={logo}
+              alt=""
+              width={56}
+              height={56}
+              unoptimized
+              className="object-cover w-full h-full"
+            />
           ) : (
             <span className="text-lg font-bold" style={{ color: primary }}>
               {(name || "J").charAt(0).toUpperCase()}
@@ -557,7 +570,14 @@ function Gallery({ businessId }: { businessId: string }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {photos.map((photo) => (
             <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden group">
-              <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="200px" className="object-cover" />
+              <Image
+                src={photo.url}
+                alt={photo.caption ?? ""}
+                fill
+                sizes="200px"
+                unoptimized
+                className="object-cover"
+              />
               <button
                 onClick={() => remove(photo.id)}
                 disabled={busy}

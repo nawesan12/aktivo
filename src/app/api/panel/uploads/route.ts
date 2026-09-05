@@ -68,16 +68,13 @@ export async function POST(request: NextRequest) {
           tokenPayload: JSON.stringify({ ownerId, kind }),
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // Runs after the browser finishes. Nothing to persist here — the URL
-        // travels back to the form, which saves it with the rest of the
-        // business's settings — but it is the only place a failed upload is
-        // visible at all.
-        log.info("upload completed", {
-          url: blob.url,
-          payload: typeof tokenPayload === "string" ? tokenPayload : undefined,
-        });
-      },
+      // Deliberately no `onUploadCompleted`. Declaring it makes the SDK put a
+      // callback URL inside the token, and the store then calls this route back
+      // before it answers the browser's PUT — so a callback that is slow,
+      // unreachable or rejected leaves `upload()` pending forever, which is the
+      // uploader stuck on "Comprimiendo…" with nothing to show for it. There is
+      // nothing to persist from here either: the URL travels back to the form,
+      // which saves it with the rest of the settings.
     });
 
     return NextResponse.json(result);

@@ -19,6 +19,19 @@ interface ImageUploaderProps {
   className?: string;
 }
 
+/** What the button is doing, so it can say so instead of always "Comprimiendo…". */
+type Phase = "compressing" | "uploading" | null;
+
+/**
+ * Ceiling for the whole thing, compression included.
+ *
+ * Nothing here should take seconds: what travels is under 160 KB. The point is
+ * that no failure mode can leave the button spinning with no way out — before
+ * this, a request that never settled meant the person had to reload the page to
+ * be able to try again.
+ */
+const UPLOAD_TIMEOUT_MS = 45_000;
+
 /** How hard to squeeze, per use. A logo needs far less room than a cover. */
 const BUDGET_FOR: Record<UploadKind, ImageKind> = {
   logo: "logo",
@@ -47,7 +60,8 @@ export function ImageUploader({
   className,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>(null);
+  const busy = phase !== null;
   const isSquare = aspectRatio === "1:1";
 
   /**
@@ -77,10 +91,13 @@ export function ImageUploader({
       return;
     }
 
-    setBusy(true);
+    setPhase("compressing");
+    const abort = new AbortController();
+    const timeout = setTimeout(() => abort.abort(), UPLOAD_TIMEOUT_MS);
     try {
       const compressed = await compressImage(file, BUDGET_FOR[kind]);
 
+      setPhase("uploading");
       const blob = await upload(
         `${uploadPathPrefix(ownerId, kind)}${compressed.file.name}`,
         compressed.file,
@@ -89,6 +106,7 @@ export function ImageUploader({
           handleUploadUrl: "/api/panel/uploads",
           contentType: compressed.file.type,
           clientPayload: kind,
+          abortSignal: abort.signal,
         }
       );
 
@@ -102,9 +120,16 @@ export function ImageUploader({
     } catch (error) {
       // The token route refuses with a plain message — plan, permission, or a
       // path that is not this business's — and it is worth showing as is.
-      toast.error(error instanceof Error ? error.message : "No pudimos subir la imagen");
+      toast.error(
+        abort.signal.aborted
+          ? "La subida tardó demasiado. Probá de nuevo."
+          : error instanceof Error
+            ? error.message
+            : "No pudimos subir la imagen"
+      );
     } finally {
-      setBusy(false);
+      clearTimeout(timeout);
+      setPhase(null);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -174,7 +199,9 @@ export function ImageUploader({
           {busy ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-[11px]">Comprimiendo…</span>
+              <span className="text-[11px]">
+                {phase === "compressing" ? "Comprimiendo…" : "Subiendo…"}
+              </span>
             </>
           ) : (
             <>
