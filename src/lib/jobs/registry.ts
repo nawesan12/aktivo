@@ -6,6 +6,7 @@ import { sendPendingReviewRequests } from "@/lib/reviews/requests";
 import { renewMercadoPagoLinks } from "@/lib/mercadopago-renewal";
 import { sendDailyDigests } from "@/lib/jobs/daily-digest";
 import { purgeOldRows } from "@/lib/jobs/purge";
+import { sendTrialReminders } from "@/lib/jobs/trial-reminders";
 
 export interface Job {
   /** Matches the primary key of the `JobRun` row. */
@@ -79,6 +80,19 @@ export const JOBS: Job[] = [
     intervalSeconds: 1800,
     opportunistic: true,
     run: sendDailyDigests,
+  },
+  {
+    /*
+      Avisarle al negocio que la prueba se termina.
+
+      El banner del panel sólo lo ve quien entra al panel, y el que está por
+      perderse es justamente el que no entró en toda la semana. Cada hora
+      alcanza: las ventanas de los avisos duran un día.
+    */
+    name: "trial-reminders",
+    intervalSeconds: 3600,
+    opportunistic: true,
+    run: sendTrialReminders,
   },
   {
     /*

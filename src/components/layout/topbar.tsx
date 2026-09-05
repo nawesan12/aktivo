@@ -7,6 +7,7 @@ import { Moon, Plus, Sun } from "lucide-react";
 import { CommandSearch } from "@/components/dashboard/command-search";
 import { PanelMenu } from "@/components/layout/panel-menu";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
+import { ShareLinkButton } from "@/components/dashboard/share-link-button";
 import { NewAppointmentDialog } from "@/components/dashboard/new-appointment-dialog";
 import { UserMenu } from "@/components/layout/user-menu";
 import { PermissionGate } from "@/components/auth/permission-gate";
@@ -51,6 +52,15 @@ export function Topbar() {
           name on /panel/turnos and no trigger at all on any other screen — an
           owner on the calendar had to navigate away to take a phone booking.
         */}
+        {/*
+          El link de la agenda, siempre a mano.
+
+          Es el producto: un negocio que no lo reparte no recibe un turno. Vivía
+          dentro de "Mi web" y en el último paso del alta —o sea, se veía una vez
+          y después había que acordarse de dónde estaba.
+        */}
+        <ShareLinkButton />
+
         <PermissionGate permission="appointments:create">
           <button
             type="button"

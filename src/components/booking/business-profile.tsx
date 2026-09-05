@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { Facebook, Globe, Instagram, MessageCircle, Music2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { normalisePhone } from "@/lib/phone";
@@ -42,6 +42,8 @@ interface BusinessProfileProps {
     coverUrl: string | null;
     primaryColor: string | null;
     accentColor: string | null;
+    latitude: number | null;
+    longitude: number | null;
     /** Shown to the visitor before they book, not hidden in the wizard. */
     cancellationPolicy: string | null;
     /** 0.3 for a 30% deposit; null when the shop does not take one. */
@@ -135,9 +137,43 @@ export function BusinessProfile({
   const closesAt = openUntil(hours, now);
   const whatsapp = business.whatsapp ? normalisePhone(business.whatsapp) : null;
   const location = [business.address, business.city, business.province].filter(Boolean).join(", ");
+  const coords =
+    typeof business.latitude === "number" && typeof business.longitude === "number"
+      ? { lat: business.latitude, lng: business.longitude }
+      : null;
   const cover: Photo[] = business.coverUrl
     ? [{ id: "cover", url: business.coverUrl, caption: null }, ...gallery]
     : gallery;
+
+  /*
+    Un handle de Instagram se escribe "@local" y no es una URL; el sitio propio
+    llega tan seguido como "local.com" que como "https://local.com". Sin
+    normalizar, el enlace apunta a una ruta de este mismo sitio.
+  */
+  const links = [
+    business.instagram && {
+      label: "Instagram",
+      icon: Instagram,
+      href: `https://instagram.com/${business.instagram.replace(/^@|^https?:\/\/(www\.)?instagram\.com\//i, "")}`,
+    },
+    business.facebook && {
+      label: "Facebook",
+      icon: Facebook,
+      href: /^https?:\/\//i.test(business.facebook)
+        ? business.facebook
+        : `https://facebook.com/${business.facebook.replace(/^@/, "")}`,
+    },
+    business.tiktok && {
+      label: "TikTok",
+      icon: Music2,
+      href: `https://tiktok.com/@${business.tiktok.replace(/^@|^https?:\/\/(www\.)?tiktok\.com\/@?/i, "")}`,
+    },
+    business.website && {
+      label: "Sitio web",
+      icon: Globe,
+      href: /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`,
+    },
+  ].filter(Boolean) as { label: string; icon: typeof Instagram; href: string }[];
 
   return (
     <div>
@@ -346,16 +382,33 @@ export function BusinessProfile({
 
             {location && (
               <section className="overflow-hidden rounded-[14px] border border-border bg-card">
+                {/*
+                  El punto que el dueño marcó, si lo marcó.
+
+                  Con coordenadas el pin cae en la puerta; sin ellas Google
+                  interpreta el texto y en una esquina, o en un barrio con
+                  numeración irregular, lo pone a media cuadra. Lo mismo para
+                  "cómo llegar": llevar a alguien a las coordenadas exactas es
+                  distinto de llevarlo a una búsqueda.
+                */}
                 <iframe
                   title={`Mapa de ${business.name}`}
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(location)}&output=embed`}
+                  src={
+                    coords
+                      ? `https://www.google.com/maps?q=${coords.lat},${coords.lng}&z=17&output=embed`
+                      : `https://www.google.com/maps?q=${encodeURIComponent(location)}&output=embed`
+                  }
                   loading="lazy"
                   className="h-[130px] w-full border-0"
                 />
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
                   <p className="min-w-0 text-[11.5px] font-semibold">{location}</p>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+                    href={
+                      coords
+                        ? `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`
+                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+                    }
                     target="_blank"
                     rel="noopener"
                     className="shrink-0 text-[10.5px] font-semibold text-jade-link"
@@ -381,6 +434,35 @@ export function BusinessProfile({
                 <p className="whitespace-pre-line text-[11px] leading-[1.6] text-muted-foreground">
                   {business.about}
                 </p>
+              </section>
+            )}
+
+            {/*
+              Las redes y el resto del contacto.
+
+              Se editaban en "Mi web", se guardaban, llegaban hasta acá como
+              props declaradas en el tipo de este mismo componente — y no se
+              dibujaban en ninguna parte. El dueño cargaba su Instagram y no
+              aparecía nunca.
+            */}
+            {links.length > 0 && (
+              <section className="rounded-[14px] border border-border bg-card p-4">
+                <h2 className="mb-2 text-xs font-bold">Seguinos</h2>
+                <ul className="flex flex-wrap gap-2">
+                  {links.map((link) => (
+                    <li key={link.href}>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:border-faint"
+                      >
+                        <link.icon className="size-3.5" aria-hidden />
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
 

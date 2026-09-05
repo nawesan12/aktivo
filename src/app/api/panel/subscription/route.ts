@@ -164,7 +164,14 @@ export async function POST(request: NextRequest) {
       body: {
         preapproval_plan_id: getMPPlanId(plan),
         external_reference: externalReference,
-        payer_email: body.email || undefined,
+        /*
+          El email del pagador va siempre.
+
+          Llegaba sólo si el formulario lo mandaba, y MercadoPago lo pide como
+          requisito de integración: con él afina su motor antifraude y rechaza
+          menos. En una suscripción, un rechazo es una baja.
+        */
+        payer_email: body.email || (await payerEmail(session.userId)) || undefined,
         back_url: `${baseUrl}/panel/suscripcion?result=callback`,
         // What the customer reads on their MercadoPago statement. It said
         // "Jiku Pro" and "Jiku Business", names that appear nowhere in the
@@ -190,4 +197,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+/** La cuenta que administra el negocio: es quien paga la suscripción. */
+async function payerEmail(userId: string): Promise<string | null> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  return user?.email ?? null;
 }

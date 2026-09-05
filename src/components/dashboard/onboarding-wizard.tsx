@@ -3,12 +3,15 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { errorMessage, messageOf } from "@/lib/api-message";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
+import { PLAN_NAMES, PLAN_PRICES, TRIAL_DAYS } from "@/lib/subscription/config";
+
 
 interface OnboardingWizardProps {
   businessName: string;
@@ -20,6 +23,7 @@ const STEPS = [
   { id: "servicios", label: "Servicios" },
   { id: "horarios", label: "Horarios" },
   { id: "link", label: "Tu link" },
+  { id: "plan", label: "Tu plan" },
 ];
 
 /** The three bands a shop actually thinks in, not seven separate days. */
@@ -33,6 +37,7 @@ const ILLUSTRATIONS = [
   "/illus/booking.svg",
   "/illus/gift.svg",
   "/illus/calendar.svg",
+  "/illus/confirmed.svg",
   "/illus/confirmed.svg",
 ];
 
@@ -48,6 +53,7 @@ const ILLUSTRATIONS = [
 export function OnboardingWizard({ businessName, businessId }: OnboardingWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [plan, setPlan] = useState<"PROFESSIONAL" | "ENTERPRISE">("PROFESSIONAL");
   const [saving, setSaving] = useState(false);
 
   const [description, setDescription] = useState("");
@@ -75,6 +81,27 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
     } catch {
       // Private browsing. The server-side check still redirects once the
       // business is complete, so this is only a shortcut.
+    }
+  }
+
+  /** Deja el medio de pago en Mercado Pago, con la semana bonificada. */
+  async function suscribirse() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/panel/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      if (!res.ok) throw new Error(await errorMessage(res));
+      const { initPoint } = await res.json();
+      // El alta queda marcada antes de irse: si vuelve de Mercado Pago por
+      // otro camino, no lo devolvemos al asistente.
+      markSeen();
+      window.location.href = initPoint;
+    } catch (error) {
+      toast.error(messageOf(error, "No pudimos abrir Mercado Pago"));
+      setSaving(false);
     }
   }
 
@@ -425,13 +452,10 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
               footer={
                 <button
                   type="button"
-                  onClick={() => {
-                    markSeen();
-                    router.push("/panel");
-                  }}
+                  onClick={() => setStep(4)}
                   className="flex items-center gap-2 rounded-[10px] bg-primary px-7 py-3 text-[13px] font-bold text-primary-foreground shadow-cta transition-colors hover:bg-[#22c55e]"
                 >
-                  <Check className="size-4" /> Ir a mi panel
+                  <ArrowRight className="size-4" /> Seguir
                 </button>
               }
             >
@@ -457,6 +481,88 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
                   gente, las señas — lo agregás desde el panel cuando quieras.
                 </p>
               )}
+            </Pane>
+          )}
+
+          {/*
+            La suscripción, acá y no cuando ya se venció.
+
+            La prueba terminaba con un panel de sólo lectura y un botón "Ver
+            planes": justo el momento en que hay que decidir pagar, que es donde
+            se va la gente. Dejando el medio de pago ahora, Mercado Pago cobra
+            solo el día ocho y no hay decisión que tomar.
+
+            Salteable a propósito. Pedir tarjeta antes de que hayan visto nada
+            corta las altas, y sin altas no hay a quién retener: el que la deja
+            queda enganchado, el que no, prueba igual con la semana local.
+          */}
+          {step === 4 && (
+            <Pane
+              title="Dejá tu tarjeta y seguí sin pensar en esto"
+              hint={`Los primeros ${TRIAL_DAYS} días no se te cobra nada. Después, el plan que elijas, y lo cancelás cuando quieras desde Mercado Pago.`}
+              footer={
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={suscribirse}
+                    disabled={saving}
+                    className="flex items-center gap-2 rounded-[10px] bg-primary px-7 py-3 text-[13px] font-bold text-primary-foreground shadow-cta transition-colors hover:bg-[#22c55e] disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="size-4" />
+                    )}
+                    Activar mi plan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      markSeen();
+                      router.push("/panel");
+                    }}
+                    className="text-[12.5px] text-muted-foreground hover:text-foreground"
+                  >
+                    Ahora no, quiero probarlo primero
+                  </button>
+                </div>
+              }
+            >
+              <div className="space-y-2">
+                {(["PROFESSIONAL", "ENTERPRISE"] as const).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setPlan(id)}
+                    aria-pressed={plan === id}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-[10px] border p-3.5 text-left transition-colors",
+                      plan === id
+                        ? "border-primary bg-jade-fill"
+                        : "border-border bg-card hover:border-faint"
+                    )}
+                  >
+                    <span>
+                      <span className="block text-[13px] font-bold">{PLAN_NAMES[id]}</span>
+                      <span className="mt-0.5 block text-[11.5px] text-muted-foreground">
+                        {id === "PROFESSIONAL"
+                          ? "Todo lo que necesita un local: turnos, clientes, señas."
+                          : "Suma varias sucursales, abonos y marca blanca."}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-[15px] font-extrabold text-jade-label">
+                        {formatCurrency(PLAN_PRICES[id].amount)}
+                      </span>
+                      <span className="block text-[10.5px] text-faint">por mes</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11.5px] text-faint">
+                Los primeros {TRIAL_DAYS} días son gratis y los maneja Mercado Pago. Si cancelás
+                antes, no se te cobra nada.
+              </p>
             </Pane>
           )}
         </div>

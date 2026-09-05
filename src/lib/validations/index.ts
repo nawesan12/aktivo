@@ -217,6 +217,10 @@ export const settingsSchema = z.object({
     address: z.string().optional(),
     city: z.string().optional(),
     province: z.string().optional(),
+    /// El punto que el dueño marca en el mapa. Con rango, para que un cero por
+    /// error no mande el local al golfo de Guinea.
+    latitude: z.number().min(-90).max(90).nullable().optional(),
+    longitude: z.number().min(-180).max(180).nullable().optional(),
     website: z.string().optional(),
     about: z.string().max(2000).optional(),
     instagram: z.string().max(120).optional(),

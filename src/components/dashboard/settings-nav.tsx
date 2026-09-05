@@ -27,7 +27,9 @@ export function SettingsNav({ active }: { active: SettingsSection }) {
           aria-current={active === section.id ? "page" : undefined}
           onClick={() => {
             const next = new URLSearchParams(searchParams);
-            if (section.id === "negocio") next.delete("s");
+            // La primera sección es la que se ve sin `?s=`, así que no lleva
+            // parámetro. Era "negocio", que se mudó entera a Mi web.
+            if (section.id === SETTINGS_SECTIONS[0].id) next.delete("s");
             else next.set("s", section.id);
             const query = next.toString();
             router.replace(query ? `?${query}` : "?", { scroll: false });

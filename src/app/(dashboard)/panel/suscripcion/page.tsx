@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format";
-import { PLAN_LIMITS } from "@/lib/subscription/config";
+import { PLAN_LIMITS, TRIAL_DAYS } from "@/lib/subscription/config";
+
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PanelHeader } from "@/components/dashboard/panel-header";
 
@@ -235,7 +236,8 @@ export default function SubscriptionPage() {
               : `Te quedan ${trial.daysLeft} días de prueba`}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Tenés todas las funcionalidades disponibles. Elegí un plan antes de
+            Tenés todo desbloqueado. Dejá tu tarjeta ahora y no se te cobra nada hasta que
+            termine la prueba — así no te quedás sin poder operar. Elegí un plan antes de
             que termine para no quedarte sin poder operar.
           </p>
         </div>
@@ -336,7 +338,13 @@ export default function SubscriptionPage() {
                 <span className="text-3xl font-heading font-bold">{formatPrice(plan.price)}</span>
                 <span className="text-sm text-muted-foreground ml-1">/mes</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-4">Se renueva todos los meses. Cancelás cuando quieras.</p>
+              <p className="text-xs text-muted-foreground mb-4">
+                {/* Lo que más mueve la aguja: activar ahora no cuesta nada.
+                    Antes sólo decía "se renueva todos los meses", que se lee
+                    como "te cobro hoy". */}
+                Los primeros {TRIAL_DAYS} días no se cobran. Después se renueva todos los meses y
+                lo cancelás cuando quieras.
+              </p>
 
               <ul className="space-y-2 flex-1 mb-6">
                 {features.map((f) => (

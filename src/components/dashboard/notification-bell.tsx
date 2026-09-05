@@ -43,9 +43,17 @@ export function NotificationBell() {
   return (
     <Popover
       open={open}
-      onOpenChange={(next) => {
+      onOpenChange={async (next) => {
         setOpen(next);
-        if (next) mutate();
+        if (!next) return;
+        // Abrirla es haberla visto: se corre la marca y el contador baja.
+        // Optimista, porque el número tiene que irse en el momento en que se
+        // toca y no cuando vuelve la respuesta.
+        mutate((actual: { unreadCount?: number } | undefined) =>
+          actual ? { ...actual, unreadCount: 0 } : actual,
+        { revalidate: false });
+        await fetch("/api/panel/notifications/seen", { method: "POST" }).catch(() => {});
+        mutate();
       }}
     >
       <PopoverTrigger asChild>

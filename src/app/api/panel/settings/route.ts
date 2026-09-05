@@ -31,6 +31,10 @@ export async function GET() {
         address: business.address,
         city: business.city,
         province: business.province,
+        // Sin esto el mapa de Mi web abre sin el punto que el dueño ya marcó, y
+        // el primer guardado posterior lo borra.
+        latitude: business.latitude,
+        longitude: business.longitude,
         phone: business.phone,
         whatsapp: business.whatsapp,
         email: business.email,

@@ -2,7 +2,9 @@ import { db } from "@/lib/db";
 import { SubscriptionRequiredError } from "@/lib/api-errors";
 
 /** Days a new business gets with the full feature set before it has to pay. */
-export const TRIAL_DAYS = 7;
+// Re-exportada para no tocar lo que ya la importa desde acá.
+export { TRIAL_DAYS } from "./config";
+import { TRIAL_DAYS } from "./config";
 
 export interface BusinessAccess {
   /** The panel is read-only: no trial left and no subscription paying for it. */

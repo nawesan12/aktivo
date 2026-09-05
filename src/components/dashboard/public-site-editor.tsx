@@ -14,8 +14,11 @@ import {
   Trash2,
   Check,
   Copy,
+  Store,
+  Phone,
 } from "lucide-react";
 import { ImageUploader } from "@/components/upload/image-uploader";
+import { LocationPicker } from "./location-picker";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { errorMessage, messageOf } from "@/lib/api-message";
 import { contrastColor, isHexColor } from "@/lib/utils";
@@ -58,9 +61,20 @@ interface BusinessForm {
   facebook: string;
   tiktok: string;
   website: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  address: string;
+  city: string;
+  province: string;
+  latitude: number | null;
+  longitude: number | null;
   primaryColor: string;
   accentColor: string;
 }
+
+const FIELD =
+  "w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary";
 
 const EMPTY: BusinessForm = {
   id: "",
@@ -74,6 +88,14 @@ const EMPTY: BusinessForm = {
   facebook: "",
   tiktok: "",
   website: "",
+  phone: "",
+  whatsapp: "",
+  email: "",
+  address: "",
+  city: "",
+  province: "",
+  latitude: null,
+  longitude: null,
   primaryColor: "",
   accentColor: "",
 };
@@ -99,10 +121,22 @@ export function PublicSiteEditor() {
       facebook: b.facebook ?? "",
       tiktok: b.tiktok ?? "",
       website: b.website ?? "",
+      phone: b.phone ?? "",
+      whatsapp: b.whatsapp ?? "",
+      email: b.email ?? "",
+      address: b.address ?? "",
+      city: b.city ?? "",
+      province: b.province ?? "",
+      latitude: b.latitude ?? null,
+      longitude: b.longitude ?? null,
       primaryColor: b.primaryColor ?? "",
       accentColor: b.accentColor ?? "",
     });
   }, [data]);
+
+  // El mismo texto que la página pública le pasa a Google, para que la vista
+  // previa muestre el pin que va a ver un cliente.
+  const mapQuery = [form.address, form.city, form.province].filter(Boolean).join(", ");
 
   function set<K extends keyof BusinessForm>(key: K, value: BusinessForm[K]) {
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -116,6 +150,7 @@ export function PublicSiteEditor() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           business: {
+            name: form.name,
             logo: form.logo,
             coverImage: form.coverImage,
             about: form.about,
@@ -124,6 +159,14 @@ export function PublicSiteEditor() {
             facebook: form.facebook,
             tiktok: form.tiktok,
             website: form.website,
+            phone: form.phone || undefined,
+            whatsapp: form.whatsapp || undefined,
+            email: form.email || undefined,
+            address: form.address,
+            city: form.city,
+            province: form.province,
+            latitude: form.latitude,
+            longitude: form.longitude,
             primaryColor: form.primaryColor,
             accentColor: form.accentColor,
           },
@@ -174,22 +217,6 @@ export function PublicSiteEditor() {
           <ExternalLink className="w-3.5 h-3.5" /> Ver mi web
         </Link>
       </div>
-
-      {/*
-        The other half of the public page.
-
-        This screen is titled "cómo te ven tus clientes", so it is where an
-        owner comes looking for anything on it — including the address and the
-        map, which live in Configuración. Without this line they simply do not
-        find them.
-      */}
-      <p className="text-xs text-muted-foreground -mt-3">
-        La dirección, el teléfono y los horarios que salen en tu web se editan en{" "}
-        <Link href="/panel/configuracion" className="text-primary hover:underline">
-          Configuración
-        </Link>
-        .
-      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Colours */}
@@ -291,6 +318,134 @@ export function PublicSiteEditor() {
       </div>
 
       <Gallery />
+
+      {/*
+        Todo lo que sale en la web, en la pantalla que se llama "Mi web".
+
+        El nombre, la dirección y el contacto vivían en Configuración → Negocio
+        mientras la descripción y el "sobre el local" se editaban acá: dos
+        formularios sobre los mismos campos, cada uno mandando su copia, así que
+        guardar en uno con el otro abierto pisaba lo que se acababa de escribir.
+        Y para quien buscaba dónde poner su dirección, estaba escondida en la
+        pantalla de ajustes operativos.
+      */}
+      <div className="glass rounded-xl p-6 space-y-4">
+        <h3 className="font-heading font-semibold flex items-center gap-2">
+          <Store className="w-4 h-4" aria-hidden /> Tu local
+        </h3>
+        <div>
+          <label htmlFor="mi-web-nombre" className="text-sm font-medium mb-1.5 block">
+            Nombre
+          </label>
+          <input
+            id="mi-web-nombre"
+            value={form.name}
+            onChange={(e) => set("name", e.target.value)}
+            className={FIELD}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="mi-web-direccion" className="text-sm font-medium mb-1.5 block">
+            Dirección
+          </label>
+          <input
+            id="mi-web-direccion"
+            value={form.address}
+            onChange={(e) => set("address", e.target.value)}
+            placeholder="Av. Colón 1234"
+            autoComplete="street-address"
+            className={FIELD}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="mi-web-ciudad" className="text-sm font-medium mb-1.5 block">
+              Ciudad
+            </label>
+            <input
+              id="mi-web-ciudad"
+              value={form.city}
+              onChange={(e) => set("city", e.target.value)}
+              placeholder="Mar del Plata"
+              autoComplete="address-level2"
+              className={FIELD}
+            />
+          </div>
+          <div>
+            <label htmlFor="mi-web-provincia" className="text-sm font-medium mb-1.5 block">
+              Provincia
+            </label>
+            <input
+              id="mi-web-provincia"
+              value={form.province}
+              onChange={(e) => set("province", e.target.value)}
+              placeholder="Buenos Aires"
+              className={FIELD}
+            />
+          </div>
+        </div>
+        {/*
+          El punto exacto, a mano.
+
+          Antes lo ponía Google interpretando el texto de la dirección y no
+          había forma de corregirlo: sobre una esquina, o en un barrio con
+          numeración irregular, caía a media cuadra.
+        */}
+        <LocationPicker
+          value={
+            form.latitude !== null && form.longitude !== null
+              ? { lat: form.latitude, lng: form.longitude }
+              : null
+          }
+          address={mapQuery}
+          onChange={(punto) => {
+            set("latitude", punto.lat);
+            set("longitude", punto.lng);
+          }}
+        />
+      </div>
+
+      {/* Contact */}
+      <div className="glass rounded-xl p-6 space-y-4">
+        <h3 className="font-heading font-semibold flex items-center gap-2">
+          <Phone className="w-4 h-4" aria-hidden /> Cómo te contactan
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <TextField
+            id="mi-web-telefono"
+            label="Teléfono"
+            value={form.phone}
+            placeholder="223 555-1234"
+            onChange={(value) => set("phone", value)}
+          />
+          <TextField
+            id="mi-web-whatsapp"
+            label="WhatsApp"
+            value={form.whatsapp}
+            placeholder="223 555-1234"
+            onChange={(value) => set("whatsapp", value)}
+          />
+          <TextField
+            id="mi-web-email"
+            label="Email"
+            value={form.email}
+            placeholder="hola@tulocal.com"
+            onChange={(value) => set("email", value)}
+          />
+          <TextField
+            id="mi-web-website"
+            label="Sitio web"
+            value={form.website}
+            placeholder="tulocal.com"
+            onChange={(value) => set("website", value)}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          El WhatsApp es el botón que más tocan: sin él, el cliente que tiene una duda no
+          pregunta.
+        </p>
+      </div>
 
       {/* Words */}
       <div className="glass rounded-xl p-6 space-y-4">

@@ -17,6 +17,7 @@ import { buildPasswordResetEmail } from "@/lib/notifications/password-reset-emai
 import { buildAccessLinkEmail } from "@/lib/notifications/access-link-email";
 import { buildMercadoPagoExpiringEmail } from "@/lib/notifications/mercadopago-email";
 import { buildDailyDigestEmail } from "@/lib/notifications/daily-digest-email";
+import { buildTrialEmail } from "@/lib/notifications/trial-email";
 
 const OUT = "design/emails";
 const when = new Date("2026-09-12T13:30:00.000Z"); // viernes 10:30 en Argentina
@@ -82,6 +83,9 @@ const emails = [
       },
     ]),
   ],
+  ["prueba-3-dias", buildTrialEmail("trial_3d", base.businessName)],
+  ["prueba-ultimo-dia", buildTrialEmail("trial_1d", base.businessName)],
+  ["prueba-terminada", buildTrialEmail("trial_ended", base.businessName)],
   [
     "mercadopago",
     buildMercadoPagoExpiringEmail(base.businessName, "https://jikuapp.com/panel/pagos", "20 de septiembre"),

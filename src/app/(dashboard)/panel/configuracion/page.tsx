@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { BusinessSettings } from "@/components/dashboard/business-settings";
-import { CustomDomain } from "@/components/dashboard/custom-domain";
 import { PaymentConfig } from "@/components/dashboard/payment-config";
 import { LocationsManager } from "@/components/dashboard/locations-manager";
 import { NotificationsLog } from "@/components/dashboard/notifications-log";
@@ -36,7 +35,7 @@ export default async function ConfiguracionPage({ searchParams }: Props) {
   const { s } = await searchParams;
   const active = (SETTINGS_SECTIONS.some((section) => section.id === s)
     ? s
-    : "negocio") as SettingsSection;
+    : SETTINGS_SECTIONS[0].id) as SettingsSection;
 
   return (
     <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
@@ -56,16 +55,9 @@ export default async function ConfiguracionPage({ searchParams }: Props) {
       </div>
 
       <div className="min-w-0 space-y-3">
-        {active === "negocio" && (
-          <>
-            <BusinessSettings section="negocio" />
-            <CustomDomain />
-          </>
-        )}
-
         {active === "reservas" && (
           <>
-            <BusinessSettings section="reservas" />
+            <BusinessSettings />
             <PaymentConfig />
           </>
         )}

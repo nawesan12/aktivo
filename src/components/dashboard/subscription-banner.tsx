@@ -34,14 +34,18 @@ export function SubscriptionBanner() {
       >
         <AlertTriangle className="w-4 h-4 text-danger-foreground shrink-0" />
         <span className="text-danger-foreground">
-          Tu prueba terminó. Podés seguir viendo todo, pero no cargar ni
-          modificar nada.
+          Tu prueba terminó. Tus turnos están todos guardados y tu web sigue publicada, pero no
+          podés cargar ni modificar nada.
         </span>
+        {/*
+          Un botón, no un enlace subrayado en el mismo color del texto: es la
+          única salida de este estado y tiene que verse como tal.
+        */}
         <Link
           href="/panel/suscripcion"
-          className="ml-auto shrink-0 font-medium underline underline-offset-4 text-danger-foreground"
+          className="ml-auto shrink-0 rounded-[8px] bg-danger px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
         >
-          Elegir un plan
+          Activar mi plan
         </Link>
       </div>
     );
@@ -50,16 +54,24 @@ export function SubscriptionBanner() {
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-primary/20 text-sm">
       <Clock className="w-4 h-4 text-primary shrink-0" />
+      {/*
+        Lo que hace falta saber para actuar: cuánto queda y que activarlo ahora
+        no cuesta. "Ver planes" sonaba a ir a mirar precios, que es justo lo que
+        se posterga.
+      */}
       <span>
         {data.trialDaysLeft === 1
           ? "Te queda 1 día de prueba."
-          : `Te quedan ${data.trialDaysLeft} días de prueba.`}
+          : `Te quedan ${data.trialDaysLeft} días de prueba.`}{" "}
+        <span className="text-muted-foreground">
+          Dejá tu tarjeta ahora y no se te cobra hasta que termine.
+        </span>
       </span>
       <Link
         href="/panel/suscripcion"
-        className="ml-auto shrink-0 font-medium underline underline-offset-4 text-primary"
+        className="ml-auto shrink-0 rounded-[8px] bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-[#22c55e]"
       >
-        Ver planes
+        Activar mi plan
       </Link>
     </div>
   );

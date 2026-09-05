@@ -2,45 +2,23 @@
 
 import { useState, useEffect } from "react";
 import useSWR from "swr";
-import { Loader2, Save, Building2, MapPin, Settings } from "lucide-react";
+import { Loader2, Save, Settings } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
-import Link from "next/link";
 
 
 /**
- * Both halves of the settings form, with one save between them.
+ * Cómo se comportan las reservas: el intervalo, la anticipación, el colchón
+ * entre turnos.
  *
- * The redesign splits Configuración into a left nav, so "Negocio" and "Reservas
- * y señas" are separate destinations — but they are one PATCH and one piece of
- * state, so the component stays whole and hides the half you are not on rather
- * than being torn into two that could disagree about what is unsaved.
+ * Acá había además un formulario con el nombre, la dirección y el contacto del
+ * local. Eso es la web pública y se edita en Mi web, junto al resto de lo que ve
+ * un cliente; mientras estuvo partido en dos pantallas, la descripción era
+ * editable en las dos y guardar en una pisaba la otra.
  */
-export function BusinessSettings({ section = "todo" }: { section?: "todo" | "negocio" | "reservas" }) {
+export function BusinessSettings() {
   const { data, isLoading, mutate } = useSWR("/api/panel/settings");
   const [saving, setSaving] = useState(false);
-
-  const [business, setBusiness] = useState({
-    name: "",
-    slug: "",
-    description: "",
-    phone: "",
-    whatsapp: "",
-    email: "",
-    address: "",
-    city: "",
-    province: "",
-    website: "",
-    primaryColor: "",
-    accentColor: "",
-    logo: "",
-    coverImage: "",
-    about: "",
-    instagram: "",
-    facebook: "",
-    tiktok: "",
-  });
 
   const [settings, setSettings] = useState({
     slotInterval: 30,
@@ -51,36 +29,14 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
   });
 
   useEffect(() => {
-    if (data) {
-      setBusiness({
-        name: data.business.name || "",
-        slug: data.business.slug || "",
-        description: data.business.description || "",
-        phone: data.business.phone || "",
-        whatsapp: data.business.whatsapp || "",
-        email: data.business.email || "",
-        address: data.business.address || "",
-        city: data.business.city || "",
-        province: data.business.province || "",
-        website: data.business.website || "",
-        primaryColor: data.business.primaryColor || "",
-        accentColor: data.business.accentColor || "",
-        logo: data.business.logo || "",
-        coverImage: data.business.coverImage || "",
-        about: data.business.about || "",
-        instagram: data.business.instagram || "",
-        facebook: data.business.facebook || "",
-        tiktok: data.business.tiktok || "",
+    if (data?.settings) {
+      setSettings({
+        slotInterval: data.settings.slotInterval || 30,
+        minAdvanceHours: data.settings.minAdvanceHours || 2,
+        maxAdvanceDays: data.settings.maxAdvanceDays || 30,
+        bufferMinutes: data.settings.bufferMinutes || 0,
+        allowGuestBooking: data.settings.allowGuestBooking ?? true,
       });
-      if (data.settings) {
-        setSettings({
-          slotInterval: data.settings.slotInterval || 30,
-          minAdvanceHours: data.settings.minAdvanceHours || 2,
-          maxAdvanceDays: data.settings.maxAdvanceDays || 30,
-          bufferMinutes: data.settings.bufferMinutes || 0,
-          allowGuestBooking: data.settings.allowGuestBooking ?? true,
-        });
-      }
     }
   }, [data]);
 
@@ -90,21 +46,10 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
       const res = await fetch("/api/panel/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        // Only what this screen still edits. Sending the appearance fields back
-        // untouched would let a stale tab here undo what "Mi web" just saved.
-        body: JSON.stringify({
-          business: {
-            name: business.name,
-            description: business.description,
-            phone: business.phone,
-            whatsapp: business.whatsapp,
-            email: business.email,
-            address: business.address,
-            city: business.city,
-            province: business.province,
-          },
-          settings,
-        }),
+        // Sólo los ajustes de reserva. Mandar de vuelta los campos del negocio
+        // —que ahora se editan en Mi web— dejaría que una pestaña vieja de esta
+        // pantalla deshiciera lo que allá se acaba de guardar.
+        body: JSON.stringify({ settings }),
       });
 
       if (!res.ok) {
@@ -121,199 +66,12 @@ export function BusinessSettings({ section = "todo" }: { section?: "todo" | "neg
     }
   }
 
-  // The same string the public page hands Google, so what the preview shows is
-  // the pin a customer will get.
-  const mapQuery = [business.address, business.city, business.province]
-    .filter(Boolean)
-    .join(", ");
-
   if (isLoading) return <FormSkeleton />;
 
   return (
     <div className="space-y-6">
-      {/* Business profile */}
-      <div className={cn("glass rounded-xl p-6 space-y-4", section === "reservas" && "hidden")}>
-        <h3 className="font-heading font-semibold flex items-center gap-2">
-          <Building2 className="w-4 h-4" /> Perfil del negocio
-        </h3>
-
-        {/* Logo, portada, colores, redes y textos viven en "Mi web", donde se
-            ven aplicados sobre una vista previa. Acá quedaban al pie de una
-            página de ajustes operativos, entre el intervalo de turnos y los
-            minutos de buffer, con dos campos hex sin nada que mostrara qué
-            hacían. */}
-        {/*
-          Says what is here, not only what is elsewhere. Naming Mi web on its
-          own sent anybody looking for their address off to the screen that does
-          not have it, and left them with no reason to scroll this one.
-        */}
-        <p className="text-sm text-muted-foreground">
-          Acá van el nombre, la dirección y los datos de contacto de tu local. El logo, los
-          colores y las fotos se editan en{" "}
-          <Link href="/panel/mi-web" className="text-primary hover:underline">
-            Mi web
-          </Link>
-          .
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="nombre-del-negocio" className="text-sm font-medium mb-1.5 block">Nombre del negocio</label>
-            <input
-              id="nombre-del-negocio"
-              value={business.name}
-              onChange={(e) => setBusiness((p) => ({ ...p, name: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="slug-url" className="text-sm font-medium mb-1.5 block">Slug (URL)</label>
-            <input
-              id="slug-url"
-              value={business.slug}
-              disabled
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none opacity-60"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label htmlFor="descripcion" className="text-sm font-medium mb-1.5 block">Descripción</label>
-            <textarea
-              id="descripcion"
-              value={business.description}
-              onChange={(e) => setBusiness((p) => ({ ...p, description: e.target.value }))}
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
-            />
-          </div>
-          {/*
-            Where the shop is, right under its name.
-
-            These three sat at the bottom of the form, below a four-row textarea
-            — so the one thing every customer needs in order to turn up was the
-            last thing an owner could find, and the note at the top of this
-            screen sends anybody looking for "how my shop looks" to Mi web,
-            where the address is not.
-          */}
-          <div className="md:col-span-2 pt-1">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-jade-link" aria-hidden /> Dónde estás
-            </h4>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sale en tu página pública, en el mapa y en el email de cada turno.
-            </p>
-          </div>
-          <div>
-            <label htmlFor="direccion" className="text-sm font-medium mb-1.5 block">
-              Dirección
-            </label>
-            <input
-              id="direccion"
-              value={business.address}
-              onChange={(e) => setBusiness((p) => ({ ...p, address: e.target.value }))}
-              placeholder="Av. Colón 1234"
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="ciudad" className="text-sm font-medium mb-1.5 block">Ciudad</label>
-              <input
-                id="ciudad"
-                value={business.city}
-                onChange={(e) => setBusiness((p) => ({ ...p, city: e.target.value }))}
-                placeholder="Mar del Plata"
-                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label htmlFor="provincia" className="text-sm font-medium mb-1.5 block">
-                Provincia
-              </label>
-              <input
-                id="provincia"
-                value={business.province}
-                onChange={(e) => setBusiness((p) => ({ ...p, province: e.target.value }))}
-                placeholder="Buenos Aires"
-                className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-          {/*
-            The pin is placed by Google from this text — there are no
-            coordinates to correct — so the only way to know it lands on the
-            right door is to look. Better here, once, than from a customer.
-          */}
-          {mapQuery && (
-            <div className="md:col-span-2 -mt-1">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-jade-link hover:underline"
-              >
-                <MapPin className="w-3.5 h-3.5" aria-hidden />
-                Ver dónde cae el punto en el mapa
-              </a>
-            </div>
-          )}
-          <div>
-            <label htmlFor="telefono" className="text-sm font-medium mb-1.5 block">Teléfono</label>
-            <input
-              id="telefono"
-              value={business.phone}
-              onChange={(e) => setBusiness((p) => ({ ...p, phone: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="whatsapp" className="text-sm font-medium mb-1.5 block">WhatsApp</label>
-            <input
-              id="whatsapp"
-              value={business.whatsapp}
-              onChange={(e) => setBusiness((p) => ({ ...p, whatsapp: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="text-sm font-medium mb-1.5 block">Email</label>
-            <input
-              id="email"
-              value={business.email}
-              onChange={(e) => setBusiness((p) => ({ ...p, email: e.target.value }))}
-              type="email"
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="website" className="text-sm font-medium mb-1.5 block">Website</label>
-            <input
-              id="website"
-              value={business.website}
-              onChange={(e) => setBusiness((p) => ({ ...p, website: e.target.value }))}
-              className="w-full h-10 px-3 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="about" className="text-sm font-medium mb-1.5 block">
-              Sobre nosotros
-            </label>
-            <textarea
-              id="about"
-              rows={4}
-              value={business.about}
-              onChange={(e) => setBusiness((p) => ({ ...p, about: e.target.value }))}
-              placeholder="Contale a tus clientes quiénes son, desde cuándo y qué los hace distintos."
-              className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Aparece en tu página pública, debajo de los servicios.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Booking settings */}
-      <div className={cn("glass rounded-xl p-6 space-y-4", section === "negocio" && "hidden")}>
+      <div className="glass rounded-xl p-6 space-y-4">
         <h3 className="font-heading font-semibold flex items-center gap-2">
           <Settings className="w-4 h-4" /> Configuración de turnos
         </h3>

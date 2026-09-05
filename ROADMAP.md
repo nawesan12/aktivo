@@ -306,6 +306,32 @@ abriera el panel.
   arranca en tres letras y la grilla de horarios conserva la anterior mientras
   llega la nueva.
 
+### Sprint 17 — Que se entienda cómo suscribirse ✅
+
+La suscripción sólo aparecía cuando la prueba ya había vencido: justo el momento
+en que hay que decidir pagar, que es donde se va la gente. Y quien no abría el
+panel en toda la semana no se enteraba de nada.
+
+- [x] **El alta termina ofreciendo el plan**, con la semana bonificada por
+  Mercado Pago (`free_trial` en el `preapproval_plan`): el que deja la tarjeta
+  queda suscripto y MP le cobra solo el día ocho, sin decisión que tomar.
+  Salteable a propósito — pedir tarjeta antes de que hayan visto nada corta las
+  altas, y sin altas no hay a quién retener.
+- [x] **Tres avisos por correo** antes y al vencer (`src/lib/jobs/trial-reminders.ts`).
+  El banner sólo lo ve quien entra al panel, y el que está por perderse es
+  justamente el que no entró.
+- [x] El banner y la pantalla de suscripción dicen lo que hacía falta para
+  actuar: que activarlo ahora no cuesta. Decían "se renueva todos los meses",
+  que se lee como "te cobro hoy", y "Ver planes", que suena a ir a mirar precios.
+- [x] `payer_email` va siempre en el preapproval. Llegaba sólo si el formulario
+  lo mandaba, y Mercado Pago lo pide para afinar su antifraude: un rechazo en
+  una suscripción es una baja.
+- [x] **Los webhooks de suscripción estaban sin suscribir.** La aplicación
+  manejaba `subscription_preapproval` y `subscription_authorized_payment` en el
+  código, pero Mercado Pago no los tenía habilitados: iba a cobrar el día ocho y
+  la aplicación no se enteraba. Corregido con el MCP.
+- [x] `scripts/mp-free-trial.ts` para poner la semana en los planes de MP.
+
 ### Pendiente
 
 - **Sin Google sign-in**: falta cargar las credenciales; hoy es sólo email y

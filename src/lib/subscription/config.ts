@@ -12,6 +12,15 @@ export interface PlanLimits {
   memberships: boolean;
 }
 
+/**
+ * Los días de prueba de un negocio nuevo.
+ *
+ * Vive acá y no en `access.ts` porque las pantallas la muestran —"no se te
+ * cobra hasta que termine"— y `access` importa Prisma: traerla desde un
+ * componente de cliente arrastraba el driver al navegador.
+ */
+export const TRIAL_DAYS = 7;
+
 export const PLAN_LIMITS: Record<BusinessPlan, PlanLimits> = {
   STARTER: {
     maxStaff: 1,

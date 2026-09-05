@@ -55,6 +55,16 @@ export async function findOverflows(page: Page): Promise<Overflow[]> {
       */
       if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") continue;
 
+      /*
+        Un widget que maneja su propio desbordamiento tampoco es un defecto.
+
+        El mapa dibuja una grilla de tiles más ancha que su caja a propósito:
+        es lo que permite arrastrarlo. `role="application"` es justamente la
+        marca de "esto tiene su propia interacción adentro", así que se salta
+        él y todo lo que contiene.
+      */
+      if (el.closest('[role="application"]')) continue;
+
       // More than a couple of pixels: sub-pixel rounding on borders is noise.
       if (el.scrollWidth > el.clientWidth + 2) {
         results.push({

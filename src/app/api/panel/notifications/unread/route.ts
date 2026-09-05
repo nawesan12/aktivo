@@ -9,7 +9,20 @@ export async function GET() {
     await requireBusinessPermission(session, "notifications:read");
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    /*
+      Lo que entró desde la última vez que lo miró.
+
+      El contador era un conteo de los envíos de las últimas 24 horas, así que
+      no bajaba al abrir la campanita: bajaba solo, con el paso del tiempo. Sin
+      marca previa —nunca la abrió— se cuenta la misma ventana de siete días que
+      muestra la lista, para no arrancar con un número inventado.
+    */
+    const settings = await db.businessSettings.findUnique({
+      where: { businessId: session.businessId },
+      select: { notificationsSeenAt: true },
+    });
+    const desde = settings?.notificationsSeenAt ?? sevenDaysAgo;
 
     const [items, unreadCount] = await Promise.all([
       db.notification.findMany({
@@ -37,7 +50,7 @@ export async function GET() {
       db.notification.count({
         where: {
           businessId: session.businessId,
-          createdAt: { gte: oneDayAgo },
+          createdAt: { gt: desde },
         },
       }),
     ]);

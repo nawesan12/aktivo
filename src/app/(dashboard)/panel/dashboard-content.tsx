@@ -7,6 +7,8 @@ import { es } from "date-fns/locale";
 import { Sparkles } from "lucide-react";
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { ShareAgendaCard } from "@/components/dashboard/share-agenda-card";
+import { QuickActions } from "@/components/dashboard/quick-actions";
 import { AppointmentsBarChart } from "@/components/dashboard/appointments-bar-chart";
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
 import { Card } from "@/components/ui/card";
@@ -85,6 +87,20 @@ export function DashboardContent({
           tu agenda está al <b className="text-jade-label">{kpis.occupancy}%</b> este mes
         </p>
       </header>
+
+      {/*
+        Antes de los números: los números son el resultado de haber repartido el
+        link, y el link es lo único que hace entrar un turno. Alguien que abre el
+        panel el primer día viene con la pregunta "¿qué le paso a mis clientes?".
+      */}
+      <ShareAgendaCard />
+
+      {/*
+        Y después, qué se puede hacer. La barra de la izquierda nombra las
+        pantallas —"Servicios", "Pagos"— y quien nunca usó esto no sabe cuál
+        abrir para lo que quiere; acá cada tarjeta dice la tarea.
+      */}
+      <QuickActions />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard

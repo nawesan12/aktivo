@@ -257,6 +257,8 @@ export default async function BusinessProfilePage({ params }: Props) {
             : null,
         primaryColor: business.primaryColor,
         accentColor: business.accentColor,
+        latitude: business.latitude,
+        longitude: business.longitude,
       }}
       categories={categories}
       staff={staffData}

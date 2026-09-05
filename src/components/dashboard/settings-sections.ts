@@ -6,8 +6,13 @@
  * client reference rather than as the array — `SETTINGS_SECTIONS.some is not a
  * function`, at request time, only in the server render.
  */
+/*
+  "Negocio" no está más: el nombre, la dirección y el contacto son la web
+  pública y se editan en Mi web, junto al resto de lo que ve un cliente. Tener
+  las dos mitades en pantallas distintas —y la descripción editable en ambas—
+  hacía que guardar en una pisara la otra.
+*/
 export const SETTINGS_SECTIONS = [
-  { id: "negocio", label: "Negocio" },
   { id: "reservas", label: "Reservas y señas" },
   { id: "avisos", label: "Recordatorios y envíos" },
   { id: "cancelaciones", label: "Cancelaciones y ausencias" },
