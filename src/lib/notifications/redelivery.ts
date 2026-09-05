@@ -24,9 +24,13 @@ export const MAX_ATTEMPTS = 4;
  */
 const MAX_AGE_HOURS = 72;
 
-type BaseType = "confirmation" | "reminder" | "cancellation";
+type BaseType = "confirmation" | "reminder" | "reminder_soon" | "cancellation";
 
-function toBaseType(type: string): BaseType {
+/** Exported for the test: the mapping is where the "mañana" bug lived. */
+export function toBaseType(type: string): BaseType {
+  // `reminder_1h` before the prefix check, or the mail that goes out an hour
+  // before the turno gets the twenty-four-hour template and says "mañana".
+  if (type === "reminder_1h") return "reminder_soon";
   if (type.startsWith("reminder")) return "reminder";
   if (type === "cancellation") return "cancellation";
   return "confirmation";
@@ -52,7 +56,7 @@ async function pendingNotifications(limit: number) {
 }
 
 const NOTIFICATION_INCLUDE = {
-  business: { select: { name: true } },
+  business: { select: { name: true, slug: true } },
   appointment: {
     include: {
       service: { select: { name: true } },
@@ -93,6 +97,7 @@ async function redeliverOne(notification: PendingNotification): Promise<Redelive
       to: notification.recipient,
       type: toBaseType(notification.type),
       businessName: notification.business.name,
+      businessSlug: notification.business.slug,
       clientName,
       serviceName: appointment.service.name,
       staffName: appointment.staff.name,

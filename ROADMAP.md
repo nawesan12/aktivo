@@ -1,7 +1,8 @@
 # Jiku — Roadmap de Desarrollo
 
 ## Vision
-Plataforma de crecimiento para negocios de servicios. Empieza como sistema de turnos (MVP: barberias/salones) y evoluciona hacia CRM, loyalty, analytics y multicanal.
+Plataforma de crecimiento para negocios de servicios. Empieza como sistema de
+turnos (MVP: barberías/salones) y evoluciona hacia CRM, cobros y fidelización.
 
 ---
 
@@ -15,7 +16,7 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Proxy (slug routing + auth protection) — `src/proxy.ts`
 - [x] Layout base (sidebar, topbar, mobile-nav)
 - [x] Zustand stores (ui-store, booking-store)
-- [x] Cloudinary config
+- [x] Subida de imágenes (Cloudinary; hoy es Vercel Blob)
 - [x] Design system tokens en globals.css
 - [x] GSAP provider + animation presets
 - [x] Seed script con datos demo de barberia
@@ -36,15 +37,15 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] API: GET /api/services, GET /api/staff
 
 ### Sprint 2 — Dashboard Core (Semana 5-6) ✅
-- [x] Dashboard home: KPIs reales desde DB, charts con Recharts
-- [x] Analytics API (scope por negocio)
+- [x] Dashboard home: KPIs reales desde DB y gráficos (Recharts; hoy dibujados a mano, sin librería)
+- [x] Analytics API (scope por negocio; absorbida por Reportes, ver Sprint 10)
 - [x] Gestion de turnos: tabla con filtros, busqueda, bulk actions
 - [x] Calendar views: dia (timeline), semana (grid), mes
 - [x] Dialog de creacion manual de turno
 - [x] Status updates (confirmar, cancelar, completar, no-show)
 
 ### Sprint 3 — Services & Staff (Semana 7-8) ✅
-- [x] CRUD servicios: crear/editar/borrar, upload imagen con Cloudinary, categorias, drag-to-reorder
+- [x] CRUD servicios: crear/editar/borrar, upload de imagen, categorías, drag-to-reorder
 - [x] CRUD staff: perfil, foto, bio, asignacion de servicios
 - [x] Gestion de horarios: working hours editor, blocked dates calendar, recurring blocks, overrides
 - [x] Visualizacion de grilla de slots en tiempo real
@@ -93,18 +94,18 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Página pública de review (`/review/[token]`)
 - [x] Nuevos permisos RBAC: `clients:tags`, `reviews:read`, `reviews:manage`
 
-### Sprint 8 — Smart Scheduling + No-Show Tracking + Campaigns ✅
+### Sprint 8 — Smart Scheduling + No-Show Tracking ✅
 - [x] Sugerencias inteligentes de slots basadas en historial del cliente
 - [x] Tracking de no-shows con penalizaciones automáticas (bloqueo temporal)
 - [x] Configuración de umbral de no-shows y días de penalización
-- [x] Auto-marcado de no-shows (cron cada 15 min)
-- [x] Campañas automáticas: BIRTHDAY, REBOOKING, INACTIVITY, CUSTOM
-- [x] Segmentación de campañas por tags de clientes
-- [x] Templates de mensajes con interpolación de variables
-- [x] Log de ejecución de campañas por destinatario
+- [x] Auto-marcado de no-shows
 - [x] Perfil de cliente con fecha de cumpleaños
-- [x] Cron jobs: ejecución de campañas (diario), auto no-show (15 min), review requests (horario)
-- [x] Nuevos permisos RBAC: `campaigns:read`, `campaigns:manage`, `noshow:read`, `noshow:manage`
+- [x] Nuevos permisos RBAC: `noshow:read`, `noshow:manage`
+- [~] **Campañas — dadas de baja** (4 de septiembre de 2026). Automáticas por
+  cumpleaños, recompra e inactividad, con segmentación por tags. Se sacaron
+  enteras: rutas, componentes, endpoints, cron, permisos `campaigns:*` y las
+  tablas `Campaign` y `CampaignExecution`. Lo que quedó para traer gente de
+  vuelta son los cupones y los referidos.
 
 ### Sprint 9 — Multi-Sucursal (Multi-Location) ✅
 - [x] Modelo BusinessGroup: entidad paraguas con owner, nombre, logo
@@ -116,27 +117,32 @@ Plataforma de crecimiento para negocios de servicios. Empieza como sistema de tu
 - [x] Sesión con getSessionGroup() y availableBusinesses en JWT
 - [x] Nuevos permisos RBAC: `group:read`, `group:manage`, `group:reports`
 
-### Sprint 10 — Embeddable Widget + Advanced Analytics ✅
-- [x] Widget embebible: `<script>` tag que crea botón flotante → abre iframe de booking
-- [x] Configuración de widget: habilitado, tema, posición
-- [x] Endpoint público CORS-enabled para config del widget
-- [x] Booking flow simplificado para iframe (`/embed/[businessSlug]`)
-- [x] Analytics avanzados: retention mensual, LTV, peak hours heatmap, churn
-- [x] Snapshots diarios de métricas (materialización en tabla AnalyticsSnapshot)
-- [x] Cron de snapshot de analytics (diario)
-- [x] Dashboard de analytics con tabs y gráficos interactivos
-- [x] Nuevos permisos RBAC: `analytics:read`, `widget:manage`
+### Sprint 10 — Widget embebible + Analytics ❌ dado de baja
+
+Ambos se sacaron enteros el 4 de septiembre de 2026, con el rediseño. Queda
+anotado porque el schema y los permisos los nombraban, y para que nadie los
+busque:
+
+- [~] **Widget embebible** — `<script>` con botón flotante e iframe de booking,
+  su configuración (`widgetEnabled`, `widgetTheme`, `widgetPosition`), el
+  endpoint público con CORS y el flujo `/embed/[businessSlug]`, que era una
+  reimplementación paralela del de reserva. La web pública del local cumple la
+  misma función y es una sola cosa que mantener.
+- [~] **Analytics avanzados** — retención mensual, LTV, heatmap de horarios
+  pico y churn, con snapshots diarios en `AnalyticsSnapshot` y su cron. Lo que
+  valía la pena se absorbió en Reportes, que lee de las tablas de siempre.
+- [~] Los permisos `analytics:read` y `widget:manage` ya no existen.
 
 ### Dependencias entre Sprints
 ```
 Sprint 7 (CRM + Reviews)
     ↓
-Sprint 8 (Campaigns + No-Show + Smart Scheduling)
-    ↓  ← Campaigns usan tags del Sprint 7 para segmentación
+Sprint 8 (No-Show + Smart Scheduling)
+    ↓
 Sprint 9 (Multi-Location)
-    ↓  ← Schema independiente, pero analytics necesitan awareness de location
-Sprint 10 (Widget + Analytics)
-       ← Widget reutiliza componentes de booking, Analytics lee datos acumulados
+       ← Schema independiente del resto
+
+Sprint 10 (Widget + Analytics) — dado de baja, ver arriba
 ```
 
 ---
@@ -156,28 +162,31 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Configuración validada al arrancar** (`src/lib/env.ts`): el deploy falla si
   falta algo, en vez de degradar en silencio.
 - **Logging estructurado** en JSON (`src/lib/logger.ts`) y `/api/health`.
-- **El trabajo programado corre sin crons**: lo dispara el tráfico real con un
-  candado en base, más un cron diario de piso y un workflow de GitHub Actions
-  cada diez minutos para los recordatorios de una hora.
+- **El trabajo programado corre sin crons de Vercel**: lo dispara el tráfico
+  real con un candado en base (`src/lib/jobs/tick.ts`). El cron diario de piso
+  se sacó de `vercel.json` con el rediseño; queda el workflow de GitHub Actions
+  cada diez minutos, que es el que sostiene el recordatorio de una hora antes
+  —su ventana son 60 minutos y los primeros turnos del día caen cuando todavía
+  no hay tráfico que dispare nada.
 - **Envíos que no se pierden**: `after()` para el trabajo en segundo plano,
   reintentos con backoff, y un job que reprocesa lo que quedó fallido.
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 120 unitarios y 83 end-to-end, incluidos doble reserva concurrente,
-  flujo completo de reserva, widget y accesibilidad, más un humo contra el sitio
+- **Tests**: 196 unitarios y 90 end-to-end, incluidos doble reserva concurrente,
+  flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
+  que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
 
 ### Pendiente
 
-- **Cloudinary sin configurar**: no se pueden subir imágenes desde el panel
-  hasta cargar `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y el upload preset.
+- **Sin Google sign-in**: falta cargar las credenciales; hoy es sólo email y
+  contraseña.
 - **Sin tracker de errores**. Un 500 escribe una línea en los logs de Vercel,
   que se retienen poco y no alertan a nadie.
 - **Notificaciones sólo por email**. WhatsApp se sacó porque exigía plantillas
   aprobadas por Meta; volver a sumarlo significa redactarlas, aprobarlas y
   escribir los mensajes como `type: "template"`.
-- Google sign-in sin credenciales: queda sólo email + contraseña.
 - Migrar `mercadopago` de 2.x a 3.x (cierra las últimas vulnerabilidades de
   `npm audit`; conviene hacerlo probando contra la API real).
 - Panel en Server Components: hoy casi todo el panel es cliente + SWR.
@@ -190,7 +199,6 @@ Lo que hay hoy, más allá de las funcionalidades:
 - Loyalty program con puntos y niveles
 - Instagram integration (booking desde perfil)
 - Google Maps booking button
-- Membresías y paquetes de servicios
 - App nativa para staff (React Native)
 - Prediccion de no-shows con ML
 - Insights con AI (recomendaciones automaticas)
@@ -207,11 +215,10 @@ Lo que hay hoy, más allá de las funcionalidades:
 | DB | PostgreSQL (Neon DB) + Prisma 7 |
 | Auth | NextAuth v5 (Google + Credentials) |
 | State | Zustand + SWR |
-| Imagenes | Cloudinary + next-cloudinary |
+| Imagenes | Vercel Blob (comprimidas en el navegador) |
 | Pagos | MercadoPago |
 | Email | Resend |
 | Validacion | Zod |
-| Charts | Recharts |
 | Icons | Lucide React |
 | Fonts | Sora (headings) + Cormorant Garamond (display) + IBM Plex Mono (mono) |
 

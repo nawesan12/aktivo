@@ -6,6 +6,7 @@ import { buildInviteEmail } from "@/lib/notifications/invite-email";
 import { buildPasswordResetEmail } from "@/lib/notifications/password-reset-email";
 import { buildVerificationEmail } from "@/lib/notifications/verification-email";
 import { buildMercadoPagoExpiringEmail } from "@/lib/notifications/mercadopago-email";
+import { toBaseType } from "@/lib/notifications/redelivery";
 
 /**
  * Email is the only channel this product has, and it is the one surface nobody
@@ -104,6 +105,25 @@ describe("el recordatorio dice cuándo es el turno", () => {
     expect(subject).not.toContain("Mañana");
     expect(html).not.toContain("Mañana tenés turno");
     expect(html).toContain("en un rato");
+  });
+});
+
+describe("el reintento de un correo que falló", () => {
+  it("no degrada el recordatorio de 1 h al de 24", () => {
+    /*
+      The retry path had its own copy of the mapping and collapsed everything
+      starting with "reminder" onto the daily template, so a one-hour reminder
+      that failed and got retried came back saying "mañana".
+    */
+    expect(toBaseType("reminder_1h")).toBe("reminder_soon");
+    expect(toBaseType("reminder_24h")).toBe("reminder");
+    expect(toBaseType("reminder")).toBe("reminder");
+  });
+
+  it("manda cancelaciones como cancelaciones y el resto como confirmación", () => {
+    expect(toBaseType("cancellation")).toBe("cancellation");
+    expect(toBaseType("reschedule")).toBe("confirmation");
+    expect(toBaseType("cualquier-cosa")).toBe("confirmation");
   });
 });
 
