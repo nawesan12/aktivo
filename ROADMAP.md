@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 210 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 213 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -236,6 +236,27 @@ Hecho el 5 de septiembre de 2026, mirando el otro lado del mismo recorrido.
 - [x] `scripts/e2e-cleanup.ts` borra también los negocios que la suite da de
   alta (`prueba-e2e-*`) y sus dueños. Sin eso, cada corrida deja uno publicado
   en el directorio y en el sitemap.
+
+### Sprint 13 — El panel del dueño, mirado con un turno real adentro ✅
+
+- [x] La campanita ya no se derrama por toda la pantalla: el viewport de
+  `ScrollArea` es `h-full` y dentro de un padre sin altura no acota nada, así
+  que la lista crecía con los ítems y se dibujaba encima del dashboard hasta el
+  pie. Y dice lo que es —"Envíos a tus clientes"—, porque bajo el título
+  "Notificaciones" se leía como avisos para el dueño y ninguno pide nada.
+- [x] Los teléfonos se muestran legibles. `formatPhoneForDisplay` existía desde
+  el principio y no se usaba en ninguna pantalla: el panel mostraba
+  `+5492234999321` donde ahora dice `223 499-9321`.
+- [x] Y esa función partía mal los códigos de área de cuatro dígitos: un número
+  de Río Gallegos (2966) se leía como uno de Bahía Blanca (296). Los códigos de
+  2, 3 y 4 dígitos no se distinguen por ninguna regla —el total es siempre
+  diez—, así que ahora hay lista.
+
+### Pendiente del recorrido del dueño
+
+- **Nadie le avisa al dueño cuando entra una reserva.** El único correo que sale
+  es el del cliente; el dueño se entera si abre el panel. Un turno tomado a las
+  once de la noche espera hasta que alguien mire.
 
 ### Pendiente
 

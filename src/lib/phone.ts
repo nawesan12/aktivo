@@ -55,17 +55,39 @@ export function normalisePhone(input: string): string {
   return `+${COUNTRY_CODE}9${digits}`;
 }
 
+/**
+ * Argentine area codes with three digits.
+ *
+ * There is no rule that separates a three-digit code from a four-digit one —
+ * the total is always ten either way — so it takes a list. This one is short
+ * and stable: 11 is the only two-digit code, these are the three-digit ones,
+ * and everything else has four. Without it, a number from Río Gallegos
+ * (2966) was split as if it were 296, and read as somebody else's town.
+ */
+const THREE_DIGIT_AREA_CODES = new Set([
+  "220", "221", "223", "230", "236", "237", "245", "249",
+  "260", "261", "263", "264", "266", "280", "291", "297", "299",
+  "336", "341", "342", "343", "345", "348",
+  "351", "353", "358", "362", "364", "370", "376", "379",
+  "380", "381", "383", "385", "387", "388",
+]);
+
 /** Readable form for the interface: `223 632-7551`. */
 export function formatPhoneForDisplay(input: string): string {
   const digits = nationalDigits(input);
   if (digits.length !== 10) return input;
 
-  // Area codes are 2, 3 or 4 digits; 11 (Buenos Aires) is the only 2-digit one.
-  const areaLength = digits.startsWith("11") ? 2 : 3;
+  const areaLength = digits.startsWith("11")
+    ? 2
+    : THREE_DIGIT_AREA_CODES.has(digits.slice(0, 3))
+      ? 3
+      : 4;
+
   const area = digits.slice(0, areaLength);
   const rest = digits.slice(areaLength);
 
-  // The last four digits always sit after the dash: 223 632-7551, 11 4123-4567.
+  // The last four digits always sit after the dash: 223 632-7551,
+  // 11 4123-4567, 2966 12-3456.
   return `${area} ${rest.slice(0, -4)}-${rest.slice(-4)}`;
 }
 

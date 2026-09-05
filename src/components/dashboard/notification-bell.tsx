@@ -8,7 +8,6 @@ import { es } from "date-fns/locale";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const statusColors: Record<string, string> = {
@@ -74,10 +73,26 @@ export function NotificationBell() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
+        {/*
+          Lo que es: el registro de lo que se le mandó a cada cliente. Bajo el
+          título "Notificaciones" se leía como avisos para el dueño, y no lo
+          son — nada acá pide que haga algo.
+        */}
         <div className="px-4 py-3 border-b border-border">
-          <h3 className="font-heading font-semibold text-sm">Notificaciones</h3>
+          <h3 className="font-heading font-semibold text-sm">Envíos a tus clientes</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Los correos que salieron por tus turnos.
+          </p>
         </div>
-        <ScrollArea className="max-h-80">
+        {/*
+          `max-h` propio, no ScrollArea.
+
+          El viewport interno de Radix es `h-full`, y `h-full` dentro de un
+          padre sin altura definida no acota nada: la lista crecía con los
+          ítems y se derramaba fuera del popover, encima del dashboard, hasta
+          el pie de la pantalla.
+        */}
+        <div className="max-h-80 overflow-y-auto overscroll-contain">
           {items.length === 0 ? (
             <div className="p-6 text-center">
               <p className="text-sm text-muted-foreground">Sin notificaciones recientes</p>
@@ -93,7 +108,7 @@ export function NotificationBell() {
                         <span className="font-medium">{item.clientName as string || "Cliente"}</span>
                         {" — "}
                         <span className="text-muted-foreground">
-                          {typeLabels[item.type as string] || (item.type as string)} via {(item.channel as string)?.toLowerCase()}
+                          {typeLabels[item.type as string] || (item.type as string)}
                         </span>
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -105,14 +120,14 @@ export function NotificationBell() {
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
         <div className="px-4 py-2.5 border-t border-border">
           <Link
             href="/panel/notificaciones"
             onClick={() => setOpen(false)}
             className="text-xs text-primary hover:underline"
           >
-            Ver todas las notificaciones
+            Ver todos los envíos
           </Link>
         </div>
       </PopoverContent>

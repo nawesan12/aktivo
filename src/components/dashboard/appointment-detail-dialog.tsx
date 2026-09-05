@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatPhoneForDisplay } from "@/lib/phone";
 
 interface AppointmentDetail {
   id: string;
@@ -96,7 +97,9 @@ export function AppointmentDetailDialog({ appointment, onClose, onStatusChange }
               </div>
               <p className="text-sm font-medium">{appointment.clientName}</p>
               {appointment.clientPhone && (
-                <p className="text-xs text-muted-foreground">{appointment.clientPhone}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatPhoneForDisplay(appointment.clientPhone)}
+                </p>
               )}
               {appointment.clientEmail && (
                 <p className="text-xs text-muted-foreground">{appointment.clientEmail}</p>

@@ -34,6 +34,7 @@ import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { APPOINTMENT_STATUS_OPTIONS, isTerminal } from "@/lib/appointment-status";
 import type { AppointmentListPage } from "@/lib/panel/appointments";
 import { useDebounced } from "@/hooks/use-debounced";
+import { formatPhoneForDisplay } from "@/lib/phone";
 
 
 interface Appointment {
@@ -296,7 +297,11 @@ export function AppointmentsTable({
                   <tr key={apt.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
                     <td className="p-3">
                       <p className="text-sm font-medium">{apt.clientName}</p>
-                      <p className="text-xs text-muted-foreground">{apt.clientPhone || apt.clientEmail}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {apt.clientPhone
+                          ? formatPhoneForDisplay(apt.clientPhone)
+                          : apt.clientEmail}
+                      </p>
                     </td>
                     <td className="p-3">
                       <p className="text-sm">{apt.serviceName}</p>

@@ -64,6 +64,26 @@ describe("presentación", () => {
     expect(formatPhoneForDisplay("+5492236327551")).toBe("223 632-7551");
     expect(formatPhoneForDisplay("1141234567")).toBe("11 4123-4567");
   });
+
+  /*
+    Los códigos de área tienen 2, 3 o 4 dígitos y el total siempre es 10, así
+    que no hay regla que los distinga: hace falta la lista. Sin ella, un número
+    de Río Gallegos (2966) se partía como si fuera de Bahía Blanca (296).
+  */
+  it("respeta los códigos de área de cuatro dígitos", () => {
+    expect(formatPhoneForDisplay("+5492966123456")).toBe("2966 12-3456");
+    expect(formatPhoneForDisplay("+5493496123456")).toBe("3496 12-3456");
+  });
+
+  it("y los de tres, que son los más comunes", () => {
+    expect(formatPhoneForDisplay("+5493514567890")).toBe("351 456-7890");
+    expect(formatPhoneForDisplay("+5492915551234")).toBe("291 555-1234");
+  });
+
+  it("deja intacto lo que no es un teléfono argentino", () => {
+    expect(formatPhoneForDisplay("12345")).toBe("12345");
+    expect(formatPhoneForDisplay("")).toBe("");
+  });
 });
 
 /*

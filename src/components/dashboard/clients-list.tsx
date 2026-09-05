@@ -23,6 +23,7 @@ import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { formatCurrency } from "@/lib/format";
 import { useDebounced } from "@/hooks/use-debounced";
 import { cn } from "@/lib/utils";
+import { formatPhoneForDisplay } from "@/lib/phone";
 
 interface Tag {
   id: string;
@@ -519,7 +520,7 @@ function ClientCard({
             rel="noopener"
             className="flex items-center gap-2 text-[11.5px] text-muted-foreground transition-colors hover:text-jade-label"
           >
-            <Phone className="size-3.5" aria-hidden /> {detail.phone}
+            <Phone className="size-3.5" aria-hidden /> {formatPhoneForDisplay(detail.phone)}
           </a>
         )}
         {detail.email && (
