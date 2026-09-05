@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 210 unitarios y 99 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 210 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -219,6 +219,23 @@ De paso, arreglado en el camino:
   qué sirve y ofrece ver dónde cae el punto en el mapa.
 - Lista de slugs reservados: un negocio llamado "Explorar" se quedaba sin
   página pública, porque una ruta estática le gana a `/[businessSlug]`.
+
+### Sprint 12 — El alta de un negocio pregunta dónde queda ✅
+
+Hecho el 5 de septiembre de 2026, mirando el otro lado del mismo recorrido.
+
+- [x] El paso 1 del onboarding pide **dirección y ciudad**. No las pedía nunca,
+  así que un local recién dado de alta salía publicado sin decir dónde está:
+  sin mapa, sin dirección en el correo del turno, y fuera del directorio por
+  ciudad —que se arma con `city`— aunque ya estuviera tomando reservas. Esa es
+  la causa de que la dirección "no se encontrara": no faltaba la pantalla,
+  faltaba que alguien la pidiera.
+- [x] El número del alta se guarda también como `whatsapp`. El campo dice
+  "Teléfono o WhatsApp" y se guardaba sólo como teléfono, así que el botón de
+  WhatsApp de la página pública no aparecía nunca.
+- [x] `scripts/e2e-cleanup.ts` borra también los negocios que la suite da de
+  alta (`prueba-e2e-*`) y sus dueños. Sin eso, cada corrida deja uno publicado
+  en el directorio y en el sitemap.
 
 ### Pendiente
 

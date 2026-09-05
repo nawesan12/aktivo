@@ -141,6 +141,15 @@ export async function loadBookingFixture(
 /** Phone numbers used by the suite, so cleanup can find exactly these. */
 export const TEST_PHONE_PREFIX = "2234999";
 
+/**
+ * Slug prefix for the businesses the suite registers, so cleanup finds those
+ * and only those. A test that signs up leaves a shop in the directory —
+ * visible on the public listing and in the sitemap — until something removes
+ * it, which is exactly how six "Barberia Prueba" ended up being the whole
+ * directory once.
+ */
+export const TEST_BUSINESS_PREFIX = "prueba-e2e-";
+
 export function testGuest(suffix: string) {
   return {
     name: "Prueba E2E",

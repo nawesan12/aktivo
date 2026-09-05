@@ -52,6 +52,8 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
 
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
 
   const [serviceName, setServiceName] = useState("");
   const [duration, setDuration] = useState(30);
@@ -82,7 +84,29 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
       const res = await fetch("/api/panel/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business: { description, phone: phone || undefined } }),
+        /*
+          La dirección se pide acá y no después.
+
+          Nunca se preguntaba en el alta, así que un local recién abierto salía
+          publicado sin decir dónde queda: sin mapa, sin dirección en el correo
+          del turno, y fuera del directorio por ciudad —que se arma con `city`—
+          aunque estuviera listo para recibir reservas. Después había que
+          encontrarla al pie de Configuración, y no se encontraba.
+
+          El número va también a `whatsapp` porque la etiqueta dice "Teléfono o
+          WhatsApp": guardándolo sólo como teléfono, el botón de WhatsApp de la
+          página pública no aparecía nunca, que es el canal por el que la mitad
+          de la gente escribe.
+        */
+        body: JSON.stringify({
+          business: {
+            description,
+            phone: phone || undefined,
+            whatsapp: phone || undefined,
+            address: address || undefined,
+            city: city || undefined,
+          },
+        }),
       });
       if (!res.ok) throw new Error(await errorMessage(res));
       setStep(1);
@@ -202,7 +226,12 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
               title={`Contanos de ${businessName}`}
               hint="Esto es lo que van a leer tus clientes cuando abran tu link."
               footer={
-                <Continue onClick={saveProfile} saving={saving} step={1} disabled={!description.trim()} />
+                <Continue
+                  onClick={saveProfile}
+                  saving={saving}
+                  step={1}
+                  disabled={!description.trim() || !address.trim() || !city.trim()}
+                />
               }
             >
               <Field label="¿Qué hacen?">
@@ -220,9 +249,34 @@ export function OnboardingWizard({ businessName, businessId }: OnboardingWizardP
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+54 9 223 555 5555"
                   inputMode="tel"
+                  autoComplete="tel"
                   className={field}
                 />
               </Field>
+              <div className="grid grid-cols-[1fr_150px] gap-3">
+                <Field label="¿Dónde están?">
+                  <input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Av. Colón 1234"
+                    autoComplete="street-address"
+                    className={field}
+                  />
+                </Field>
+                <Field label="Ciudad">
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Mar del Plata"
+                    autoComplete="address-level2"
+                    className={field}
+                  />
+                </Field>
+              </div>
+              <p className="-mt-1 text-[11px] text-faint">
+                Sale en tu página, en el mapa y en el mail de cada turno. Con la ciudad, además,
+                aparecés cuando alguien busca en tu zona.
+              </p>
             </Pane>
           )}
 
