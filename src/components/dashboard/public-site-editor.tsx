@@ -258,7 +258,6 @@ export function PublicSiteEditor() {
             <ImageUploader
               value={form.logo || null}
               onChange={(url) => set("logo", url ?? "")}
-              ownerId={form.id}
               kind="logo"
               aspectRatio="1:1"
             />
@@ -268,7 +267,6 @@ export function PublicSiteEditor() {
             <ImageUploader
               value={form.coverImage || null}
               onChange={(url) => set("coverImage", url ?? "")}
-              ownerId={form.id}
               kind="cover"
               aspectRatio="16:9"
             />
@@ -276,7 +274,7 @@ export function PublicSiteEditor() {
         </div>
       </div>
 
-      <Gallery businessId={form.id} />
+      <Gallery />
 
       {/* Words */}
       <div className="glass rounded-xl p-6 space-y-4">
@@ -513,7 +511,7 @@ function Preview({
   );
 }
 
-function Gallery({ businessId }: { businessId: string }) {
+function Gallery() {
   const { data, mutate } = useSWR<{ data: Photo[]; max: number }>("/api/panel/mi-web/galeria");
   const [busy, setBusy] = useState(false);
 
@@ -596,7 +594,6 @@ function Gallery({ businessId }: { businessId: string }) {
           <ImageUploader
             value={null}
             onChange={add}
-            ownerId={businessId}
             kind="gallery"
             aspectRatio="1:1"
           />

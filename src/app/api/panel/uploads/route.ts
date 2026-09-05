@@ -1,87 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
-import { AuthError } from "@/lib/api-errors";
-import { handleApiError } from "@/lib/api-errors";
+import { AuthError, ValidationError, handleApiError } from "@/lib/api-errors";
 import { createLogger } from "@/lib/logger";
 import { UPLOAD_KINDS, uploadPathPrefix, type UploadKind } from "@/lib/uploads";
 
 const log = createLogger("uploads");
 
+/** What the store will accept. The browser sends WebP; the rest are fallbacks. */
+const ALLOWED_TYPES = ["image/webp", "image/jpeg", "image/png", "image/svg+xml"];
+
 /**
- * Hands the browser a short-lived token so it can put the file straight into
- * Blob storage.
+ * The ceiling, in bytes.
  *
- * The bytes never pass through here. A function that proxied every upload would
- * burn CPU and wall time on exactly the thing this deployment has the least of,
- * for no benefit: the browser can talk to the store directly, and this route
- * only has to answer "yes, that business may write that path, up to this size,
- * of these types".
+ * The browser compresses to well under this — a logo lands around 30 KB, a
+ * cover under 160 KB. This is here for whoever skips the browser.
+ */
+const MAX_BYTES = 2_000_000;
+
+/**
+ * Takes the compressed image and puts it in Blob storage.
  *
- * The limits are set here rather than trusted from the client, because the
- * client is a browser and anybody can send whatever they like to this route.
+ * This used to hand the browser a token so it could write to the store
+ * directly, which is what the SDK is built for. It did not work: the PUT goes
+ * to `vercel.com`, cross-origin, and on iOS Safari it never completed — the
+ * request died at the network layer with nothing to go on, and the SDK's own
+ * retry loop hid it behind seventeen minutes of silence. Desktop browsers were
+ * fine, which is the worst kind of bug to own.
+ *
+ * Going through here costs no more than that did. The token request was already
+ * one function invocation, so this is the same one, and what it carries is an
+ * image the browser has already scaled and re-encoded — 30 to 160 KB, not the
+ * three megabytes off the camera. No `sharp`, no decoding, no CPU worth
+ * counting: the function hands the bytes to the store and answers. Direct
+ * client upload earns its keep on large files; this is not that, and it cost us
+ * a feature that did not work on half the phones our customers use.
+ *
+ * The limits stay here rather than being trusted from the client, because the
+ * client is a browser and anybody can post whatever they like to this route.
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as HandleUploadBody;
+    const form = await request.formData();
+    const file = form.get("file");
+    const kind = String(form.get("kind") ?? "") as UploadKind;
 
-    const result = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
-        const kind = (clientPayload ?? "") as UploadKind;
-        if (!UPLOAD_KINDS.includes(kind)) {
-          throw new Error("Tipo de imagen desconocido");
-        }
+    if (!UPLOAD_KINDS.includes(kind)) {
+      throw new ValidationError("Tipo de imagen desconocido");
+    }
 
-        // A profile picture belongs to the person and needs nothing more than
-        // being signed in: a client who books at a barbershop has an avatar and
-        // no business at all. Everything else is a business's image.
-        let ownerId: string;
-        if (kind === "avatar") {
-          const session = await auth();
-          if (!session?.user?.id) throw new AuthError();
-          ownerId = session.user.id;
-        } else {
-          const session = await getSessionBusiness();
-          await requireBusinessPermission(session, "settings:update");
-          ownerId = session.businessId;
-        }
+    if (!(file instanceof File)) {
+      throw new ValidationError("No llegó ninguna imagen");
+    }
 
-        // The path is ours to decide, not the caller's: without this someone
-        // could name their upload after another owner's file.
-        const prefix = uploadPathPrefix(ownerId, kind);
-        if (!pathname.startsWith(prefix)) {
-          throw new Error("Ruta de subida inválida");
-        }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new ValidationError("Ese formato de imagen no se puede subir");
+    }
 
-        return {
-          allowedContentTypes: ["image/webp", "image/jpeg", "image/png", "image/svg+xml"],
-          // The browser compresses to well under this. The ceiling is here for
-          // whoever skips the browser.
-          maximumSizeInBytes: 2_000_000,
-          // Blob appends a random suffix by default, so replacing an image
-          // leaves the old one orphaned. We delete the previous one ourselves
-          // and want the path we asked for.
-          addRandomSuffix: true,
-          tokenPayload: JSON.stringify({ ownerId, kind }),
-        };
-      },
-      // Deliberately no `onUploadCompleted`. Declaring it makes the SDK put a
-      // callback URL inside the token, and the store then calls this route back
-      // before it answers the browser's PUT — so a callback that is slow,
-      // unreachable or rejected leaves `upload()` pending forever, which is the
-      // uploader stuck on "Comprimiendo…" with nothing to show for it. There is
-      // nothing to persist from here either: the URL travels back to the form,
-      // which saves it with the rest of the settings.
+    if (file.size > MAX_BYTES) {
+      throw new ValidationError("La imagen es demasiado grande");
+    }
+
+    // A profile picture belongs to the person and needs nothing more than being
+    // signed in: a client who books at a barbershop has an avatar and no
+    // business at all. Everything else is a business's image.
+    let ownerId: string;
+    if (kind === "avatar") {
+      const session = await auth();
+      if (!session?.user?.id) throw new AuthError();
+      ownerId = session.user.id;
+    } else {
+      const session = await getSessionBusiness();
+      await requireBusinessPermission(session, "settings:update");
+      ownerId = session.businessId;
+    }
+
+    // The path is ours to decide, not the caller's: without this someone could
+    // name their upload after another owner's file. Only the extension survives
+    // from what was sent, and only from a fixed list.
+    const extension = file.type === "image/svg+xml" ? "svg" : file.type.split("/")[1];
+    const name = `${Date.now()}.${extension}`;
+
+    const blob = await put(`${uploadPathPrefix(ownerId, kind)}${name}`, file, {
+      access: "public",
+      contentType: file.type,
+      // The name already carries a timestamp, so nothing collides, and the URL
+      // stays the one we asked for — which is what makes the old file findable
+      // and deletable when an image is replaced.
+      addRandomSuffix: false,
     });
 
-    return NextResponse.json(result);
+    log.info("upload stored", { kind, ownerId, bytes: file.size, url: blob.url });
+
+    return NextResponse.json({ url: blob.url, pathname: blob.pathname });
   } catch (error) {
-    // `handleUpload` throws for a rejected token as well as for a genuine
-    // failure, and Blob expects a non-2xx so the browser stops.
-    log.warn("upload rejected", { reason: error instanceof Error ? error.message : "unknown" });
     return handleApiError(error, "panel:uploads");
   }
 }

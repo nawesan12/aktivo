@@ -59,7 +59,6 @@ export default function ProfilePage() {
             <ImageUploader
               value={image}
               onChange={(url) => setImage(url)}
-              ownerId={data?.id ?? ""}
               kind="avatar"
               aspectRatio="1:1"
               className="w-16 h-16 rounded-full"

@@ -6,15 +6,12 @@ import { Camera, ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { compressImage, describeSaving, type ImageKind } from "@/lib/image-compress";
-import { isBlobUrl, uploadPathPrefix, type UploadKind } from "@/lib/uploads";
-import { uploadToBlob } from "@/lib/blob-upload";
+import { isBlobUrl, type UploadKind } from "@/lib/uploads";
 import { createLogger } from "@/lib/logger";
 
 interface ImageUploaderProps {
   value: string | null;
   onChange: (url: string | null) => void;
-  /** Who owns the file — a business, or the person for an avatar. */
-  ownerId: string;
   kind: UploadKind;
   aspectRatio?: "1:1" | "16:9";
   className?: string;
@@ -47,7 +44,6 @@ const BUDGET_FOR: Record<UploadKind, ImageKind> = {
 export function ImageUploader({
   value,
   onChange,
-  ownerId,
   kind,
   aspectRatio = "1:1",
   className,
@@ -89,12 +85,26 @@ export function ImageUploader({
       const compressed = await compressImage(file, BUDGET_FOR[kind]);
 
       setPhase("uploading");
-      const blob = await uploadToBlob({
-        pathname: `${uploadPathPrefix(ownerId, kind)}${compressed.file.name}`,
-        file: compressed.file,
-        kind,
-        handleUploadUrl: "/api/panel/uploads",
-      });
+
+      // One same-origin POST carrying the file. Where it lands is the route's
+      // call, derived from the session — the browser does not get to name the
+      // path, which is one less thing to check on the way in.
+      const form = new FormData();
+      form.append("file", compressed.file);
+      form.append("kind", kind);
+
+      const response = await fetch("/api/panel/uploads", { method: "POST", body: form });
+      const payload = (await response.json().catch(() => null)) as
+        | { url?: string; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.url) {
+        // The route refuses with a plain message — plan, permission, format or
+        // size — and that message is the useful part.
+        throw new Error(payload?.error || `No pudimos subir la imagen (${response.status})`);
+      }
+
+      const blob = { url: payload.url };
 
       const previous = value;
       onChange(blob.url);

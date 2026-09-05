@@ -42,8 +42,6 @@ interface StaffMember {
 }
 
 export function StaffManager() {
-  const { data: settingsData } = useSWR<{ business?: { id: string } }>("/api/panel/settings");
-  const businessId = settingsData?.business?.id ?? "";
   const { data, isLoading, mutate } = useSWR("/api/panel/staff");
   const { data: servicesData } = useSWR("/api/panel/services");
 
@@ -239,7 +237,6 @@ export function StaffManager() {
                 <ImageUploader
                   value={staffImage || null}
                   onChange={(url) => setStaffImage(url ?? "")}
-                  ownerId={businessId}
                   kind="staff"
                   aspectRatio="1:1"
                 />
