@@ -172,7 +172,6 @@ model User {
   // Sprint 8
   penalties               ClientPenalty[]
   clientProfiles          ClientProfile[]
-  campaignExecutions      CampaignExecution[]
   // Sprint 9
   ownedGroups             BusinessGroup[]
   // Client UX
@@ -255,12 +254,9 @@ model Business {
   // Sprint 8
   penalties               ClientPenalty[]
   clientProfiles          ClientProfile[]
-  campaigns               Campaign[]
   // Sprint 9
   groupId                 String?
   group                   BusinessGroup?           @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  // Sprint 10
-  analyticsSnapshots      AnalyticsSnapshot[]
   // Subscriptions
   subscriptions           Subscription[]
   // Waitlist
@@ -323,10 +319,6 @@ model BusinessSettings {
   referralRewardType      CouponType?
   referralRewardValue     Float?
   referralMaxRedemptions  Int?
-  // Sprint 10 — Widget
-  widgetEnabled           Boolean     @default(false)
-  widgetTheme             String      @default("dark")
-  widgetPosition          String      @default("bottom-right")
   createdAt               DateTime    @default(now())
   updatedAt               DateTime    @updatedAt
 
@@ -580,7 +572,6 @@ model GuestClient {
   // Sprint 8
   penalties               ClientPenalty[]
   clientProfiles          ClientProfile[]
-  campaignExecutions      CampaignExecution[]
   // Client UX
   notificationPreferences NotificationPreference[]
   memberships             Membership[]
@@ -819,65 +810,6 @@ model ClientProfile {
 }
 
 // ──────────────────────────────────────────
-// Sprint 8: Campaigns
-// ──────────────────────────────────────────
-
-enum CampaignType {
-  BIRTHDAY
-  REBOOKING
-  INACTIVITY
-  CUSTOM
-}
-
-enum CampaignStatus {
-  DRAFT
-  ACTIVE
-  PAUSED
-  COMPLETED
-}
-
-model Campaign {
-  id             String              @id @default(cuid())
-  businessId     String
-  name           String
-  type           CampaignType
-  status         CampaignStatus      @default(DRAFT)
-  triggerConfig  Json? // JSON: days thresholds, conditions
-  messageSubject String?
-  messageBody    String              @db.Text
-  targetTagIds   String[] // Array of tag IDs for segmentation
-  channel        NotificationChannel @default(EMAIL)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-
-  business   Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  executions CampaignExecution[]
-
-  @@index([businessId])
-  @@index([status])
-}
-
-model CampaignExecution {
-  id            String             @id @default(cuid())
-  campaignId    String
-  userId        String?
-  guestClientId String?
-  recipient     String // email or phone
-  status        NotificationStatus @default(PENDING)
-  error         String?
-  sentAt        DateTime?
-  createdAt     DateTime           @default(now())
-
-  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
-  guestClient GuestClient? @relation(fields: [guestClientId], references: [id], onDelete: SetNull)
-
-  @@index([campaignId])
-  @@index([userId])
-  @@index([guestClientId])
-}
-
-// ──────────────────────────────────────────
 // Sprint 9: Multi-Location
 // ──────────────────────────────────────────
 
@@ -893,22 +825,6 @@ model BusinessGroup {
   businesses Business[]
 
   @@index([ownerId])
-}
-
-// ──────────────────────────────────────────
-// Sprint 10: Analytics Snapshot
-// ──────────────────────────────────────────
-
-model AnalyticsSnapshot {
-  id         String   @id @default(cuid())
-  businessId String
-  date       DateTime @db.Date
-  metrics    Json // { retention, ltv, peakHours, churn, revenue, appointments, newClients }
-  createdAt  DateTime @default(now())
-
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  @@unique([businessId, date])
 }
 
 // ──────────────────────────────────────────
