@@ -2,12 +2,13 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { upload } from "@vercel/blob/client";
 import { Camera, ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { compressImage, describeSaving, type ImageKind } from "@/lib/image-compress";
 import { isBlobUrl, uploadPathPrefix, type UploadKind } from "@/lib/uploads";
+import { uploadToBlob } from "@/lib/blob-upload";
+import { createLogger } from "@/lib/logger";
 
 interface ImageUploaderProps {
   value: string | null;
@@ -19,18 +20,10 @@ interface ImageUploaderProps {
   className?: string;
 }
 
+const log = createLogger("ui:image-uploader");
+
 /** What the button is doing, so it can say so instead of always "Comprimiendo…". */
 type Phase = "compressing" | "uploading" | null;
-
-/**
- * Ceiling for the whole thing, compression included.
- *
- * Nothing here should take seconds: what travels is under 160 KB. The point is
- * that no failure mode can leave the button spinning with no way out — before
- * this, a request that never settled meant the person had to reload the page to
- * be able to try again.
- */
-const UPLOAD_TIMEOUT_MS = 45_000;
 
 /** How hard to squeeze, per use. A logo needs far less room than a cover. */
 const BUDGET_FOR: Record<UploadKind, ImageKind> = {
@@ -92,23 +85,16 @@ export function ImageUploader({
     }
 
     setPhase("compressing");
-    const abort = new AbortController();
-    const timeout = setTimeout(() => abort.abort(), UPLOAD_TIMEOUT_MS);
     try {
       const compressed = await compressImage(file, BUDGET_FOR[kind]);
 
       setPhase("uploading");
-      const blob = await upload(
-        `${uploadPathPrefix(ownerId, kind)}${compressed.file.name}`,
-        compressed.file,
-        {
-          access: "public",
-          handleUploadUrl: "/api/panel/uploads",
-          contentType: compressed.file.type,
-          clientPayload: kind,
-          abortSignal: abort.signal,
-        }
-      );
+      const blob = await uploadToBlob({
+        pathname: `${uploadPathPrefix(ownerId, kind)}${compressed.file.name}`,
+        file: compressed.file,
+        kind,
+        handleUploadUrl: "/api/panel/uploads",
+      });
 
       const previous = value;
       onChange(blob.url);
@@ -118,17 +104,13 @@ export function ImageUploader({
       // with a dead URL if the upload then failed.
       void discard(previous);
     } catch (error) {
-      // The token route refuses with a plain message — plan, permission, or a
-      // path that is not this business's — and it is worth showing as is.
-      toast.error(
-        abort.signal.aborted
-          ? "La subida tardó demasiado. Probá de nuevo."
-          : error instanceof Error
-            ? error.message
-            : "No pudimos subir la imagen"
-      );
+      // Shown as it comes: every message on this path already says what went
+      // wrong and, where it matters, what to do about it. A generic "no pudimos
+      // subir la imagen" here would throw away the only useful thing we have.
+      const message = error instanceof Error ? error.message : "No pudimos subir la imagen";
+      log.warn("upload failed", { kind, reason: message });
+      toast.error(message);
     } finally {
-      clearTimeout(timeout);
       setPhase(null);
       if (inputRef.current) inputRef.current.value = "";
     }

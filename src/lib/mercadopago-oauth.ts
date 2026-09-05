@@ -100,6 +100,53 @@ interface TokenResponse {
   expires_in: number;
 }
 
+/**
+ * Why MercadoPago refused, in a word the panel can act on.
+ *
+ * The raw message never leaves the server — it can name the credential that was
+ * sent — but which of the two usual mistakes it was does need to reach the
+ * owner, because both are fixed outside the app and neither is guessable from
+ * "no se pudo conectar la cuenta".
+ */
+export type LinkFailure = "mismatch" | "self" | "failed";
+
+export class MercadoPagoLinkError extends Error {
+  constructor(
+    message: string,
+    readonly kind: LinkFailure
+  ) {
+    super(message);
+    this.name = "MercadoPagoLinkError";
+  }
+}
+
+/** Reads MercadoPago's own wording for the two mistakes we can name. */
+function classify(status: number, detail: string): LinkFailure {
+  const text = detail.toLowerCase();
+
+  // The redirect URI configured on the application does not match the one the
+  // authorisation was started with. MercadoPago is strict about this: it has to
+  // be the callback, character for character.
+  if (text.includes("redirect_uri") || text.includes("redirect uri")) return "mismatch";
+
+  // Linking the account that owns the application to that same application.
+  // MercadoPago refuses, and no amount of retrying changes it.
+  if (
+    text.includes("same user") ||
+    text.includes("mismo usuario") ||
+    text.includes("owner") ||
+    text.includes("cannot be the collector")
+  ) {
+    return "self";
+  }
+
+  // `invalid_grant` on an authorisation code is almost always the redirect URI,
+  // because the code itself is used once, immediately, by this route.
+  if (status === 400 && text.includes("invalid_grant")) return "mismatch";
+
+  return "failed";
+}
+
 async function requestToken(body: Record<string, string>): Promise<TokenResponse> {
   const response = await fetch(TOKEN_URL, {
     method: "POST",
@@ -113,8 +160,10 @@ async function requestToken(body: Record<string, string>): Promise<TokenResponse
   if (!response.ok) {
     // The message is MercadoPago's own and safe to log: it names the failure
     // (invalid code, mismatched redirect) without carrying the credential.
-    throw new Error(
-      `MercadoPago rechazó la solicitud (${response.status}): ${payload?.message ?? payload?.error ?? "sin detalle"}`
+    const detail = String(payload?.message ?? payload?.error ?? "sin detalle");
+    throw new MercadoPagoLinkError(
+      `MercadoPago rechazó la solicitud (${response.status}): ${detail}`,
+      classify(response.status, detail)
     );
   }
 

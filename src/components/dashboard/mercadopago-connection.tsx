@@ -23,6 +23,17 @@ const CALLBACK_MESSAGES: Record<string, { ok: boolean; text: string }> = {
   ok: { ok: true, text: "Mercado Pago quedó conectado" },
   denied: { ok: false, text: "No autorizaste la conexión" },
   invalid: { ok: false, text: "El enlace venció. Probá de nuevo." },
+  // The two that are fixed outside the app. Saying only "no pudimos conectar"
+  // left nothing to act on: both of these look identical from here, and neither
+  // gets better by pressing the button again.
+  mismatch: {
+    ok: false,
+    text: "Mercado Pago rechazó la vuelta. En tu aplicación de Mercado Pago, la URL de redirección tiene que ser exactamente https://jikuapp.com/api/mercadopago/oauth/callback",
+  },
+  self: {
+    ok: false,
+    text: "Mercado Pago no deja conectar la misma cuenta que creó la aplicación. Probá con la cuenta del negocio.",
+  },
   failed: { ok: false, text: "No pudimos conectar con Mercado Pago" },
 };
 

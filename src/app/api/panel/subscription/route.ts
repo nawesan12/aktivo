@@ -8,7 +8,10 @@ import { getBusinessAccess } from "@/lib/subscription/access";
 import { getPlatformPreApproval, getMPPlanId } from "@/lib/subscription/mp-platform";
 import { startOfMonth, endOfMonth } from "date-fns";
 import type { BusinessPlan } from "@/generated/prisma/client";
+import { createLogger } from "@/lib/logger";
 import { appUrl } from "@/lib/env";
+
+const log = createLogger("panel:subscription");
 
 export async function GET() {
   try {
@@ -101,16 +104,41 @@ export async function POST(request: NextRequest) {
       throw new ValidationError("Plan inválido. Elegí PROFESSIONAL o ENTERPRISE.");
     }
 
-    // Check for existing active subscription
-    const existing = await db.subscription.findFirst({
+    // Only an authorised subscription is a subscription. A PENDING row is a
+    // checkout that was started and not finished — closing the tab on
+    // MercadoPago's screen is enough to leave one behind — and treating it as
+    // active locked the business out of ever subscribing: this route refused
+    // because of it, and `/cancel` would not touch it because it only knows how
+    // to cancel an authorised one. One abandoned attempt and there was no way
+    // back in from the product.
+    const active = await db.subscription.findFirst({
       where: {
         businessId: session.businessId,
-        status: { in: ["AUTHORIZED", "PENDING"] },
+        status: "AUTHORIZED",
       },
     });
 
-    if (existing) {
+    if (active) {
       throw new ValidationError("Ya tenés una suscripción activa. Cancelala primero para cambiar de plan.");
+    }
+
+    // Whatever was left half-way is closed here rather than piling up: the row
+    // stays, so the history still tells what happened, but it no longer stands
+    // between the person and the plan they are trying to buy.
+    const abandoned = await db.subscription.updateMany({
+      where: { businessId: session.businessId, status: "PENDING" },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason: "Checkout abandonado",
+      },
+    });
+
+    if (abandoned.count > 0) {
+      log.info("discarded abandoned checkouts", {
+        businessId: session.businessId,
+        count: abandoned.count,
+      });
     }
 
     const price = PLAN_PRICES[plan];

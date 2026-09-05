@@ -3,12 +3,12 @@ import { appUrl } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 import { logAction } from "@/lib/audit";
-import { linkAccount, verifyState } from "@/lib/mercadopago-oauth";
+import { linkAccount, verifyState, MercadoPagoLinkError } from "@/lib/mercadopago-oauth";
 
 const log = createLogger("mercadopago:oauth:callback");
 
 /** Back to the payments screen, saying how it went. */
-function back(result: "ok" | "denied" | "invalid" | "failed") {
+function back(result: "ok" | "denied" | "invalid" | "failed" | "mismatch" | "self") {
   return NextResponse.redirect(appUrl(`/panel/pagos?mp=${result}`));
 }
 
@@ -60,8 +60,10 @@ export async function GET(request: NextRequest) {
     return back("ok");
   } catch (error) {
     // Never surface the raw failure in the URL: it can carry the reason
-    // MercadoPago rejected the exchange, which is not for the browser.
+    // MercadoPago rejected the exchange, which is not for the browser. What does
+    // travel is which of the two known mistakes it was — both are fixed outside
+    // the app, and neither is guessable from a generic failure.
     log.error("could not complete the link", error);
-    return back("failed");
+    return back(error instanceof MercadoPagoLinkError ? error.kind : "failed");
   }
 }
