@@ -7,6 +7,7 @@ import { CustomDomain } from "@/components/dashboard/custom-domain";
 import { PaymentConfig } from "@/components/dashboard/payment-config";
 import { LocationsManager } from "@/components/dashboard/locations-manager";
 import { NotificationsLog } from "@/components/dashboard/notifications-log";
+import { DailyDigestSetting } from "@/components/dashboard/daily-digest-setting";
 import { AuditLog } from "@/components/dashboard/audit-log";
 import { NoShowTracker } from "@/components/dashboard/no-show-tracker";
 import { PlanGate } from "@/components/dashboard/plan-gate";
@@ -69,7 +70,12 @@ export default async function ConfiguracionPage({ searchParams }: Props) {
           </>
         )}
 
-        {active === "avisos" && <NotificationsLog />}
+        {active === "avisos" && (
+          <>
+            <DailyDigestSetting />
+            <NotificationsLog />
+          </>
+        )}
 
         {active === "cancelaciones" && <NoShowTracker />}
 

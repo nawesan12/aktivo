@@ -4,6 +4,7 @@ import { autoMarkNoShows } from "@/lib/no-show";
 import { redeliverFailedNotifications } from "@/lib/notifications/redelivery";
 import { sendPendingReviewRequests } from "@/lib/reviews/requests";
 import { renewMercadoPagoLinks } from "@/lib/mercadopago-renewal";
+import { sendDailyDigests } from "@/lib/jobs/daily-digest";
 
 export interface Job {
   /** Matches the primary key of the `JobRun` row. */
@@ -64,6 +65,19 @@ export const JOBS: Job[] = [
     intervalSeconds: 1800,
     opportunistic: true,
     run: sendPendingReviewRequests,
+  },
+  {
+    /*
+      "Tus turnos de mañana", a partir de las 19 en la hora del negocio.
+
+      Cada media hora porque la ventana es toda la tarde y `dailyDigestSentFor`
+      hace que las pasadas de más no cuesten nada: la primera que encuentre el
+      día sin resumir lo manda, y las siguientes no ven ningún negocio pendiente.
+    */
+    name: "daily-digest",
+    intervalSeconds: 1800,
+    opportunistic: true,
+    run: sendDailyDigests,
   },
   {
     // Once an hour is plenty for something with a month of runway, and it keeps

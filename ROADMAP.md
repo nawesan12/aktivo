@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 216 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 227 unitarios y 100 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -263,11 +263,26 @@ Hecho el 5 de septiembre de 2026, mirando el otro lado del mismo recorrido.
   `redelivery.ts` —el camino de los reintentos, que ya se quedó atrás una vez—
   se actualizó en el mismo commit.
 
-### Pendiente del recorrido del dueño
+### Sprint 15 — "Tus turnos de mañana" ✅
 
-- **Nadie le avisa al dueño cuando entra una reserva.** El único correo que sale
-  es el del cliente; el dueño se entera si abre el panel. Un turno tomado a las
-  once de la noche espera hasta que alguien mire.
+El dueño no recibía nada: la única notificación que salía por una reserva era la
+del cliente, y un turno tomado a las once de la noche esperaba a que alguien
+abriera el panel.
+
+- [x] Un correo a la tarde con los turnos del día siguiente, en vez de un aviso
+  por reserva: con diez turnos en un día bueno, lo segundo son diez correos que
+  se terminan filtrando a una carpeta.
+- [x] Sale a partir de las 19 en la hora del negocio, cuando la agenda de mañana
+  ya está armada y todavía se está a tiempo de mover algo.
+- [x] Un día sin turnos no manda nada. "Mañana no tenés turnos" todas las tardes
+  es el correo que enseña a ignorar los correos.
+- [x] Le llega a la cuenta que dio de alta el negocio, con el correo del local
+  como respaldo: el público puede ser un buzón que nadie abre.
+- [x] `dailyDigestSentFor` se reserva **antes** de mandar. El trabajo es
+  oportunista —lo dispara el tráfico real— así que corre muchas veces por tarde;
+  sin eso, cada visita al sitio entre las siete y la medianoche sería otro correo
+  igual.
+- [x] Se apaga desde Configuración → Recordatorios y envíos.
 
 ### Pendiente
 

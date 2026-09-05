@@ -314,6 +314,12 @@ model BusinessSettings {
   noShowThreshold         Int         @default(3)
   noShowPenaltyDays       Int         @default(30)
   noShowAutoMark          Boolean     @default(false)
+  /// "Tus turnos de mañana": el resumen que le llega al negocio a la tarde.
+  dailyDigestEnabled      Boolean     @default(true)
+  /// El día ya resumido, para no mandarlo dos veces. El trabajo es
+  /// oportunista —lo dispara el tráfico real— así que corre muchas veces por
+  /// tarde y necesita saber cuál ya salió.
+  dailyDigestSentFor      DateTime?
   // Referral program
   referralEnabled         Boolean     @default(false)
   referralRewardType      CouponType?

@@ -235,6 +235,7 @@ export const settingsSchema = z.object({
     noShowThreshold: z.number().min(1).optional(),
     noShowPenaltyDays: z.number().min(1).optional(),
     noShowAutoMark: z.boolean().optional(),
+    dailyDigestEnabled: z.boolean().optional(),
   }).optional(),
 });
 
