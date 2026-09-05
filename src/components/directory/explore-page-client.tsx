@@ -57,7 +57,7 @@ export function ExplorePageClient({
   const { data, isLoading } = useSWR(
     swrKey,
     swrKey === initialKey && initialResults
-      ? { fallbackData: initialResults }
+      ? { fallbackData: initialResults, revalidateOnMount: false }
       : undefined
   );
 

@@ -37,8 +37,17 @@ export function DashboardContent({
 }) {
   const { data } = useSWR<DashboardStats>("/api/panel/stats", {
     fallbackData: initialStats,
-    // Each tick is a dozen queries. Five minutes is plenty for a KPI panel, and
-    // coming back to the tab refreshes it anyway.
+    /*
+      `revalidateOnMount: false` because the server just ran these thirteen
+      queries to render this very page — SWR's default is to fetch anyway the
+      moment it mounts, so every visit to the dashboard was costing two full
+      rounds of them, the second one microseconds after the first.
+
+      Freshness still comes from the two triggers that mean somebody is looking:
+      the tab regaining focus, and the interval. SWR pauses that interval while
+      the tab is hidden, so a panel left open in a background tab costs nothing.
+    */
+    revalidateOnMount: false,
     refreshInterval: 300000,
     revalidateOnFocus: true,
   });

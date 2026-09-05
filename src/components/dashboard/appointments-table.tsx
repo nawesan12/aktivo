@@ -115,7 +115,11 @@ export function AppointmentsTable({
     // a day.
     refreshInterval: 120000,
     revalidateOnFocus: true,
-    ...(swrKey === initialKey && initialData ? { fallbackData: initialData } : {}),
+    // Same as the dashboard: when this key is the one the server already
+    // resolved, fetching it again on mount runs the query twice per visit.
+    ...(swrKey === initialKey && initialData
+      ? { fallbackData: initialData, revalidateOnMount: false }
+      : {}),
   });
   const { data: settingsData } = useSWR("/api/panel/settings");
 
