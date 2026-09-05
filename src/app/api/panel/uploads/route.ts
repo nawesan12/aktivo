@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/session-business";
-import { AuthError, ValidationError, handleApiError } from "@/lib/api-errors";
+import { AppError, AuthError, ValidationError, handleApiError } from "@/lib/api-errors";
+import { env } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 import { UPLOAD_KINDS, uploadPathPrefix, type UploadKind } from "@/lib/uploads";
 
@@ -82,14 +83,34 @@ export async function POST(request: NextRequest) {
     const extension = file.type === "image/svg+xml" ? "svg" : file.type.split("/")[1];
     const name = `${Date.now()}.${extension}`;
 
-    const blob = await put(`${uploadPathPrefix(ownerId, kind)}${name}`, file, {
-      access: "public",
-      contentType: file.type,
-      // The name already carries a timestamp, so nothing collides, and the URL
-      // stays the one we asked for — which is what makes the old file findable
-      // and deletable when an image is replaced.
-      addRandomSuffix: false,
-    });
+    // The token is passed rather than left to be discovered. The SDK looks for
+    // OIDC *before* `BLOB_READ_WRITE_TOKEN`, and on Vercel a function is handed
+    // a `VERCEL_OIDC_TOKEN` whether or not the store trusts it — so with
+    // `BLOB_STORE_ID` also set, every upload authenticated as OIDC and failed,
+    // while the token that was actually configured sat unread.
+    if (!env.BLOB_READ_WRITE_TOKEN) {
+      throw new AppError("El almacenamiento de imágenes no está configurado", 503);
+    }
+
+    let blob;
+    try {
+      blob = await put(`${uploadPathPrefix(ownerId, kind)}${name}`, file, {
+        access: "public",
+        contentType: file.type,
+        token: env.BLOB_READ_WRITE_TOKEN,
+        // The name already carries a timestamp, so nothing collides, and the
+        // URL stays the one we asked for — which is what makes the old file
+        // findable and deletable when an image is replaced.
+        addRandomSuffix: false,
+      });
+    } catch (error) {
+      // The store's own wording, forwarded. Swallowing it into "Error interno"
+      // is how this took four attempts to diagnose: the reason was always in
+      // the message, and never anywhere the owner or we could read it.
+      const detail = error instanceof Error ? error.message : "sin detalle";
+      log.error("store refused the upload", error);
+      throw new AppError(`El almacenamiento rechazó la imagen: ${detail}`, 502);
+    }
 
     log.info("upload stored", { kind, ownerId, bytes: file.size, url: blob.url });
 

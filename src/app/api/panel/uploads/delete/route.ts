@@ -6,6 +6,7 @@ import { getSessionBusiness, requireBusinessPermission } from "@/lib/auth/sessio
 import { handleApiError, AuthError, ValidationError } from "@/lib/api-errors";
 import { createLogger } from "@/lib/logger";
 import { isBlobUrl } from "@/lib/uploads";
+import { env } from "@/lib/env";
 
 const log = createLogger("uploads:delete");
 
@@ -48,7 +49,9 @@ export async function POST(request: NextRequest) {
       throw new ValidationError("Ruta desconocida");
     }
 
-    await del(url);
+    // Same reason as the upload route: without an explicit token the SDK
+    // authenticates as OIDC, which the store does not accept here.
+    await del(url, { token: env.BLOB_READ_WRITE_TOKEN });
     log.info("blob deleted", { path });
 
     return NextResponse.json({ ok: true });
