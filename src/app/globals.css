@@ -326,6 +326,34 @@
    Utility classes
    ────────────────────────────────────────── */
 
+/*
+  El ancho de la web pública.
+
+  Sin esto, la página de un local se estiraba hasta el borde de la pantalla
+  mientras la barra de arriba se quedaba centrada en 1024px: en un monitor ancho
+  el nombre del local aparecía a mitad de camino de su propia portada. Y
+  convivían tres anchos distintos —1024 en la barra, 1152 en el directorio, 1104
+  en el wizard de reserva—, así que pasar de una pantalla a otra movía el
+  contenido de lugar.
+
+  1104px es el que ya tenía el wizard: el paso siguiente al perfil del local, y
+  el que fija el diseño de dos columnas con la barra lateral de 340px.
+
+  Va en `@utility` y no en `@layer utilities`: esa forma es de Tailwind v3 y en
+  v4 la regla no se emite, así que la clase existe en el código y no aplica
+  nada.
+*/
+@utility shell {
+  width: 100%;
+  max-width: 1104px;
+  margin-inline: auto;
+  padding-inline: 18px;
+
+  @media (width >= 1024px) {
+    padding-inline: 48px;
+  }
+}
+
 @layer utilities {
   /*
     Room for the notch and the home indicator, *added* to whatever padding the
@@ -354,32 +382,6 @@
   .safe-x {
     padding-left: calc(var(--safe-x, 0px) + env(safe-area-inset-left, 0px));
     padding-right: calc(var(--safe-x, 0px) + env(safe-area-inset-right, 0px));
-  }
-
-  /*
-    El ancho de la web pública.
-
-    Sin esto, la página de un local se estiraba hasta el borde de la pantalla
-    mientras la barra de arriba se quedaba centrada en 1024px: en un monitor
-    ancho el nombre del local aparecía a mitad de camino de su propia portada.
-    Y convivían tres anchos distintos —1024 en la barra, 1152 en el directorio,
-    1104 en el wizard de reserva—, así que pasar de una pantalla a otra movía
-    el contenido de lugar.
-
-    1104px es el que ya tenía el wizard: el paso siguiente al perfil del local,
-    y el que fija el diseño de dos columnas con la barra lateral de 340px.
-  */
-  .shell {
-    margin-inline: auto;
-    width: 100%;
-    max-width: 1104px;
-    padding-inline: 18px;
-  }
-
-  @media (min-width: 1024px) {
-    .shell {
-      padding-inline: 48px;
-    }
   }
 
   .glass {
