@@ -164,7 +164,13 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen">
+      {/*
+        `dvh` y no `vh`: en iOS `100vh` es el alto con las barras del sistema
+        retraídas, o sea más que lo que se ve. Con `min-h-screen` el body medía
+        más que la pantalla y el documento scrolleaba por debajo del panel, que
+        tiene su propio scroll — dos scrolls peleando.
+      */}
+      <body className="min-h-dvh">
         {/*
           Keyboard users would otherwise tab through the whole navigation on
           every page before reaching the content. Visible only when focused.

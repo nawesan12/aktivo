@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 237 unitarios y 101 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 232 unitarios y 103 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -351,6 +351,24 @@ panel en toda la semana no se enteraba de nada.
   envueltos (`lib/toast.ts`) para el éxito y el error — así ninguna pantalla
   nueva se queda sin él. **En iPhone no vibra**: iOS no expone la Vibration API
   ni en Safari ni en una aplicación instalada; funciona en Android.
+
+### Sprint 19 — Menos, y que el teléfono no pelee ✅
+
+- [x] **Se sacó el recordatorio de una hora antes.** Su ventana es de sesenta
+  minutos y el trabajo lo dispara el tráfico real, con un piso de GitHub Actions
+  que en la práctica corre cada dos horas: la mayoría de las veces no salía.
+  Prometer un aviso que no llega es peor que no prometerlo. Queda el del día
+  anterior, cuya ventana de dos horas sí se cumple. La columna
+  `reminder1hSentAt` queda sin uso; sacarla sería una migración destructiva que
+  no vale la pena.
+- [x] **El doble scroll del panel, de raíz.** `h-dvh` no alcanzaba: el `<body>`
+  seguía siendo `min-h-screen`, o sea `100vh`, que en iOS es más alto que la
+  pantalla — el documento scrolleaba por debajo del panel. Ahora el body es
+  `min-h-dvh` y, donde hay `[data-app-shell]`, el documento va con `overflow:
+  hidden` y `overscroll-behavior: none`. Es una garantía estructural: con eso no
+  puede haber un segundo scroll, mida lo que mida el navegador.
+- [x] `e2e/f23-panel-en-el-telefono.spec.ts` lo fija, y se comprobó que detecta
+  la regresión quitando la marca.
 
 ### Pendiente
 

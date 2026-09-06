@@ -24,7 +24,6 @@ function getResend(): Resend | null {
 type EmailType =
   | "confirmation"
   | "reminder"
-  | "reminder_soon"
   | "cancellation"
   | "waitlist_slot_open"
   | "slot_lost";
@@ -84,12 +83,6 @@ const COPY: Record<
     mapped onto the same template, so the mail that goes out sixty minutes
     before the turno told the client it was the following day.
   */
-  reminder_soon: {
-    subject: (b) => `Tu turno es en un rato — ${b}`,
-    eyebrow: "Recordatorio",
-    heading: "Tu turno es en un rato",
-    preheader: "Falta una hora. Te esperamos.",
-  },
   cancellation: {
     subject: (b) => `Turno cancelado — ${b}`,
     eyebrow: "Turno cancelado",
@@ -146,10 +139,7 @@ function buildEmail(data: EmailData): { subject: string; html: string; text: str
     Sale en los que se leen para ir —la confirmación y los dos recordatorios— y
     no en la cancelación ni en el turno perdido, donde ya no hay a dónde ir.
   */
-  const vaAlLocal =
-    data.type === "confirmation" ||
-    data.type === "reminder" ||
-    data.type === "reminder_soon";
+  const vaAlLocal = data.type === "confirmation" || data.type === "reminder";
 
   blocks.push(
     details([

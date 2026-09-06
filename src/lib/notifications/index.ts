@@ -6,8 +6,7 @@ type NotificationType =
   | "reminder"
   | "cancellation"
   | "reschedule"
-  | "reminder_24h"
-  | "reminder_1h";
+  | "reminder_24h";
 
 interface NotificationData {
   businessId: string;
@@ -51,7 +50,7 @@ export async function sendNotification(data: NotificationData) {
   // Check notification preferences
   const prefs = await getPreferences(data.businessId, data.userId, data.guestClientId);
 
-  const isReminder = data.type === "reminder_24h" || data.type === "reminder_1h" || data.type === "reminder";
+  const isReminder = data.type === "reminder_24h" || data.type === "reminder";
   if (prefs?.remindersEnabled === false && isReminder) {
     return results;
   }
@@ -62,11 +61,9 @@ export async function sendNotification(data: NotificationData) {
   const baseType =
     data.type === "reminder_24h" || data.type === "reminder"
       ? ("reminder" as const)
-      : data.type === "reminder_1h"
-        ? ("reminder_soon" as const)
-        : data.type === "reschedule"
-          ? ("confirmation" as const)
-          : data.type;
+      : data.type === "reschedule"
+        ? ("confirmation" as const)
+        : data.type;
 
   if (data.clientEmail && emailEnabled) {
     try {

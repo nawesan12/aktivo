@@ -24,13 +24,18 @@ export const MAX_ATTEMPTS = 4;
  */
 const MAX_AGE_HOURS = 72;
 
-type BaseType = "confirmation" | "reminder" | "reminder_soon" | "cancellation";
+type BaseType = "confirmation" | "reminder" | "cancellation";
 
-/** Exported for the test: the mapping is where the "mañana" bug lived. */
+/**
+ * Exported for the test: the mapping is where the "mañana" bug lived.
+ *
+ * Ya no hay recordatorio de una hora antes —se sacó porque su ventana de
+ * sesenta minutos casi nunca coincidía con una pasada del trabajo—, así que las
+ * filas viejas con `reminder_1h` caen en la rama de `reminder`, que dice
+ * "mañana". Es un correo de hace más de tres días: `MAX_AGE_HOURS` lo descarta
+ * antes de llegar acá.
+ */
 export function toBaseType(type: string): BaseType {
-  // `reminder_1h` before the prefix check, or the mail that goes out an hour
-  // before the turno gets the twenty-four-hour template and says "mañana".
-  if (type === "reminder_1h") return "reminder_soon";
   if (type.startsWith("reminder")) return "reminder";
   if (type === "cancellation") return "cancellation";
   return "confirmation";

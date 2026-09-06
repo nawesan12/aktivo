@@ -36,7 +36,6 @@ const base = {
 const emails = [
   ["turno-confirmacion", buildAppointmentEmail({ ...base, type: "confirmation" })],
   ["turno-recordatorio", buildAppointmentEmail({ ...base, type: "reminder" })],
-  ["turno-recordatorio-1h", buildAppointmentEmail({ ...base, type: "reminder_soon" })],
   ["turno-cancelacion", buildAppointmentEmail({ ...base, type: "cancellation" })],
   [
     "lista-espera",

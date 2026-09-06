@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       desaparecen.
     */
     <PanelMenuProvider>
-    <div className="flex h-dvh overflow-hidden">
+    <div data-app-shell className="flex h-dvh overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />

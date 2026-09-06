@@ -28,7 +28,6 @@ const base = {
 const everyEmail = () => [
   { name: "confirmation", mail: buildAppointmentEmail({ ...base, type: "confirmation" }) },
   { name: "reminder", mail: buildAppointmentEmail({ ...base, type: "reminder" }) },
-  { name: "reminder_soon", mail: buildAppointmentEmail({ ...base, type: "reminder_soon" }) },
   { name: "cancellation", mail: buildAppointmentEmail({ ...base, type: "cancellation" }) },
   {
     name: "waitlist_slot_open",
@@ -99,24 +98,17 @@ describe("el recordatorio dice cuándo es el turno", () => {
     expect(html).toContain("Mañana tenés turno");
   });
 
-  it("el de 1 h no dice mañana", () => {
-    // Both reminders used to render the same template, so the mail that goes
-    // out sixty minutes before the turno announced it for the following day.
-    const { subject, html } = buildAppointmentEmail({ ...base, type: "reminder_soon" });
-    expect(subject).not.toContain("Mañana");
-    expect(html).not.toContain("Mañana tenés turno");
-    expect(html).toContain("en un rato");
-  });
 });
 
 describe("el reintento de un correo que falló", () => {
-  it("no degrada el recordatorio de 1 h al de 24", () => {
+  it("un recordatorio reintentado sigue siendo un recordatorio", () => {
     /*
-      The retry path had its own copy of the mapping and collapsed everything
-      starting with "reminder" onto the daily template, so a one-hour reminder
-      that failed and got retried came back saying "mañana".
+      El camino del reintento tiene su propia copia del mapeo, y por eso vale
+      fijarlo: cuando había un recordatorio de una hora, esta copia lo colapsaba
+      sobre la plantilla diaria y el correo reintentado volvía diciendo
+      "mañana". Ese recordatorio ya no existe —su ventana de sesenta minutos casi
+      nunca coincidía con una pasada del trabajo—, pero la copia sigue acá.
     */
-    expect(toBaseType("reminder_1h")).toBe("reminder_soon");
     expect(toBaseType("reminder_24h")).toBe("reminder");
     expect(toBaseType("reminder")).toBe("reminder");
   });
@@ -203,7 +195,7 @@ describe("el botón de acción", () => {
 */
 describe("la dirección del local", () => {
   it("va en los correos que se leen para ir", () => {
-    for (const type of ["confirmation", "reminder", "reminder_soon"] as const) {
+    for (const type of ["confirmation", "reminder"] as const) {
       const { html, text } = buildAppointmentEmail({ ...base, type });
       expect(html, type).toContain("Av. Colón 1234");
       expect(text, type).toContain("Av. Colón 1234");

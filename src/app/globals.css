@@ -300,6 +300,22 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+
+  /*
+    El panel es una aplicación, no un documento: la barra de arriba y la de
+    abajo quedan fijas y lo único que se mueve es el contenido del medio.
+
+    Sin esto el documento scrollea igual —por el rebote de iOS, o por unos
+    píxeles de diferencia entre el body y el contenedor— y se siente como dos
+    scrolls peleando, que es exactamente lo que pasaba. `:has()` lo aplica sólo
+    donde está ese contenedor, sin tocar la landing ni las páginas públicas.
+  */
+  html:has([data-app-shell]),
+  body:has([data-app-shell]) {
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     letter-spacing: -0.03em;
