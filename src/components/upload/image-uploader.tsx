@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { Camera, ImageIcon, Loader2, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { compressImage, describeSaving, type ImageKind } from "@/lib/image-compress";
 import { isBlobUrl, type UploadKind } from "@/lib/uploads";

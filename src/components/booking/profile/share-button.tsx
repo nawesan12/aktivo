@@ -1,6 +1,6 @@
 "use client";
 import { Share2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 /**
  * The whole point of a business having a link is passing it around, and there
  * was no way to do it from the page. Uses the native share sheet where there is

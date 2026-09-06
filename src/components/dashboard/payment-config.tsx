@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, CreditCard, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { paymentConfigSchema, type PaymentConfigInput } from "@/lib/validations";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Bell, Mail, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface Preference {
   id: string;

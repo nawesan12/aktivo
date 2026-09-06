@@ -112,15 +112,21 @@ export const PANEL_ROUTES: string[] = [
  * rather than a destination — so it is described here as a hole the component
  * fills, not as a route.
  */
-export const MOBILE_NAV: (PanelNavItem | "action")[] = [
+export const MOBILE_NAV: (PanelNavItem | "action" | "menu")[] = [
   { name: "Hoy", href: "/panel", icon: LayoutDashboard },
   { name: "Calendario", href: "/panel/calendario", icon: CalendarDays },
   "action",
   { name: "Clientes", href: "/panel/clientes", icon: UserCircle },
-  // Settings has its own slot on purpose: on a phone it is the screen owners
-  // reach for most after the agenda, and burying it behind a drawer was why
-  // nobody changed their deposit percentage from the shop floor.
-  { name: "Ajustes", href: "/panel/configuracion", icon: Settings },
+  /*
+    El último lugar de la barra, que es el que queda bajo el pulgar, abre el
+    menú entero y no una pantalla sola.
+
+    Antes era "Ajustes", y las otras diez pantallas del panel se alcanzaban sólo
+    desde la hamburguesa de arriba a la izquierda — la esquina más lejos del
+    pulgar en un teléfono grande. Configuración sigue estando, primera en el
+    menú que esto abre.
+  */
+  "menu",
 ];
 
 /** Whether `pathname` is inside the screen this entry owns. */

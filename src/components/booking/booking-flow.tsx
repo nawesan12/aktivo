@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Kanji } from "@/components/brand/kanji";
 import { Skeleton } from "@/components/ui/skeleton";

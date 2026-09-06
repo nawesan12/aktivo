@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validations";
 

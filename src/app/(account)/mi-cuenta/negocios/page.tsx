@@ -4,7 +4,7 @@ import useSWR from "swr";
 import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Building2, ArrowRight, Loader2 } from "lucide-react";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { PLAN_NAMES } from "@/lib/subscription/config";

@@ -22,7 +22,7 @@ import {
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { CalendarSkeleton } from "@/components/skeletons/dashboard-skeleton";

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { SWRConfig } from "swr";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { errorMessage } from "@/lib/api-message";
 
 /** A failed request that still knows what the server answered. */

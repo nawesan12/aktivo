@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Globe, Loader2, Check, AlertCircle, Copy, Trash2 } from "lucide-react";
 import { errorMessage, messageOf } from "@/lib/api-message";
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Check, Copy, ExternalLink, QrCode, Share2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Link from "next/link";

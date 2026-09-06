@@ -173,7 +173,7 @@ Lo que hay hoy, más allá de las funcionalidades:
 - **Cobro real**: dos planes en MercadoPago ($7.000 y $15.000 ARS), una semana
   de prueba por negocio y bloqueo de escritura del panel al vencer.
 - **CI** en GitHub Actions: tipos, lint, tests unitarios y build.
-- **Tests**: 231 unitarios y 101 end-to-end, incluidos doble reserva concurrente,
+- **Tests**: 237 unitarios y 101 end-to-end, incluidos doble reserva concurrente,
   flujo completo de reserva, accesibilidad, que el panel entre en un teléfono, y
   que los correos no vuelvan a romperse en silencio, más un humo contra el sitio
   desplegado (`e2e-prod/`).
@@ -331,6 +331,26 @@ panel en toda la semana no se enteraba de nada.
   código, pero Mercado Pago no los tenía habilitados: iba a cobrar el día ocho y
   la aplicación no se enteraba. Corregido con el MCP.
 - [x] `scripts/mp-free-trial.ts` para poner la semana en los planes de MP.
+
+### Sprint 18 — El teléfono ✅
+
+- [x] **El scroll del panel se rompía en iOS.** El layout usaba `h-screen`, y
+  `100vh` en iOS es el alto con las barras del sistema retraídas: el contenedor
+  medía más que la pantalla, el `main` de adentro tenía su scroll, el documento
+  se movía otro poco por fuera, y los dos peleaban. Ahora es `h-dvh`, que sigue
+  al área visible de verdad.
+- [x] Y la última tarjeta quedaba tapada por la barra de abajo — confirmado
+  revirtiendo el arreglo y viendo fallar la comprobación en WebKit. El colchón
+  inferior ahora suma `env(safe-area-inset-bottom)`.
+- [x] **El menú, bajo el pulgar.** Estaba sólo en la hamburguesa de arriba a la
+  izquierda, la esquina más lejana en un teléfono grande, y detrás de ella
+  estaban diez de las quince pantallas. El último lugar de la barra inferior lo
+  abre; Configuración sigue estando, dentro.
+- [x] **Haptics en toda la aplicación.** Un detector delegado en el documento
+  (`components/providers/haptics-provider.tsx`) para el toque, y los avisos
+  envueltos (`lib/toast.ts`) para el éxito y el error — así ninguna pantalla
+  nueva se queda sin él. **En iPhone no vibra**: iOS no expone la Vibration API
+  ni en Safari ni en una aplicación instalada; funciona en Android.
 
 ### Pendiente
 

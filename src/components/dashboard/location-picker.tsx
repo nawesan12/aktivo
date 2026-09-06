@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Loader2, Crosshair } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import "leaflet/dist/leaflet.css";
 

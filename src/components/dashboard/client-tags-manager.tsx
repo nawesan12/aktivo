@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Plus, X, Tag, Loader2, Pencil, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { errorMessage, messageOf } from "@/lib/api-message";
 
 

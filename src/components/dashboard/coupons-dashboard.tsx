@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Plus, Trash2, Loader2, Tag, TicketPercent } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { errorMessage, messageOf } from "@/lib/api-message";
 

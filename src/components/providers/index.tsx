@@ -7,6 +7,7 @@ import { SessionProvider } from "./session-provider";
 import { SWRProvider } from "./swr-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { HapticsProvider } from "./haptics-provider";
 
 /**
  * `session` is passed by the layouts that already resolved it on the server.
@@ -35,6 +36,9 @@ export function Providers({
           <TooltipProvider>
             {children}
             <Toaster richColors position="bottom-right" />
+            {/* Un golpecito en cada toque, en toda la aplicación. No pinta
+                nada: instala un solo detector en el documento. */}
+            <HapticsProvider />
           </TooltipProvider>
         </SWRProvider>
       </ThemeProvider>

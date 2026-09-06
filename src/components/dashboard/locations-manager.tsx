@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { MapPin, Plus, Building2, Users, Scissors, Calendar, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { formatCurrency } from "@/lib/format";
 

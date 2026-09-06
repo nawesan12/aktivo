@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Loader2, Shield, Info } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 

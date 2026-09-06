@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { Check, Copy, ExternalLink, Pencil, Share2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 /**
  * El link de la agenda, como lo primero que se ve al entrar.

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Bell, Trash2, Clock, CheckCircle, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import { errorMessage, messageOf } from "@/lib/api-message";
 

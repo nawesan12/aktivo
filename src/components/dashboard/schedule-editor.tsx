@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Save, Loader2, Plus, X, Clock, CalendarOff } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { FormSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import Link from "next/link";
 

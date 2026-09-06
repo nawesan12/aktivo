@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { AlertTriangle, ShieldAlert, Ban, TrendingUp } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons/dashboard-skeleton";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 
 export function NoShowTracker() {

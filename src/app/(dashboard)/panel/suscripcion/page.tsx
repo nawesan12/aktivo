@@ -16,7 +16,7 @@ import {
   Shield,
   Loader2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/format";
 import { PLAN_LIMITS, TRIAL_DAYS } from "@/lib/subscription/config";
 

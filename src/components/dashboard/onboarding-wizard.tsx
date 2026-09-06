@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CreditCard, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { JikuLogo } from "@/components/brand/jiku-logo";
 import { errorMessage, messageOf } from "@/lib/api-message";

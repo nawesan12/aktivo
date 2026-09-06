@@ -19,7 +19,7 @@ import {
   Loader2,
   FileText,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { StatusBadge } from "./status-badge";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { NewAppointmentDialog } from "./new-appointment-dialog";

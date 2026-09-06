@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Mail } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Switch } from "@/components/ui/switch";
 

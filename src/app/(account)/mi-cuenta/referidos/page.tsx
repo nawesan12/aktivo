@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { Users, Copy, Check, Share2, Loader2, Gift } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/format";
 import { messageOf } from "@/lib/api-message";
 

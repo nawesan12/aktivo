@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { X, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Calendar } from "@/components/ui/calendar";
 import { TimeSlotGrid } from "./time-slot-grid";
 

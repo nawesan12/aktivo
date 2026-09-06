@@ -31,7 +31,8 @@ export default async function AccountLayout({ children }: { children: ReactNode 
 
   if (session.user.businessId) {
     return (
-      <div className="flex h-screen overflow-hidden">
+      // `dvh` y no `vh`: ver la nota en el layout del panel.
+      <div className="flex h-dvh overflow-hidden">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Topbar />

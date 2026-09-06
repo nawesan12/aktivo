@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Loader2, Mail, UserPlus, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermissionGate } from "@/components/auth/permission-gate";

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Menu, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { MOBILE_NAV, isNavItemActive } from "./navigation";
+import { haptic } from "@/lib/haptics";
+import { PanelMenuTrigger } from "./panel-menu";
 
 /**
  * The panel on a phone.
@@ -30,6 +32,7 @@ export function BottomNav() {
               key="action"
               href="/panel/turnos?nuevo=1"
               aria-label="Cargar un turno"
+              onClick={() => haptic()}
               /*
                 -24px of margin lifts the button half out of the bar, which is
                 what makes it read as the primary action rather than a fifth tab.
@@ -41,6 +44,25 @@ export function BottomNav() {
           );
         }
 
+        if (entry === "menu") {
+          /*
+            El menú, en el lugar que queda bajo el pulgar.
+
+            Estaba sólo arriba a la izquierda, que en un teléfono grande es la
+            esquina a la que no se llega sin cambiar la mano de posición — y
+            detrás de esa hamburguesa estaban diez de las quince pantallas.
+          */
+          return (
+            <PanelMenuTrigger
+              key="menu"
+              className="flex flex-col items-center gap-0.5 px-2 text-center text-faint transition-colors"
+            >
+              <Menu className="size-[17px]" aria-hidden />
+              <span className="text-[8.5px]">Menú</span>
+            </PanelMenuTrigger>
+          );
+        }
+
         const active = isNavItemActive(entry, pathname);
         const Icon = entry.icon;
 
@@ -48,6 +70,7 @@ export function BottomNav() {
           <Link
             key={index}
             href={entry.href}
+            onClick={() => haptic()}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex flex-col items-center gap-0.5 px-2 text-center transition-colors",

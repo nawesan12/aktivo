@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ArrowLeft, Loader2, Mail, Bell } from "lucide-react";
 import { errorMessage, messageOf } from "@/lib/api-message";
 
