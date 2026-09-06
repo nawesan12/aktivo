@@ -46,7 +46,7 @@ export function PublicHeader({ brand, transparent, whiteLabel }: PublicHeaderPro
     >
       <nav
         aria-label="Principal"
-        className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4"
+        className="shell flex h-14 items-center justify-between gap-3"
       >
         {brand ? (
           <Link

@@ -37,6 +37,14 @@ const baseSchema = z.object({
   // Without these, sign-in with Google is hidden and only email + password works.
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  // ── Errores ─────────────────────────────────────────────────────────────
+  /**
+   * Sin esto no se reporta nada y la app anda igual. Es público por diseño —va
+   * en el bundle del cliente—, así que no es un secreto: sólo permite *mandar*
+   * eventos al proyecto, nunca leerlos.
+   */
+  NEXT_PUBLIC_SENTRY_DSN: z.url().optional(),
+
   /** Signs the guest-token cookie. Falls back to AUTH_SECRET, domain-separated. */
   GUEST_JWT_SECRET: secret().optional(),
   /** Encrypts each business's MercadoPago token at rest. Falls back to AUTH_SECRET. */

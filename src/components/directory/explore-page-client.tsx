@@ -68,8 +68,8 @@ export function ExplorePageClient({
     <div className="min-h-screen bg-[radial-gradient(800px_380px_at_50%_-5%,rgba(74,222,128,0.12),transparent_60%)] pb-11">
       <div className="bg-dots absolute inset-0 -z-10" aria-hidden />
 
-      <div className="px-6 pb-7 pt-12 text-center sm:px-10">
-        <div className="mx-auto max-w-6xl">
+      <div className="pb-7 pt-12 text-center">
+        <div className="shell">
           <h1 className="text-[28px] font-extrabold leading-[1.08] tracking-[-0.04em] sm:text-4xl">
             Reservá en los mejores
             <br />
@@ -122,7 +122,7 @@ export function ExplorePageClient({
       </div>
 
       {/* Results */}
-      <div className="mx-auto max-w-6xl px-6 sm:px-10">
+      <div className="shell">
         {isLoading ? (
           // Skeletons in the shape of the cards, not a spinner in an empty page:
           // the layout stops jumping when the results land.

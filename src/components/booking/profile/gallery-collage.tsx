@@ -25,7 +25,7 @@ export function GalleryCollage({ photos, alt }: { photos: Photo[]; alt: string }
   const [index, setIndex] = useState(0);
 
   if (photos.length === 0) {
-    return <div className="brand-gradient m-1.5 h-[168px] rounded-2xl lg:h-[288px]" aria-hidden />;
+    return <div className="brand-gradient h-[168px] rounded-2xl lg:h-[288px]" aria-hidden />;
   }
 
   const [first, second, third] = photos;
@@ -37,14 +37,14 @@ export function GalleryCollage({ photos, alt }: { photos: Photo[]; alt: string }
 
   return (
     <>
-      <div className="flex h-[180px] gap-1.5 p-1.5 lg:h-[300px]">
+      <div className="flex h-[180px] gap-1.5 lg:h-[300px]">
         <button
           type="button"
           onClick={() => show(0)}
           aria-label="Ver las fotos del local"
           className="relative h-full flex-[2] overflow-hidden rounded-l-2xl rounded-r-md"
         >
-          <Image src={first.url} alt={alt} fill sizes="66vw" priority className="object-cover" />
+          <Image src={first.url} alt={alt} fill sizes="(min-width: 1104px) 672px, 66vw" priority className="object-cover" />
         </button>
 
         {second && (
@@ -55,7 +55,7 @@ export function GalleryCollage({ photos, alt }: { photos: Photo[]; alt: string }
               aria-label="Ver las fotos del local"
               className="relative h-1/2 overflow-hidden rounded-l-md rounded-r-2xl rounded-b-md"
             >
-              <Image src={second.url} alt="" fill sizes="33vw" className="object-cover" />
+              <Image src={second.url} alt="" fill sizes="(min-width: 1104px) 336px, 33vw" className="object-cover" />
             </button>
             {third && (
               <button
@@ -64,7 +64,7 @@ export function GalleryCollage({ photos, alt }: { photos: Photo[]; alt: string }
                 aria-label="Ver las fotos del local"
                 className="relative h-1/2 overflow-hidden rounded-b-2xl rounded-t-md"
               >
-                <Image src={third.url} alt="" fill sizes="33vw" className="object-cover" />
+                <Image src={third.url} alt="" fill sizes="(min-width: 1104px) 336px, 33vw" className="object-cover" />
                 {photos.length > 3 && (
                   <span className="absolute bottom-2.5 right-2.5 rounded-full bg-card/95 px-3 py-1.5 text-[10px] font-semibold">
                     Ver las {photos.length} fotos

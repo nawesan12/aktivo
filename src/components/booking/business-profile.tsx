@@ -177,9 +177,14 @@ export function BusinessProfile({
 
   return (
     <div>
-      <GalleryCollage photos={cover} alt={business.name} />
+      {/* Dentro del mismo contenedor que el resto: la portada empieza y
+          termina donde empieza y termina la tarjeta del local, en lugar de
+          desbordarla por doce píxeles de cada lado. */}
+      <div className="shell pt-1.5">
+        <GalleryCollage photos={cover} alt={business.name} />
+      </div>
 
-      <div className="px-[18px] lg:px-14">
+      <div className="shell">
         <div className="relative z-[2] my-5 flex flex-col gap-4 rounded-[18px] border border-border bg-card p-5 shadow-[0_16px_40px_-22px_rgba(9,9,11,0.25)] lg:my-7 lg:flex-row lg:items-center lg:gap-[22px] lg:p-[26px_28px]">
           {business.logoUrl ? (
             <Image

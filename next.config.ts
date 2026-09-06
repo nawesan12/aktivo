@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   turbopack: {},
@@ -67,4 +68,34 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * El envoltorio de Sentry.
+ *
+ * `tunnelRoute` queda apagado a propósito: hace que cada evento del navegador
+ * pase por una ruta nuestra para esquivar los bloqueadores, y eso es una
+ * invocación de función por cada error de cada visitante. Preferimos perder los
+ * errores de quien usa un bloqueador antes que pagar por reportarlos.
+ *
+ * Los sourcemaps se suben sólo si hay token; sin él el build sigue andando, con
+ * los stack traces del cliente minimizados. Y se borran después de subirlos,
+ * para no publicarlos junto a la app.
+ */
+export default withSentryConfig(nextConfig, {
+  org: "vimo-1h",
+  project: "jiku",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  telemetry: false,
+  widenClientFileUpload: true,
+  disableLogger: true,
+  tunnelRoute: false,
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+    deleteSourcemapsAfterUpload: true,
+  },
+  webpack: {
+    // No hay crons en Vercel (el plan gratis permite uno por día); el trabajo
+    // programado lo dispara el tráfico real desde `lib/jobs/registry.ts`.
+    automaticVercelMonitors: false,
+  },
+});

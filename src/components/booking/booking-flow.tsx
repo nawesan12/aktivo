@@ -330,8 +330,8 @@ export function BookingFlow({
   }
 
   return (
-    <div className="relative px-[18px] pb-[150px] lg:px-12 lg:pb-11">
-      <div className="relative mx-auto grid max-w-[1104px] gap-5 lg:grid-cols-[1fr_340px]">
+    <div className="relative pb-[150px] lg:pb-11">
+      <div className="shell relative grid gap-5 lg:grid-cols-[1fr_340px]">
         <Kanji
           size={110}
           opacity={0.12}

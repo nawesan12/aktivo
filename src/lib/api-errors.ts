@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { createLogger } from "@/lib/logger";
 
 const log = createLogger("api");
@@ -185,7 +186,21 @@ export function handleApiError(error: unknown, scope?: string): NextResponse {
     );
   }
 
+  /*
+    Acá abajo caen los errores que nadie previó, y son los únicos que se
+    reportan: todo lo de arriba es una respuesta esperada —un horario tomado, un
+    campo inválido— y mandarlo al tablero de errores lo llenaría de ruido hasta
+    que el 500 de verdad pase desapercibido.
+
+    Este es también el motivo por el que hace falta reportar desde acá y no
+    alcanza con `onRequestError`: Next sólo ve los errores que escapan de la
+    ruta, y de una ruta de este proyecto no escapa ninguno —los atrapa esta
+    función—. Sin esto, todo lo que rompa una API queda únicamente en los logs
+    de Vercel, que se borran solos y que nadie mira si no está buscando algo.
+  */
   (scope ? log.child(scope) : log).error("unhandled error", error);
+  Sentry.captureException(error, scope ? { tags: { scope } } : undefined);
+
   return NextResponse.json(
     { error: "Error interno" },
     { status: 500 }
